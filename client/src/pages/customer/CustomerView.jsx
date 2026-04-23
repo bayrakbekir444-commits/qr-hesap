@@ -651,9 +651,9 @@ export default function CustomerView() {
                             )}
                             <div className="menu-order-item-info">
                               <span className="menu-order-item-name">
-                                {item.is_special && <span style={{ color: '#d97706', marginRight: 4 }}>⭐</span>}
+                                {!!item.is_special && <span style={{ color: '#d97706', marginRight: 4 }}>⭐</span>}
                                 {getItemName(item, lang)}
-                                {tukendi && <span style={{ color: '#dc2626', marginLeft: 8, fontSize: '0.8em' }}>{t('tukendi', lang)}</span>}
+                                {tukendi ? <span style={{ color: '#dc2626', marginLeft: 8, fontSize: '0.8em' }}>{t('tukendi', lang)}</span> : null}
                               </span>
                               {getItemDesc(item, lang) && (
                                 <span className="menu-order-item-desc">{getItemDesc(item, lang)}</span>
