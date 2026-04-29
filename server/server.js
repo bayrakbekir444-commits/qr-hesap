@@ -24,9 +24,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // CORS — production'da CORS_ORIGIN env'inden domain listesi
-const corsOrigin = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim())
-  : true; // dev'de hepsine açık
+const corsRaw = process.env.CORS_ORIGIN || '';
+const corsOrigin = corsRaw === '*' || corsRaw === ''
+  ? true // hepsine açık
+  : corsRaw.split(',').map((s) => s.trim());
 
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
