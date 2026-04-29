@@ -9,6 +9,9 @@
     "init-db": "node db/init.js",
     "seed": "node db/seed.js"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.0.0",

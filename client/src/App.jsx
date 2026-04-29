@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 import CustomerView from './pages/customer/CustomerView';
 import MenuView from './pages/customer/MenuView';
@@ -24,6 +24,8 @@ import PanelLayout from './components/PanelLayout';
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/panel/login" replace />} />
+
       {/* Customer-facing routes (legacy single QR) */}
       <Route path="/t/:qrToken" element={<CustomerView />} />
       <Route path="/t/:qrToken/split" element={<SplitBill />} />

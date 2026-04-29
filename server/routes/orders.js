@@ -4,11 +4,11 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /api/orders/new-alerts - Son 30 saniyede güncellenen siparişler
+// GET /api/orders/new-alerts - Son 5 dakikada güncellenen siparişler
 router.get('/new-alerts', authMiddleware, (req, res) => {
   try {
     const db = getDb();
-    const thirtySecondsAgo = new Date(Date.now() - 30000).toISOString();
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
     const orders = db.prepare(
       `SELECT o.*, t.table_number
@@ -18,7 +18,7 @@ router.get('/new-alerts', authMiddleware, (req, res) => {
        AND o.status = 'open'
        AND o.updated_at >= ?
        ORDER BY o.updated_at DESC`
-    ).all(req.restaurantId, thirtySecondsAgo);
+    ).all(req.restaurantId, fiveMinutesAgo);
 
     const result = orders.map((order) => {
       const items = db.prepare(

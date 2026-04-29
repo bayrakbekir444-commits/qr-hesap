@@ -23,8 +23,12 @@ const notificationsRoutes = require('./routes/notifications');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+// CORS — production'da CORS_ORIGIN env'inden domain listesi
+const corsOrigin = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim())
+  : true; // dev'de hepsine açık
+
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 
 // Veritabanını başlat

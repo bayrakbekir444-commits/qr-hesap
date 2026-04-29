@@ -1,1 +1,23 @@
 node_modules/
+
+# Env dosyaları (sırlar git'e gitmez)
+.env
+.env.local
+.env.production
+
+# DB lock/journal dosyaları (database.sqlite repo'da kalsın, demo seed olarak)
+server/db/database.sqlite-shm
+server/db/database.sqlite-wal
+server/db/backups/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build çıktıları
+client/dist/
+restoran-app/.expo/
+restoran-app/dist/

@@ -168,23 +168,39 @@ export default function MenuView() {
                   <span className="mv-category-count">{menuByCategory[category].length} urun</span>
                 </div>
                 <div className="mv-items">
-                  {menuByCategory[category].map((item) => (
+                  {menuByCategory[category].map((item) => {
+                    const fallbackImg = `https://loremflickr.com/400/300/${encodeURIComponent((item.name || 'food') + ',food')}?lock=${item.id}`;
+                    const imgSrc = item.image_url || fallbackImg;
+                    return (
                     <div key={item.id} className="mv-food-card">
-                      <div className="mv-food-info">
+                      <div className="mv-food-image">
+                        <img
+                          src={imgSrc}
+                          alt={getItemName(item, lang)}
+                          onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
+                        />
+                        <div className="mv-food-image-placeholder" style={{ display: 'none' }}>
+                          {(getItemName(item, lang) || '?').charAt(0).toUpperCase()}
+                        </div>
+                      </div>
+                      <div className="mv-food-body">
                         <span className="mv-food-name">{getItemName(item, lang)}</span>
                         {getItemDesc(item, lang) && (
                           <span className="mv-food-desc">{getItemDesc(item, lang)}</span>
                         )}
-                        <span className="mv-food-price">{formatTL(item.price)}</span>
+                        <div className="mv-food-row">
+                          <span className="mv-food-price">{formatTL(item.price)}</span>
+                          <button
+                            className="mv-add-btn"
+                            onClick={() => handleAddItem(item)}
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        className="mv-add-btn"
-                        onClick={() => handleAddItem(item)}
-                      >
-                        +
-                      </button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -208,15 +224,31 @@ export default function MenuView() {
 
             {orderOpen && (
               <div className="mv-order-list">
-                {orderItems.map((item, i) => (
+                {orderItems.map((item, i) => {
+                  const menuItemId = item.menu_item_id || item.menuItemId;
+                  const menuItem = menu.find((m) => m.id === menuItemId);
+                  const reorderTarget = menuItem || { id: menuItemId, name: item.name, price: item.unit_price ?? item.price };
+                  return (
                   <div key={i} className="mv-order-item">
                     <div className="mv-order-item-left">
                       <span className="mv-order-qty">{item.quantity}x</span>
-                      <span className="mv-order-name">{item.name}</span>
+                      <span className="mv-order-name">{item.name || item.item_name}</span>
                     </div>
-                    <span className="mv-order-price">{formatTL(item.price * item.quantity)}</span>
+                    <div className="mv-order-item-right">
+                      <span className="mv-order-price">{formatTL((item.unit_price ?? item.price) * item.quantity)}</span>
+                      {menuItemId && (
+                        <button
+                          className="mv-reorder-btn"
+                          onClick={(e) => { e.stopPropagation(); handleAddItem(reorderTarget); }}
+                          title="1 tane daha"
+                        >
+                          +1
+                        </button>
+                      )}
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
                 <div className="mv-order-total-row">
                   <span>Toplam</span>
                   <span className="mv-order-total-amount">{formatTL(orderTotal)}</span>

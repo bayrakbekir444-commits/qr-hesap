@@ -10,17 +10,21 @@ export default function MenuManage() {
   const [catForm, setCatForm] = useState({ name: '', editId: null });
   const [itemForm, setItemForm] = useState({ name: '', name_en: '', name_ar: '', price: '', categoryId: '', editId: null, image_url: '', is_special: false, special_discount: 0 });
   const [showItemForm, setShowItemForm] = useState(false);
+  const [activeCategoryId, setActiveCategoryId] = useState(null);
 
   const fetchData = async () => {
     try {
       const res = await api.get('/menu');
-      // Backend: [{ id, name, items: [...] }]
       setCategories(res.data);
       const allItems = [];
       res.data.forEach((cat) => {
         (cat.items || []).forEach((it) => allItems.push(it));
       });
       setItems(allItems);
+      setActiveCategoryId((prev) => {
+        if (prev && res.data.some((c) => c.id === prev)) return prev;
+        return res.data[0]?.id || null;
+      });
     } catch {
       // ignore
     } finally {
@@ -109,56 +113,35 @@ export default function MenuManage() {
 
   if (loading) return <Loading />;
 
+  const activeItems = items.filter((it) => (it.categoryId || it.category_id) === activeCategoryId);
+
+  const categoryEmoji = (name = '') => {
+    const n = name.toLocaleLowerCase('tr');
+    if (n.includes('kebap') || n.includes('et')) return '🍖';
+    if (n.includes('çorba') || n.includes('corba')) return '🍲';
+    if (n.includes('salata')) return '🥗';
+    if (n.includes('tatlı') || n.includes('tatli')) return '🍰';
+    if (n.includes('içecek') || n.includes('icecek') || n.includes('drink')) return '🥤';
+    if (n.includes('pizza')) return '🍕';
+    if (n.includes('burger') || n.includes('fast')) return '🥙';
+    if (n.includes('kahve') || n.includes('coffee')) return '☕';
+    return '🍽️';
+  };
+
   return (
     <div className="menu-manage">
-      <h1 className="panel-page-title">Menu Yonetimi</h1>
-
-      {/* Categories Section */}
-      <div className="panel-card">
-        <h3>Kategoriler</h3>
-        <form className="inline-form" onSubmit={handleCatSubmit}>
-          <input
-            type="text"
-            placeholder="Kategori adi"
-            value={catForm.name}
-            onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
-          />
-          <button type="submit" className="btn btn-accent btn-sm">
-            {catForm.editId ? 'Guncelle' : 'Ekle'}
-          </button>
-          {catForm.editId && (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCatForm({ name: '', editId: null })}>
-              Iptal
-            </button>
-          )}
-        </form>
-        <div className="tag-list">
-          {categories.map((cat) => (
-            <div key={cat.id} className="tag-item">
-              <span>{cat.name}</span>
-              <div className="tag-actions">
-                <button onClick={() => setCatForm({ name: cat.name, editId: cat.id })} className="btn-icon" title="Duzenle">&#9998;</button>
-                <button onClick={() => handleDeleteCat(cat.id)} className="btn-icon danger" title="Sil">&#10005;</button>
-              </div>
-            </div>
-          ))}
-          {categories.length === 0 && <p className="empty-text">Henuz kategori eklenmemis.</p>}
-        </div>
+      <div className="mm-page-header">
+        <h1 className="panel-page-title">Menu Yonetimi</h1>
+        <button className="btn btn-accent btn-sm" onClick={() => {
+          setItemForm({ name: '', name_en: '', name_ar: '', price: '', categoryId: activeCategoryId || categories[0]?.id || '', editId: null, image_url: '', is_special: false, special_discount: 0 });
+          setShowItemForm(!showItemForm);
+        }}>
+          {showItemForm ? 'Kapat' : '+ Yeni Urun'}
+        </button>
       </div>
 
-      {/* Menu Items Section */}
-      <div className="panel-card">
-        <div className="card-header-row">
-          <h3>Menu Urunleri</h3>
-          <button className="btn btn-accent btn-sm" onClick={() => {
-            setItemForm({ name: '', price: '', categoryId: categories[0]?.id || '', editId: null });
-            setShowItemForm(!showItemForm);
-          }}>
-            {showItemForm ? 'Kapat' : '+ Yeni Urun'}
-          </button>
-        </div>
-
-        {showItemForm && (
+      {showItemForm && (
+        <div className="panel-card">
           <form className="item-form" onSubmit={handleItemSubmit}>
             <div className="form-group">
               <label>Ürün Adı (TR)</label>
@@ -258,63 +241,86 @@ export default function MenuManage() {
               </button>
             </div>
           </form>
-        )}
+        </div>
+      )}
 
-        {categories.map((cat) => {
-          const catItems = items.filter((it) => (it.categoryId || it.category_id) === cat.id);
-          if (catItems.length === 0) return null;
-          return (
-            <div key={cat.id} className="menu-category-section">
-              <h4 className="menu-category-title">{cat.name}</h4>
-              <table className="panel-table">
-                <thead>
-                  <tr>
-                    <th>Ürün</th>
-                    <th>Fiyat</th>
-                    <th>Durum</th>
-                    <th>İşlem</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {catItems.map((item) => (
-                    <tr key={item.id} style={!item.active ? { opacity: 0.5 } : {}}>
-                      <td>
-                        {item.image_url && (
-                          <img src={item.image_url} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6, marginRight: 8, verticalAlign: 'middle' }} />
-                        )}
-                        {item.name}
-                        {item.is_special ? <span style={{ marginLeft: 6, color: '#d97706' }}>⭐</span> : null}
-                      </td>
-                      <td>{formatTL(item.price)}</td>
-                      <td>
-                        <button
-                          onClick={() => toggleStock(item)}
-                          style={{
-                            background: item.active ? '#dcfce7' : '#fee2e2',
-                            color: item.active ? '#166534' : '#991b1b',
-                            border: 'none',
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '6px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            fontSize: '0.8rem',
-                          }}>
-                          {item.active ? '✓ Stokta' : '✕ Tükendi'}
-                        </button>
-                      </td>
-                      <td>
-                        <button className="btn-icon" onClick={() => editItem(item)} title="Duzenle">&#9998;</button>
-                        <button className="btn-icon danger" onClick={() => handleDeleteItem(item.id)} title="Sil">&#10005;</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      <div className="mm-container">
+        <aside className="mm-sidebar">
+          <h2>Menü</h2>
+          <form className="mm-cat-form" onSubmit={handleCatSubmit}>
+            <input
+              type="text"
+              placeholder="Kategori adı"
+              value={catForm.name}
+              onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
+            />
+            <button type="submit">{catForm.editId ? '✓' : '+'}</button>
+            {catForm.editId && (
+              <button type="button" onClick={() => setCatForm({ name: '', editId: null })}>✕</button>
+            )}
+          </form>
+          <ul className="mm-cat-list">
+            {categories.map((cat) => (
+              <li
+                key={cat.id}
+                className={cat.id === activeCategoryId ? 'active' : ''}
+                onClick={() => setActiveCategoryId(cat.id)}
+              >
+                <span className="mm-cat-name">
+                  <span className="mm-cat-emoji">{categoryEmoji(cat.name)}</span>
+                  {cat.name}
+                </span>
+                <span className="mm-cat-actions" onClick={(e) => e.stopPropagation()}>
+                  <button className="mm-cat-icon" onClick={() => setCatForm({ name: cat.name, editId: cat.id })} title="Düzenle">✎</button>
+                  <button className="mm-cat-icon danger" onClick={() => handleDeleteCat(cat.id)} title="Sil">✕</button>
+                </span>
+              </li>
+            ))}
+            {categories.length === 0 && <li className="mm-cat-empty">Henüz kategori yok</li>}
+          </ul>
+        </aside>
+
+        <section className="mm-area">
+          {activeItems.length === 0 ? (
+            <div className="mm-empty">
+              {categories.length === 0
+                ? 'Önce sol taraftan bir kategori ekleyin.'
+                : 'Bu kategoride henüz ürün yok. "+ Yeni Ürün" ile ekleyin.'}
             </div>
-          );
-        })}
-
-        {items.length === 0 && <p className="empty-text">Henuz urun eklenmemis.</p>}
+          ) : (
+            activeItems.map((item) => {
+              const fallbackImg = `https://loremflickr.com/400/300/${encodeURIComponent((item.name || 'food') + ',food')}?lock=${item.id}`;
+              const imgSrc = item.image_url || fallbackImg;
+              return (
+              <div key={item.id} className={`card ${!item.active ? 'inactive' : ''}`}>
+                <div className="card-img-wrap">
+                  <img
+                    src={imgSrc}
+                    alt={item.name}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
+                  />
+                  <div className="card-placeholder" style={{ display: 'none' }}>{(item.name || '?').charAt(0).toUpperCase()}</div>
+                  {item.is_special ? <span className="card-badge">⭐</span> : null}
+                </div>
+                <div className="card-content">
+                  <div className="card-title">{item.name}</div>
+                  <div className="card-price">{formatTL(item.price)}</div>
+                  <div className="card-actions">
+                    <button
+                      onClick={() => toggleStock(item)}
+                      className={`mm-stock ${item.active ? 'active' : ''}`}
+                    >
+                      {item.active ? '✓ Stokta' : '✕ Tükendi'}
+                    </button>
+                    <button className="btn-icon" onClick={() => editItem(item)} title="Duzenle">&#9998;</button>
+                    <button className="btn-icon danger" onClick={() => handleDeleteItem(item.id)} title="Sil">&#10005;</button>
+                  </div>
+                </div>
+              </div>
+              );
+            })
+          )}
+        </section>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-const DB_PATH = path.join(__dirname, 'database.sqlite');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'database.sqlite');
 const SCHEMA_PATH = path.join(__dirname, 'schema.sql');
 
 let db;
