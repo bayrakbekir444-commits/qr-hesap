@@ -1,18 +1,19 @@
 const express = require('express');
-const { getDb } = require('../db/init');
+const { getPool } = require('../db/init');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
 // GET /api/loyalty - Tüm sadakat üyelerini listele (auth)
-router.get('/', authMiddleware, (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const db = getDb();
-    const members = db.prepare(
-      'SELECT * FROM loyalty WHERE restaurant_id = ? ORDER BY total_spent DESC'
-    ).all(req.restaurantId);
+    const pool = getPool();
+    const { rows } = await pool.query(
+      'SELECT * FROM loyalty WHERE restaurant_id = $1 ORDER BY total_spent DESC',
+      [req.restaurantId]
+    );
 
-    res.json(members);
+    res.json(rows);
   } catch (err) {
     console.error('Sadakat listesi hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
@@ -20,22 +21,25 @@ router.get('/', authMiddleware, (req, res) => {
 });
 
 // GET /api/loyalty/:phone - Sadakat bilgisi (auth yok)
-router.get('/:phone', (req, res) => {
+router.get('/:phone', async (req, res) => {
   try {
     const { phone } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const member = db.prepare(
-      'SELECT * FROM loyalty WHERE phone = ?'
-    ).get(phone);
+    const { rows: memberRows } = await pool.query(
+      'SELECT * FROM loyalty WHERE phone = $1',
+      [phone]
+    );
+    const member = memberRows[0];
 
     if (!member) {
       return res.json({ member: null, transactions: [] });
     }
 
-    const transactions = db.prepare(
-      'SELECT * FROM loyalty_transactions WHERE loyalty_id = ? ORDER BY created_at DESC LIMIT 50'
-    ).all(member.id);
+    const { rows: transactions } = await pool.query(
+      'SELECT * FROM loyalty_transactions WHERE loyalty_id = $1 ORDER BY created_at DESC LIMIT 50',
+      [member.id]
+    );
 
     res.json({ member, transactions });
   } catch (err) {
@@ -45,7 +49,7 @@ router.get('/:phone', (req, res) => {
 });
 
 // POST /api/loyalty/earn - Puan kazan (auth yok, ödeme sonrası çağrılır)
-router.post('/earn', (req, res) => {
+router.post('/earn', async (req, res) => {
   try {
     const { phone, amount, restaurant_id } = req.body;
 
@@ -53,7 +57,7 @@ router.post('/earn', (req, res) => {
       return res.status(400).json({ error: 'phone, amount ve restaurant_id gereklidir.' });
     }
 
-    const db = getDb();
+    const pool = getPool();
     const pointsEarned = Math.floor(amount / 10); // Her 10 TL için 1 puan
 
     if (pointsEarned <= 0) {
@@ -61,26 +65,35 @@ router.post('/earn', (req, res) => {
     }
 
     // Üyelik var mı kontrol et
-    let member = db.prepare(
-      'SELECT * FROM loyalty WHERE phone = ? AND restaurant_id = ?'
-    ).get(phone, restaurant_id);
+    const { rows: existingRows } = await pool.query(
+      'SELECT * FROM loyalty WHERE phone = $1 AND restaurant_id = $2',
+      [phone, restaurant_id]
+    );
+    let member = existingRows[0];
 
     if (!member) {
-      const result = db.prepare(
-        'INSERT INTO loyalty (phone, restaurant_id, points, total_spent) VALUES (?, ?, ?, ?)'
-      ).run(phone, restaurant_id, pointsEarned, amount);
-      member = db.prepare('SELECT * FROM loyalty WHERE id = ?').get(result.lastInsertRowid);
+      const { rows } = await pool.query(
+        `INSERT INTO loyalty (phone, restaurant_id, points, total_spent)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [phone, restaurant_id, pointsEarned, amount]
+      );
+      member = rows[0];
     } else {
-      db.prepare(
-        'UPDATE loyalty SET points = points + ?, total_spent = total_spent + ? WHERE id = ?'
-      ).run(pointsEarned, amount, member.id);
-      member = db.prepare('SELECT * FROM loyalty WHERE id = ?').get(member.id);
+      const { rows } = await pool.query(
+        `UPDATE loyalty SET points = points + $1, total_spent = total_spent + $2
+         WHERE id = $3
+         RETURNING *`,
+        [pointsEarned, amount, member.id]
+      );
+      member = rows[0];
     }
 
     // İşlem kaydı
-    db.prepare(
-      'INSERT INTO loyalty_transactions (loyalty_id, points, type, description) VALUES (?, ?, ?, ?)'
-    ).run(member.id, pointsEarned, 'earn', `${amount} TL harcama - ${pointsEarned} puan kazanıldı`);
+    await pool.query(
+      'INSERT INTO loyalty_transactions (loyalty_id, points, type, description) VALUES ($1, $2, $3, $4)',
+      [member.id, pointsEarned, 'earn', `${amount} TL harcama - ${pointsEarned} puan kazanıldı`]
+    );
 
     res.json({
       message: 'Puan kazanıldı.',
@@ -95,7 +108,7 @@ router.post('/earn', (req, res) => {
 });
 
 // POST /api/loyalty/redeem - Puan kullan (auth)
-router.post('/redeem', authMiddleware, (req, res) => {
+router.post('/redeem', authMiddleware, async (req, res) => {
   try {
     const { phone, points } = req.body;
 
@@ -103,11 +116,13 @@ router.post('/redeem', authMiddleware, (req, res) => {
       return res.status(400).json({ error: 'phone ve geçerli points değeri gereklidir.' });
     }
 
-    const db = getDb();
+    const pool = getPool();
 
-    const member = db.prepare(
-      'SELECT * FROM loyalty WHERE phone = ? AND restaurant_id = ?'
-    ).get(phone, req.restaurantId);
+    const { rows: memberRows } = await pool.query(
+      'SELECT * FROM loyalty WHERE phone = $1 AND restaurant_id = $2',
+      [phone, req.restaurantId]
+    );
+    const member = memberRows[0];
 
     if (!member) {
       return res.status(404).json({ error: 'Sadakat üyesi bulunamadı.' });
@@ -117,20 +132,20 @@ router.post('/redeem', authMiddleware, (req, res) => {
       return res.status(400).json({ error: 'Yeterli puan yok.', available_points: member.points });
     }
 
-    db.prepare(
-      'UPDATE loyalty SET points = points - ? WHERE id = ?'
-    ).run(points, member.id);
+    const { rows: updatedRows } = await pool.query(
+      'UPDATE loyalty SET points = points - $1 WHERE id = $2 RETURNING *',
+      [points, member.id]
+    );
 
-    db.prepare(
-      'INSERT INTO loyalty_transactions (loyalty_id, points, type, description) VALUES (?, ?, ?, ?)'
-    ).run(member.id, -points, 'redeem', `${points} puan kullanıldı`);
-
-    const updated = db.prepare('SELECT * FROM loyalty WHERE id = ?').get(member.id);
+    await pool.query(
+      'INSERT INTO loyalty_transactions (loyalty_id, points, type, description) VALUES ($1, $2, $3, $4)',
+      [member.id, -points, 'redeem', `${points} puan kullanıldı`]
+    );
 
     res.json({
       message: 'Puan kullanıldı.',
       points_redeemed: points,
-      remaining_points: updated.points,
+      remaining_points: updatedRows[0].points,
     });
   } catch (err) {
     console.error('Puan kullanma hatası:', err);

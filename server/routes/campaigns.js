@@ -1,22 +1,22 @@
 const express = require('express');
-const { getDb } = require('../db/init');
+const { getPool } = require('../db/init');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
 // GET /api/campaigns - Aktif kampanyaları listele (auth yok, müşteriye gösterilir)
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const db = getDb();
-
-    // restaurant_id query param ile filtreleme (müşteri tarafı için)
+    const pool = getPool();
     const { restaurant_id } = req.query;
 
-    let campaigns;
+    let campaigns = [];
     if (restaurant_id) {
-      campaigns = db.prepare(
-        'SELECT * FROM campaigns WHERE restaurant_id = ? AND active = 1 ORDER BY created_at DESC'
-      ).all(restaurant_id);
+      const { rows } = await pool.query(
+        'SELECT * FROM campaigns WHERE restaurant_id = $1 AND active = 1 ORDER BY created_at DESC',
+        [restaurant_id]
+      );
+      campaigns = rows;
     } else {
       // Auth header varsa kendi restoranının kampanyalarını göster
       const authHeader = req.headers.authorization;
@@ -25,14 +25,14 @@ router.get('/', (req, res) => {
         const { JWT_SECRET } = require('../middleware/auth');
         try {
           const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
-          campaigns = db.prepare(
-            'SELECT * FROM campaigns WHERE restaurant_id = ? AND active = 1 ORDER BY created_at DESC'
-          ).all(decoded.restaurantId);
+          const { rows } = await pool.query(
+            'SELECT * FROM campaigns WHERE restaurant_id = $1 AND active = 1 ORDER BY created_at DESC',
+            [decoded.restaurantId]
+          );
+          campaigns = rows;
         } catch {
           campaigns = [];
         }
-      } else {
-        campaigns = [];
       }
     }
 
@@ -44,17 +44,19 @@ router.get('/', (req, res) => {
 });
 
 // GET /api/campaigns/validate/:code - Kupon kodu doğrula (auth yok)
-router.get('/validate/:code', (req, res) => {
+router.get('/validate/:code', async (req, res) => {
   try {
     const { code } = req.params;
     const { restaurant_id } = req.query;
     if (!code || !restaurant_id) {
       return res.status(400).json({ error: 'Kod ve restaurant_id gerekli.' });
     }
-    const db = getDb();
-    const campaign = db.prepare(
-      'SELECT * FROM campaigns WHERE restaurant_id = ? AND code = ? AND active = 1'
-    ).get(restaurant_id, code.toUpperCase());
+    const pool = getPool();
+    const { rows } = await pool.query(
+      'SELECT * FROM campaigns WHERE restaurant_id = $1 AND code = $2 AND active = 1',
+      [restaurant_id, code.toUpperCase()]
+    );
+    const campaign = rows[0];
 
     if (!campaign) {
       return res.status(404).json({ error: 'Geçersiz kupon kodu.' });
@@ -72,7 +74,7 @@ router.get('/validate/:code', (req, res) => {
 });
 
 // POST /api/campaigns - Kampanya oluştur (auth gerekli)
-router.post('/', authMiddleware, (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const { name, discount_type, discount_value, code } = req.body;
 
@@ -92,17 +94,16 @@ router.post('/', authMiddleware, (req, res) => {
       return res.status(400).json({ error: 'Yüzdelik indirim 100\'den büyük olamaz.' });
     }
 
-    const db = getDb();
-    const now = new Date().toISOString();
-
+    const pool = getPool();
     const codeUpper = code ? code.toUpperCase().trim() : null;
-    const result = db.prepare(
-      'INSERT INTO campaigns (restaurant_id, name, discount_type, discount_value, code, active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)'
-    ).run(req.restaurantId, name, discount_type, discount_value, codeUpper, now);
+    const { rows } = await pool.query(
+      `INSERT INTO campaigns (restaurant_id, name, discount_type, discount_value, code, active, created_at)
+       VALUES ($1, $2, $3, $4, $5, 1, NOW())
+       RETURNING *`,
+      [req.restaurantId, name, discount_type, discount_value, codeUpper]
+    );
 
-    const campaign = db.prepare('SELECT * FROM campaigns WHERE id = ?').get(result.lastInsertRowid);
-
-    res.status(201).json({ message: 'Kampanya oluşturuldu.', campaign });
+    res.status(201).json({ message: 'Kampanya oluşturuldu.', campaign: rows[0] });
   } catch (err) {
     console.error('Kampanya oluşturma hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
@@ -110,20 +111,21 @@ router.post('/', authMiddleware, (req, res) => {
 });
 
 // DELETE /api/campaigns/:id - Kampanyayı sil (auth gerekli)
-router.delete('/:id', authMiddleware, (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const campaign = db.prepare(
-      'SELECT * FROM campaigns WHERE id = ? AND restaurant_id = ?'
-    ).get(id, req.restaurantId);
+    const { rows } = await pool.query(
+      'SELECT id FROM campaigns WHERE id = $1 AND restaurant_id = $2',
+      [id, req.restaurantId]
+    );
 
-    if (!campaign) {
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'Kampanya bulunamadı.' });
     }
 
-    db.prepare('DELETE FROM campaigns WHERE id = ?').run(id);
+    await pool.query('DELETE FROM campaigns WHERE id = $1', [id]);
 
     res.json({ message: 'Kampanya silindi.' });
   } catch (err) {

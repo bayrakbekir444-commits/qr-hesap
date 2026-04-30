@@ -1,4 +1,4 @@
-const { getDb } = require('../db/init');
+const { getPool } = require('../db/init');
 
 const PACKAGES = {
   temel: {
@@ -33,9 +33,13 @@ const PACKAGES = {
   },
 };
 
-const getPackage = (restaurantId) => {
-  const db = getDb();
-  const r = db.prepare('SELECT package_type, package_expires_at FROM restaurants WHERE id = ?').get(restaurantId);
+const getPackage = async (restaurantId) => {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    'SELECT package_type, package_expires_at FROM restaurants WHERE id = $1',
+    [restaurantId]
+  );
+  const r = rows[0];
   const type = r?.package_type || 'temel';
   const config = PACKAGES[type] || PACKAGES.temel;
   const expired = r?.package_expires_at ? new Date(r.package_expires_at) < new Date() : false;
@@ -43,31 +47,38 @@ const getPackage = (restaurantId) => {
 };
 
 // Middleware: belirli bir özelliği gerektirir
-const requireFeature = (feature) => (req, res, next) => {
-  const pkg = getPackage(req.restaurantId);
-  if (pkg.expired) {
-    return res.status(402).json({ error: 'Paket süresi dolmuş. Lütfen sistem sorumlusuna başvurun.' });
+const requireFeature = (feature) => async (req, res, next) => {
+  try {
+    const pkg = await getPackage(req.restaurantId);
+    if (pkg.expired) {
+      return res.status(402).json({ error: 'Paket süresi dolmuş. Lütfen sistem sorumlusuna başvurun.' });
+    }
+    if (!pkg.config.features[feature]) {
+      return res.status(403).json({
+        error: `Bu özellik ${pkg.config.label} paketinde yok. Pro veya Zincir pakete yükselt.`,
+        upgrade_required: true,
+        current_package: pkg.type,
+      });
+    }
+    next();
+  } catch (err) {
+    console.error('requireFeature hatası:', err);
+    res.status(500).json({ error: 'Sunucu hatası.' });
   }
-  if (!pkg.config.features[feature]) {
-    return res.status(403).json({
-      error: `Bu özellik ${pkg.config.label} paketinde yok. Pro veya Zincir pakete yükselt.`,
-      upgrade_required: true,
-      current_package: pkg.type,
-    });
-  }
-  next();
 };
 
 // Masa eklemeden önce limit kontrolü
-const checkTableLimit = (restaurantId) => {
-  const db = getDb();
-  const pkg = getPackage(restaurantId);
+const checkTableLimit = async (restaurantId) => {
+  const pool = getPool();
+  const pkg = await getPackage(restaurantId);
   if (pkg.expired) {
     return { ok: false, error: 'Paket süresi dolmuş.' };
   }
-  const count = db.prepare(
-    'SELECT COUNT(*) as c FROM tables WHERE restaurant_id = ? AND active = 1'
-  ).get(restaurantId).c;
+  const { rows } = await pool.query(
+    'SELECT COUNT(*)::int as c FROM tables WHERE restaurant_id = $1 AND active = 1',
+    [restaurantId]
+  );
+  const count = rows[0].c;
   if (count >= pkg.config.max_tables) {
     return {
       ok: false,

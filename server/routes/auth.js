@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { getDb } = require('../db/init');
+const { getPool } = require('../db/init');
 const { JWT_SECRET, authMiddleware } = require('../middleware/auth');
 const { getPackage, PACKAGES } = require('../middleware/packages');
 
@@ -10,7 +10,7 @@ const router = express.Router();
 const genCode = () => String(Math.floor(100000 + Math.random() * 900000));
 
 // POST /api/auth/login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   try {
     const { name, password } = req.body;
 
@@ -18,8 +18,9 @@ router.post('/login', (req, res) => {
       return res.status(400).json({ error: 'Restoran adı ve şifre gereklidir.' });
     }
 
-    const db = getDb();
-    const restaurant = db.prepare('SELECT * FROM restaurants WHERE name = ?').get(name);
+    const pool = getPool();
+    const { rows } = await pool.query('SELECT * FROM restaurants WHERE name = $1', [name]);
+    const restaurant = rows[0];
 
     if (!restaurant) {
       return res.status(401).json({ error: 'Restoran bulunamadı.' });
@@ -51,13 +52,14 @@ router.post('/login', (req, res) => {
 });
 
 // POST /api/auth/forgot — Şifremi unuttum kodu üret
-router.post('/forgot', (req, res) => {
+router.post('/forgot', async (req, res) => {
   try {
     const { name } = req.body;
     if (!name) return res.status(400).json({ error: 'Restoran adı gereklidir.' });
 
-    const db = getDb();
-    const restaurant = db.prepare('SELECT * FROM restaurants WHERE name = ?').get(name);
+    const pool = getPool();
+    const { rows } = await pool.query('SELECT * FROM restaurants WHERE name = $1', [name]);
+    const restaurant = rows[0];
     if (!restaurant) {
       // Güvenlik: aynı yanıt ver
       return res.json({ message: 'Eğer restoran kayıtlıysa, sistem sorumlusuna kod gönderildi.' });
@@ -66,9 +68,10 @@ router.post('/forgot', (req, res) => {
     const code = genCode();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-    db.prepare(
-      'INSERT INTO password_resets (restaurant_id, code, expires_at) VALUES (?, ?, ?)'
-    ).run(restaurant.id, code, expiresAt);
+    await pool.query(
+      'INSERT INTO password_resets (restaurant_id, code, expires_at) VALUES ($1, $2, $3)',
+      [restaurant.id, code, expiresAt]
+    );
 
     // Production'da SMS/email gönder. Şu an sunucu konsoluna yaz.
     console.log('');
@@ -87,7 +90,7 @@ router.post('/forgot', (req, res) => {
 });
 
 // POST /api/auth/reset — Kod ile yeni şifre belirle
-router.post('/reset', (req, res) => {
+router.post('/reset', async (req, res) => {
   try {
     const { name, code, newPassword } = req.body;
     if (!name || !code || !newPassword) {
@@ -97,17 +100,20 @@ router.post('/reset', (req, res) => {
       return res.status(400).json({ error: 'Şifre en az 6 karakter olmalı.' });
     }
 
-    const db = getDb();
-    const restaurant = db.prepare('SELECT * FROM restaurants WHERE name = ?').get(name);
+    const pool = getPool();
+    const { rows: rRows } = await pool.query('SELECT * FROM restaurants WHERE name = $1', [name]);
+    const restaurant = rRows[0];
     if (!restaurant) {
       return res.status(404).json({ error: 'Restoran bulunamadı.' });
     }
 
-    const reset = db.prepare(
+    const { rows: resetRows } = await pool.query(
       `SELECT * FROM password_resets
-       WHERE restaurant_id = ? AND code = ? AND used = 0
-       ORDER BY id DESC LIMIT 1`
-    ).get(restaurant.id, code);
+       WHERE restaurant_id = $1 AND code = $2 AND used = 0
+       ORDER BY id DESC LIMIT 1`,
+      [restaurant.id, code]
+    );
+    const reset = resetRows[0];
 
     if (!reset) {
       return res.status(400).json({ error: 'Geçersiz kod.' });
@@ -118,8 +124,8 @@ router.post('/reset', (req, res) => {
     }
 
     const newHash = bcrypt.hashSync(newPassword, 10);
-    db.prepare('UPDATE restaurants SET password_hash = ? WHERE id = ?').run(newHash, restaurant.id);
-    db.prepare('UPDATE password_resets SET used = 1 WHERE id = ?').run(reset.id);
+    await pool.query('UPDATE restaurants SET password_hash = $1 WHERE id = $2', [newHash, restaurant.id]);
+    await pool.query('UPDATE password_resets SET used = 1 WHERE id = $1', [reset.id]);
 
     res.json({ message: 'Şifre güncellendi. Yeni şifrenizle giriş yapabilirsiniz.' });
   } catch (err) {
@@ -129,49 +135,53 @@ router.post('/reset', (req, res) => {
 });
 
 // GET /api/auth/restaurant — Mevcut restoran bilgisi
-router.get('/restaurant', authMiddleware, (req, res) => {
+router.get('/restaurant', authMiddleware, async (req, res) => {
   try {
-    const db = getDb();
-    const r = db.prepare(
-      'SELECT id, name, logo_url, description, phone, email FROM restaurants WHERE id = ?'
-    ).get(req.restaurantId);
-    res.json(r);
+    const pool = getPool();
+    const { rows } = await pool.query(
+      'SELECT id, name, logo_url, description, phone, email FROM restaurants WHERE id = $1',
+      [req.restaurantId]
+    );
+    res.json(rows[0]);
   } catch {
     res.status(500).json({ error: 'Sunucu hatası.' });
   }
 });
 
 // PUT /api/auth/restaurant — Restoran bilgilerini güncelle
-router.put('/restaurant', authMiddleware, (req, res) => {
+router.put('/restaurant', authMiddleware, async (req, res) => {
   try {
     const { logo_url, description, phone, email } = req.body;
-    const db = getDb();
-    db.prepare(
-      'UPDATE restaurants SET logo_url = ?, description = ?, phone = ?, email = ? WHERE id = ?'
-    ).run(
-      logo_url || null,
-      description || null,
-      phone || null,
-      email || null,
-      req.restaurantId
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `UPDATE restaurants
+       SET logo_url = $1, description = $2, phone = $3, email = $4
+       WHERE id = $5
+       RETURNING id, name, logo_url, description, phone, email`,
+      [
+        logo_url || null,
+        description || null,
+        phone || null,
+        email || null,
+        req.restaurantId,
+      ]
     );
-    const r = db.prepare(
-      'SELECT id, name, logo_url, description, phone, email FROM restaurants WHERE id = ?'
-    ).get(req.restaurantId);
-    res.json({ message: 'Güncellendi.', restaurant: r });
+    res.json({ message: 'Güncellendi.', restaurant: rows[0] });
   } catch {
     res.status(500).json({ error: 'Sunucu hatası.' });
   }
 });
 
 // GET /api/auth/package — Mevcut paket bilgisi
-router.get('/package', authMiddleware, (req, res) => {
+router.get('/package', authMiddleware, async (req, res) => {
   try {
-    const pkg = getPackage(req.restaurantId);
-    const db = getDb();
-    const tableCount = db.prepare(
-      'SELECT COUNT(*) as c FROM tables WHERE restaurant_id = ? AND active = 1'
-    ).get(req.restaurantId).c;
+    const pkg = await getPackage(req.restaurantId);
+    const pool = getPool();
+    const { rows } = await pool.query(
+      'SELECT COUNT(*)::int as c FROM tables WHERE restaurant_id = $1 AND active = 1',
+      [req.restaurantId]
+    );
+    const tableCount = rows[0].c;
 
     res.json({
       type: pkg.type,

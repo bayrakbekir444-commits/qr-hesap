@@ -1,14 +1,15 @@
 const express = require('express');
-const { getDb } = require('../db/init');
+const { getPool } = require('../db/init');
 const { userAuthMiddleware } = require('../middleware/userAuth');
 
 const router = express.Router();
 
 // GET /api/wallet - Cüzdan bakiyesi
-router.get('/', userAuthMiddleware, (req, res) => {
+router.get('/', userAuthMiddleware, async (req, res) => {
   try {
-    const db = getDb();
-    const wallet = db.prepare('SELECT * FROM wallets WHERE user_id = ?').get(req.userId);
+    const pool = getPool();
+    const { rows } = await pool.query('SELECT * FROM wallets WHERE user_id = $1', [req.userId]);
+    const wallet = rows[0];
 
     if (!wallet) {
       return res.status(404).json({ error: 'Cüzdan bulunamadı.' });
@@ -29,71 +30,83 @@ router.get('/', userAuthMiddleware, (req, res) => {
 });
 
 // POST /api/wallet/deposit - Para yükleme (simüle)
-router.post('/deposit', userAuthMiddleware, (req, res) => {
+router.post('/deposit', userAuthMiddleware, async (req, res) => {
+  const pool = getPool();
+  const client = await pool.connect();
   try {
     const { amount } = req.body;
 
     if (!amount || amount <= 0) {
+      client.release();
       return res.status(400).json({ error: 'Geçerli bir tutar giriniz.' });
     }
 
-    const db = getDb();
-    const wallet = db.prepare('SELECT * FROM wallets WHERE user_id = ?').get(req.userId);
+    const { rows: walletRows } = await client.query('SELECT * FROM wallets WHERE user_id = $1', [req.userId]);
+    const wallet = walletRows[0];
 
     if (!wallet) {
+      client.release();
       return res.status(404).json({ error: 'Cüzdan bulunamadı.' });
     }
 
     const amountTL = (amount / 100).toFixed(2);
 
-    const deposit = db.transaction(() => {
-      db.prepare('UPDATE wallets SET balance = balance + ? WHERE id = ?').run(amount, wallet.id);
+    await client.query('BEGIN');
+    await client.query('UPDATE wallets SET balance = balance + $1 WHERE id = $2', [amount, wallet.id]);
+    await client.query(
+      'INSERT INTO wallet_transactions (wallet_id, amount, type, description) VALUES ($1, $2, $3, $4)',
+      [wallet.id, amount, 'deposit', `Para yükleme: ${amountTL} TL`]
+    );
+    await client.query(
+      'INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)',
+      [req.userId, 'Para Yüklendi', `Para yüklendi: ${amountTL} TL`, 'success']
+    );
+    await client.query('COMMIT');
 
-      db.prepare(
-        'INSERT INTO wallet_transactions (wallet_id, amount, type, description) VALUES (?, ?, ?, ?)'
-      ).run(wallet.id, amount, 'deposit', `Para yükleme: ${amountTL} TL`);
-
-      db.prepare(
-        'INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)'
-      ).run(req.userId, 'Para Yüklendi', `Para yüklendi: ${amountTL} TL`, 'success');
-    });
-
-    deposit();
-
-    const updated = db.prepare('SELECT balance FROM wallets WHERE id = ?').get(wallet.id);
+    const { rows: updatedRows } = await client.query('SELECT balance FROM wallets WHERE id = $1', [wallet.id]);
 
     res.json({
       message: `Para yüklendi: ${amountTL} TL`,
-      balance: updated.balance,
-      balance_formatted: (updated.balance / 100).toFixed(2) + ' TL',
+      balance: updatedRows[0].balance,
+      balance_formatted: (updatedRows[0].balance / 100).toFixed(2) + ' TL',
     });
   } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
     console.error('Para yükleme hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
+  } finally {
+    client.release();
   }
 });
 
 // GET /api/wallet/transactions - İşlem geçmişi
-router.get('/transactions', userAuthMiddleware, (req, res) => {
+router.get('/transactions', userAuthMiddleware, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
 
-    const db = getDb();
-    const wallet = db.prepare('SELECT id FROM wallets WHERE user_id = ?').get(req.userId);
+    const pool = getPool();
+    const { rows: walletRows } = await pool.query(
+      'SELECT id FROM wallets WHERE user_id = $1',
+      [req.userId]
+    );
+    const wallet = walletRows[0];
 
     if (!wallet) {
       return res.status(404).json({ error: 'Cüzdan bulunamadı.' });
     }
 
-    const total = db.prepare(
-      'SELECT COUNT(*) as count FROM wallet_transactions WHERE wallet_id = ?'
-    ).get(wallet.id).count;
+    const { rows: countRows } = await pool.query(
+      'SELECT COUNT(*)::int as count FROM wallet_transactions WHERE wallet_id = $1',
+      [wallet.id]
+    );
+    const total = countRows[0].count;
 
-    const transactions = db.prepare(
-      'SELECT * FROM wallet_transactions WHERE wallet_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?'
-    ).all(wallet.id, limit, offset);
+    const { rows: transactions } = await pool.query(
+      'SELECT * FROM wallet_transactions WHERE wallet_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+      [wallet.id, limit, offset]
+    );
 
     res.json({
       transactions,
@@ -111,18 +124,22 @@ router.get('/transactions', userAuthMiddleware, (req, res) => {
 });
 
 // POST /api/wallet/pay - Cüzdandan ödeme
-router.post('/pay', userAuthMiddleware, (req, res) => {
+router.post('/pay', userAuthMiddleware, async (req, res) => {
+  const pool = getPool();
+  const client = await pool.connect();
   try {
-    const { order_id, amount, tip, qr_token } = req.body;
+    const { order_id, amount, tip } = req.body;
 
     if (!order_id || !amount) {
+      client.release();
       return res.status(400).json({ error: 'Sipariş ID ve tutar gereklidir.' });
     }
 
-    const db = getDb();
-    const wallet = db.prepare('SELECT * FROM wallets WHERE user_id = ?').get(req.userId);
+    const { rows: walletRows } = await client.query('SELECT * FROM wallets WHERE user_id = $1', [req.userId]);
+    const wallet = walletRows[0];
 
     if (!wallet) {
+      client.release();
       return res.status(404).json({ error: 'Cüzdan bulunamadı.' });
     }
 
@@ -131,69 +148,80 @@ router.post('/pay', userAuthMiddleware, (req, res) => {
 
     // Bakiye kontrolü
     if (wallet.balance < totalAmount) {
-      db.prepare(
-        'INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)'
-      ).run(req.userId, 'Ödeme Reddedildi', 'Ödeme reddedildi: yetersiz bakiye', 'error');
-
+      await client.query(
+        'INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)',
+        [req.userId, 'Ödeme Reddedildi', 'Ödeme reddedildi: yetersiz bakiye', 'error']
+      );
+      client.release();
       return res.status(400).json({ error: 'Yetersiz bakiye.' });
     }
 
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(order_id);
-    if (!order) {
+    const { rows: orderRows } = await client.query('SELECT id FROM orders WHERE id = $1', [order_id]);
+    if (orderRows.length === 0) {
+      client.release();
       return res.status(404).json({ error: 'Sipariş bulunamadı.' });
     }
 
-    const pay = db.transaction(() => {
-      // Bakiyeden düş
-      db.prepare('UPDATE wallets SET balance = balance - ? WHERE id = ?').run(totalAmount, wallet.id);
+    await client.query('BEGIN');
+    // Bakiyeden düş
+    await client.query('UPDATE wallets SET balance = balance - $1 WHERE id = $2', [totalAmount, wallet.id]);
 
-      // Cüzdan işlemi
-      db.prepare(
-        'INSERT INTO wallet_transactions (wallet_id, amount, type, description, reference_id) VALUES (?, ?, ?, ?, ?)'
-      ).run(wallet.id, totalAmount, 'payment', `Ödeme: ${totalTL} TL (Sipariş #${order_id})`, String(order_id));
+    // Cüzdan işlemi
+    await client.query(
+      `INSERT INTO wallet_transactions (wallet_id, amount, type, description, reference_id)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [wallet.id, totalAmount, 'payment', `Ödeme: ${totalTL} TL (Sipariş #${order_id})`, String(order_id)]
+    );
 
-      // Payments tablosuna kayıt
-      const paymentResult = db.prepare(
-        'INSERT INTO payments (order_id, payer_name, amount, tip, status) VALUES (?, ?, ?, ?, ?)'
-      ).run(order_id, req.userName, amount, tip || 0, 'paid');
+    // Payments tablosuna kayıt
+    const { rows: paymentInsertRows } = await client.query(
+      `INSERT INTO payments (order_id, payer_name, amount, tip, status)
+       VALUES ($1, $2, $3, $4, 'paid')
+       RETURNING *`,
+      [order_id, req.userName, amount, tip || 0]
+    );
+    const payment = paymentInsertRows[0];
 
-      // Bildirim
-      db.prepare(
-        'INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)'
-      ).run(req.userId, 'Ödeme Başarılı', `Ödeme başarılı: ${totalTL} TL`, 'success');
+    // Bildirim
+    await client.query(
+      'INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)',
+      [req.userId, 'Ödeme Başarılı', `Ödeme başarılı: ${totalTL} TL`, 'success']
+    );
+    await client.query('COMMIT');
 
-      return paymentResult.lastInsertRowid;
-    });
-
-    const paymentId = pay();
-
-    const updatedWallet = db.prepare('SELECT balance FROM wallets WHERE id = ?').get(wallet.id);
-    const payment = db.prepare('SELECT * FROM payments WHERE id = ?').get(paymentId);
+    const { rows: updatedWalletRows } = await client.query('SELECT balance FROM wallets WHERE id = $1', [wallet.id]);
 
     // Sipariş toplam/kalan hesabı
-    const totalPaid = db.prepare(
-      "SELECT SUM(amount + tip) as total FROM payments WHERE order_id = ? AND status = 'paid'"
-    ).get(order_id);
+    const { rows: paidRows } = await client.query(
+      "SELECT COALESCE(SUM(amount + tip), 0)::bigint as total FROM payments WHERE order_id = $1 AND status = 'paid'",
+      [order_id]
+    );
+    const totalPaid = Number(paidRows[0].total) || 0;
 
-    const orderTotal = db.prepare(
-      'SELECT SUM(quantity * unit_price) as total FROM order_items WHERE order_id = ?'
-    ).get(order_id);
+    const { rows: orderTotalRows } = await client.query(
+      'SELECT COALESCE(SUM(quantity * unit_price), 0)::bigint as total FROM order_items WHERE order_id = $1',
+      [order_id]
+    );
+    const orderTotal = Number(orderTotalRows[0].total) || 0;
 
-    const remaining = (orderTotal.total || 0) - (totalPaid.total || 0);
+    const remaining = orderTotal - totalPaid;
 
     res.json({
       message: `Ödeme başarılı: ${totalTL} TL`,
       payment,
-      wallet_balance: updatedWallet.balance,
-      wallet_balance_formatted: (updatedWallet.balance / 100).toFixed(2) + ' TL',
-      order_total: orderTotal.total || 0,
-      total_paid: totalPaid.total || 0,
+      wallet_balance: updatedWalletRows[0].balance,
+      wallet_balance_formatted: (updatedWalletRows[0].balance / 100).toFixed(2) + ' TL',
+      order_total: orderTotal,
+      total_paid: totalPaid,
       remaining: remaining > 0 ? remaining : 0,
       fully_paid: remaining <= 0,
     });
   } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
     console.error('Cüzdan ödeme hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
+  } finally {
+    client.release();
   }
 });
 

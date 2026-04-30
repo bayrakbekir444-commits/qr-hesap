@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { getDb } = require('../db/init');
+const { getPool } = require('../db/init');
 const { JWT_SECRET } = require('../middleware/auth');
 const { adminMiddleware, ADMIN_USERNAME, ADMIN_PASSWORD } = require('../middleware/admin');
 const { PACKAGES } = require('../middleware/packages');
@@ -26,16 +26,16 @@ router.post('/login', (req, res) => {
 });
 
 // GET /api/admin/restaurants — Tüm restoranlar (istatistiklerle)
-router.get('/restaurants', adminMiddleware, (req, res) => {
+router.get('/restaurants', adminMiddleware, async (req, res) => {
   try {
-    const db = getDb();
-    const rows = db.prepare(
+    const pool = getPool();
+    const { rows } = await pool.query(
       `SELECT r.id, r.name, r.email, r.phone, r.package_type, r.package_expires_at, r.created_at,
-              (SELECT COUNT(*) FROM tables t WHERE t.restaurant_id = r.id AND t.active = 1) as table_count,
-              (SELECT COUNT(*) FROM orders o JOIN tables t ON o.table_id = t.id WHERE t.restaurant_id = r.id AND o.status = 'closed') as total_orders
+              (SELECT COUNT(*)::int FROM tables t WHERE t.restaurant_id = r.id AND t.active = 1) as table_count,
+              (SELECT COUNT(*)::int FROM orders o JOIN tables t ON o.table_id = t.id WHERE t.restaurant_id = r.id AND o.status = 'closed') as total_orders
        FROM restaurants r
        ORDER BY r.id`
-    ).all();
+    );
 
     const result = rows.map((r) => {
       const cfg = PACKAGES[r.package_type || 'temel'];
@@ -56,24 +56,25 @@ router.get('/restaurants', adminMiddleware, (req, res) => {
 });
 
 // PUT /api/admin/restaurants/:id/package — Paket değiştir
-router.put('/restaurants/:id/package', adminMiddleware, (req, res) => {
+router.put('/restaurants/:id/package', adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { package_type, months } = req.body;
     if (!['temel', 'pro', 'zincir'].includes(package_type)) {
       return res.status(400).json({ error: 'Geçersiz paket.' });
     }
-    const db = getDb();
-    const restaurant = db.prepare('SELECT * FROM restaurants WHERE id = ?').get(id);
-    if (!restaurant) return res.status(404).json({ error: 'Restoran bulunamadı.' });
+    const pool = getPool();
+    const { rows: existRows } = await pool.query('SELECT id FROM restaurants WHERE id = $1', [id]);
+    if (existRows.length === 0) return res.status(404).json({ error: 'Restoran bulunamadı.' });
 
     const expires = new Date();
     expires.setMonth(expires.getMonth() + (parseInt(months, 10) || 1));
     const expiresStr = expires.toISOString().split('T')[0];
 
-    db.prepare(
-      'UPDATE restaurants SET package_type = ?, package_expires_at = ? WHERE id = ?'
-    ).run(package_type, expiresStr, id);
+    await pool.query(
+      'UPDATE restaurants SET package_type = $1, package_expires_at = $2 WHERE id = $3',
+      [package_type, expiresStr, id]
+    );
 
     res.json({ message: 'Paket güncellendi.', package_type, expires_at: expiresStr });
   } catch {
@@ -82,39 +83,49 @@ router.put('/restaurants/:id/package', adminMiddleware, (req, res) => {
 });
 
 // DELETE /api/admin/restaurants/:id — Restoranı sil (DİKKAT)
-router.delete('/restaurants/:id', adminMiddleware, (req, res) => {
+router.delete('/restaurants/:id', adminMiddleware, async (req, res) => {
+  const pool = getPool();
+  const client = await pool.connect();
   try {
     const { id } = req.params;
-    const db = getDb();
-    const restaurant = db.prepare('SELECT * FROM restaurants WHERE id = ?').get(id);
-    if (!restaurant) return res.status(404).json({ error: 'Restoran bulunamadı.' });
+    const { rows: existRows } = await client.query('SELECT id FROM restaurants WHERE id = $1', [id]);
+    if (existRows.length === 0) {
+      client.release();
+      return res.status(404).json({ error: 'Restoran bulunamadı.' });
+    }
 
-    // Önce ilişkili verileri sil (FK cascade yoksa)
-    const tables = db.prepare('SELECT id FROM tables WHERE restaurant_id = ?').all(id);
-    tables.forEach((t) => {
-      const orders = db.prepare('SELECT id FROM orders WHERE table_id = ?').all(t.id);
-      orders.forEach((o) => {
-        db.prepare('DELETE FROM order_items WHERE order_id = ?').run(o.id);
-        db.prepare('DELETE FROM payments WHERE order_id = ?').run(o.id);
-      });
-      db.prepare('DELETE FROM orders WHERE table_id = ?').run(t.id);
-    });
-    db.prepare('DELETE FROM tables WHERE restaurant_id = ?').run(id);
-    db.prepare('DELETE FROM menu_items WHERE restaurant_id = ?').run(id);
-    db.prepare('DELETE FROM categories WHERE restaurant_id = ?').run(id);
-    db.prepare('DELETE FROM staff WHERE restaurant_id = ?').run(id);
-    db.prepare('DELETE FROM campaigns WHERE restaurant_id = ?').run(id);
-    db.prepare('DELETE FROM restaurants WHERE id = ?').run(id);
+    await client.query('BEGIN');
 
+    // Önce ilişkili verileri sil
+    const { rows: tables } = await client.query('SELECT id FROM tables WHERE restaurant_id = $1', [id]);
+    for (const t of tables) {
+      const { rows: orders } = await client.query('SELECT id FROM orders WHERE table_id = $1', [t.id]);
+      for (const o of orders) {
+        await client.query('DELETE FROM order_items WHERE order_id = $1', [o.id]);
+        await client.query('DELETE FROM payments WHERE order_id = $1', [o.id]);
+      }
+      await client.query('DELETE FROM orders WHERE table_id = $1', [t.id]);
+    }
+    await client.query('DELETE FROM tables WHERE restaurant_id = $1', [id]);
+    await client.query('DELETE FROM menu_items WHERE restaurant_id = $1', [id]);
+    await client.query('DELETE FROM categories WHERE restaurant_id = $1', [id]);
+    await client.query('DELETE FROM staff WHERE restaurant_id = $1', [id]);
+    await client.query('DELETE FROM campaigns WHERE restaurant_id = $1', [id]);
+    await client.query('DELETE FROM restaurants WHERE id = $1', [id]);
+
+    await client.query('COMMIT');
     res.json({ message: 'Restoran silindi.' });
   } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
     console.error('Restoran silme hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
+  } finally {
+    client.release();
   }
 });
 
 // POST /api/admin/restaurants — Yeni restoran oluştur
-router.post('/restaurants', adminMiddleware, (req, res) => {
+router.post('/restaurants', adminMiddleware, async (req, res) => {
   try {
     const { name, password, package_type = 'temel', months = 1 } = req.body;
     if (!name || !password) {
@@ -123,9 +134,9 @@ router.post('/restaurants', adminMiddleware, (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({ error: 'Şifre en az 6 karakter.' });
     }
-    const db = getDb();
-    const existing = db.prepare('SELECT id FROM restaurants WHERE name = ?').get(name);
-    if (existing) {
+    const pool = getPool();
+    const { rows: existRows } = await pool.query('SELECT id FROM restaurants WHERE name = $1', [name]);
+    if (existRows.length > 0) {
       return res.status(409).json({ error: 'Bu isimde restoran zaten var.' });
     }
 
@@ -134,11 +145,13 @@ router.post('/restaurants', adminMiddleware, (req, res) => {
     expires.setMonth(expires.getMonth() + parseInt(months, 10));
     const expiresStr = expires.toISOString().split('T')[0];
 
-    const result = db.prepare(
-      'INSERT INTO restaurants (name, password_hash, package_type, package_expires_at) VALUES (?, ?, ?, ?)'
-    ).run(name, hash, package_type, expiresStr);
+    const { rows } = await pool.query(
+      `INSERT INTO restaurants (name, password_hash, package_type, package_expires_at)
+       VALUES ($1, $2, $3, $4) RETURNING id`,
+      [name, hash, package_type, expiresStr]
+    );
 
-    res.status(201).json({ message: 'Restoran oluşturuldu.', id: result.lastInsertRowid });
+    res.status(201).json({ message: 'Restoran oluşturuldu.', id: rows[0].id });
   } catch (err) {
     console.error('Restoran oluşturma hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
@@ -146,18 +159,25 @@ router.post('/restaurants', adminMiddleware, (req, res) => {
 });
 
 // GET /api/admin/stats — Genel istatistik
-router.get('/stats', adminMiddleware, (req, res) => {
+router.get('/stats', adminMiddleware, async (req, res) => {
   try {
-    const db = getDb();
-    const stats = {
-      total_restaurants: db.prepare('SELECT COUNT(*) as c FROM restaurants').get().c,
-      total_tables: db.prepare('SELECT COUNT(*) as c FROM tables WHERE active = 1').get().c,
-      total_orders: db.prepare("SELECT COUNT(*) as c FROM orders WHERE status = 'closed'").get().c,
-      revenue_all_time: db.prepare(
-        `SELECT COALESCE(SUM(oi.quantity * oi.unit_price), 0) as total
+    const pool = getPool();
+    const [r1, r2, r3, r4] = await Promise.all([
+      pool.query('SELECT COUNT(*)::int as c FROM restaurants'),
+      pool.query('SELECT COUNT(*)::int as c FROM tables WHERE active = 1'),
+      pool.query("SELECT COUNT(*)::int as c FROM orders WHERE status = 'closed'"),
+      pool.query(
+        `SELECT COALESCE(SUM(oi.quantity * oi.unit_price), 0)::bigint as total
          FROM order_items oi JOIN orders o ON oi.order_id = o.id
          WHERE o.status = 'closed'`
-      ).get().total,
+      ),
+    ]);
+
+    const stats = {
+      total_restaurants: r1.rows[0].c,
+      total_tables: r2.rows[0].c,
+      total_orders: r3.rows[0].c,
+      revenue_all_time: Number(r4.rows[0].total) || 0,
     };
     res.json(stats);
   } catch {

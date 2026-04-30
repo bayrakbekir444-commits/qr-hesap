@@ -1,42 +1,42 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { getDb } = require('../db/init');
+const { getPool } = require('../db/init');
 const { userAuthMiddleware, USER_JWT_SECRET } = require('../middleware/userAuth');
 
 const router = express.Router();
 
 // POST /api/users/register
-router.post('/register', (req, res) => {
+router.post('/register', async (req, res) => {
+  const pool = getPool();
+  const client = await pool.connect();
   try {
     const { name, email, phone, password } = req.body;
 
     if (!name || !email || !password) {
+      client.release();
       return res.status(400).json({ error: 'Ad, email ve şifre gereklidir.' });
     }
 
-    const db = getDb();
-
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-    if (existing) {
+    const { rows: existRows } = await client.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existRows.length > 0) {
+      client.release();
       return res.status(409).json({ error: 'Bu email adresi zaten kayıtlı.' });
     }
 
     const passwordHash = bcrypt.hashSync(password, 10);
 
-    const createUserAndWallet = db.transaction(() => {
-      const userResult = db.prepare(
-        'INSERT INTO users (name, email, phone, password_hash) VALUES (?, ?, ?, ?)'
-      ).run(name, email, phone || null, passwordHash);
+    await client.query('BEGIN');
+    const { rows: userRows } = await client.query(
+      `INSERT INTO users (name, email, phone, password_hash)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
+      [name, email, phone || null, passwordHash]
+    );
+    const userId = userRows[0].id;
 
-      const userId = userResult.lastInsertRowid;
-
-      db.prepare('INSERT INTO wallets (user_id, balance) VALUES (?, 0)').run(userId);
-
-      return userId;
-    });
-
-    const userId = createUserAndWallet();
+    await client.query('INSERT INTO wallets (user_id, balance) VALUES ($1, 0)', [userId]);
+    await client.query('COMMIT');
 
     const token = jwt.sign(
       { userId, userName: name },
@@ -50,13 +50,16 @@ router.post('/register', (req, res) => {
       user: { id: userId, name, email, phone: phone || null },
     });
   } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
     console.error('Kayıt hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
+  } finally {
+    client.release();
   }
 });
 
 // POST /api/users/login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -64,9 +67,10 @@ router.post('/login', (req, res) => {
       return res.status(400).json({ error: 'Email ve şifre gereklidir.' });
     }
 
-    const db = getDb();
+    const pool = getPool();
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = rows[0];
     if (!user) {
       return res.status(401).json({ error: 'Geçersiz email veya şifre.' });
     }
@@ -99,16 +103,19 @@ router.post('/login', (req, res) => {
 });
 
 // GET /api/users/profile
-router.get('/profile', userAuthMiddleware, (req, res) => {
+router.get('/profile', userAuthMiddleware, async (req, res) => {
   try {
-    const db = getDb();
-    const user = db.prepare('SELECT id, name, email, phone, created_at FROM users WHERE id = ?').get(req.userId);
+    const pool = getPool();
+    const { rows } = await pool.query(
+      'SELECT id, name, email, phone, created_at FROM users WHERE id = $1',
+      [req.userId]
+    );
 
-    if (!user) {
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
     }
 
-    res.json({ user });
+    res.json({ user: rows[0] });
   } catch (err) {
     console.error('Profil hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
@@ -116,26 +123,29 @@ router.get('/profile', userAuthMiddleware, (req, res) => {
 });
 
 // PUT /api/users/profile
-router.put('/profile', userAuthMiddleware, (req, res) => {
+router.put('/profile', userAuthMiddleware, async (req, res) => {
   try {
     const { name, phone } = req.body;
-    const db = getDb();
+    const pool = getPool();
 
-    const user = db.prepare('SELECT id FROM users WHERE id = ?').get(req.userId);
-    if (!user) {
+    const { rows: existRows } = await pool.query('SELECT id FROM users WHERE id = $1', [req.userId]);
+    if (existRows.length === 0) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
     }
 
     if (name) {
-      db.prepare('UPDATE users SET name = ? WHERE id = ?').run(name, req.userId);
+      await pool.query('UPDATE users SET name = $1 WHERE id = $2', [name, req.userId]);
     }
     if (phone !== undefined) {
-      db.prepare('UPDATE users SET phone = ? WHERE id = ?').run(phone, req.userId);
+      await pool.query('UPDATE users SET phone = $1 WHERE id = $2', [phone, req.userId]);
     }
 
-    const updated = db.prepare('SELECT id, name, email, phone, created_at FROM users WHERE id = ?').get(req.userId);
+    const { rows } = await pool.query(
+      'SELECT id, name, email, phone, created_at FROM users WHERE id = $1',
+      [req.userId]
+    );
 
-    res.json({ message: 'Profil güncellendi.', user: updated });
+    res.json({ message: 'Profil güncellendi.', user: rows[0] });
   } catch (err) {
     console.error('Profil güncelleme hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });

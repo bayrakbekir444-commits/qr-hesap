@@ -1,6 +1,6 @@
 // Demo ürünleri için doğrulanmış (HTTP 200) yüksek kaliteli Unsplash/Pexels URL'leri.
 
-const { getDb, initDb } = require('./init');
+const { getPool, initDb } = require('./init');
 
 const IMAGE_MAP = {
   'Ayran':            'https://images.pexels.com/photos/26648792/pexels-photo-26648792.jpeg?auto=compress&cs=tinysrgb&w=640',
@@ -23,14 +23,26 @@ const IMAGE_MAP = {
   'Kazandibi':        'https://images.pexels.com/photos/16668398/pexels-photo-16668398.jpeg?auto=compress&cs=tinysrgb&w=640',
 };
 
-initDb();
-const db = getDb();
-const items = db.prepare('SELECT id, name FROM menu_items').all();
-const update = db.prepare('UPDATE menu_items SET image_url = ? WHERE id = ?');
-let ok = 0;
-for (const item of items) {
-  const url = IMAGE_MAP[item.name];
-  if (url) { update.run(url, item.id); ok++; console.log('✓', item.name); }
-  else console.log('-', item.name, '(eşleşme yok)');
-}
-console.log(`\n${ok}/${items.length} ürün güncellendi.`);
+(async () => {
+  try {
+    await initDb();
+    const pool = getPool();
+    const { rows: items } = await pool.query('SELECT id, name FROM menu_items');
+    let ok = 0;
+    for (const item of items) {
+      const url = IMAGE_MAP[item.name];
+      if (url) {
+        await pool.query('UPDATE menu_items SET image_url = $1 WHERE id = $2', [url, item.id]);
+        ok++;
+        console.log('✓', item.name);
+      } else {
+        console.log('-', item.name, '(eşleşme yok)');
+      }
+    }
+    console.log(`\n${ok}/${items.length} ürün güncellendi.`);
+    process.exit(0);
+  } catch (err) {
+    console.error('Update images hatası:', err);
+    process.exit(1);
+  }
+})();

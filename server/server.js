@@ -32,12 +32,6 @@ const corsOrigin = corsRaw === '*' || corsRaw === ''
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 
-// Veritabanını başlat
-initDb();
-
-// Otomatik yedekleme başlat (günlük, son 7 gün tutulur)
-yedekBaslat();
-
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -72,8 +66,18 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Sunucu hatası.' });
 });
 
-app.listen(PORT, () => {
-  console.log(`QR Hesap API http://localhost:${PORT} adresinde çalışıyor.`);
-});
+// Veritabanını async başlat, sonra dinlemeye geç
+(async () => {
+  try {
+    await initDb();
+    yedekBaslat();
+    app.listen(PORT, () => {
+      console.log(`QR Hesap API http://localhost:${PORT} adresinde çalışıyor.`);
+    });
+  } catch (err) {
+    console.error('Veritabanı başlatma hatası:', err);
+    process.exit(1);
+  }
+})();
 
 module.exports = app;

@@ -1,38 +1,42 @@
 const express = require('express');
-const { getDb } = require('../db/init');
+const { getPool } = require('../db/init');
 
 const router = express.Router();
 
 // GET /api/receipts/:orderId - Fiş verisi oluştur (auth yok)
-router.get('/:orderId', (req, res) => {
+router.get('/:orderId', async (req, res) => {
   try {
     const { orderId } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const order = db.prepare(
+    const { rows: orderRows } = await pool.query(
       `SELECT o.*, t.table_number, r.name as restaurant_name
        FROM orders o
        JOIN tables t ON o.table_id = t.id
        JOIN restaurants r ON t.restaurant_id = r.id
-       WHERE o.id = ?`
-    ).get(orderId);
+       WHERE o.id = $1`,
+      [orderId]
+    );
+    const order = orderRows[0];
 
     if (!order) {
       return res.status(404).json({ error: 'Sipariş bulunamadı.' });
     }
 
-    const items = db.prepare(
+    const { rows: items } = await pool.query(
       `SELECT oi.*, mi.name as item_name
        FROM order_items oi
        JOIN menu_items mi ON oi.menu_item_id = mi.id
-       WHERE oi.order_id = ?`
-    ).all(orderId);
+       WHERE oi.order_id = $1`,
+      [orderId]
+    );
 
     const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
 
-    const payments = db.prepare(
-      "SELECT * FROM payments WHERE order_id = ? AND status = 'paid' ORDER BY created_at"
-    ).all(orderId);
+    const { rows: payments } = await pool.query(
+      "SELECT * FROM payments WHERE order_id = $1 AND status = 'paid' ORDER BY created_at",
+      [orderId]
+    );
 
     const totalTip = payments.reduce((sum, p) => sum + (p.tip || 0), 0);
     const totalPaid = payments.reduce((sum, p) => sum + p.amount + (p.tip || 0), 0);

@@ -1,18 +1,19 @@
 const express = require('express');
-const { getDb } = require('../db/init');
+const { getPool } = require('../db/init');
 const { userAuthMiddleware } = require('../middleware/userAuth');
 
 const router = express.Router();
 
 // GET /api/notifications - Bildirim listesi
-router.get('/', userAuthMiddleware, (req, res) => {
+router.get('/', userAuthMiddleware, async (req, res) => {
   try {
-    const db = getDb();
-    const notifications = db.prepare(
-      'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC'
-    ).all(req.userId);
+    const pool = getPool();
+    const { rows } = await pool.query(
+      'SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC',
+      [req.userId]
+    );
 
-    res.json({ notifications });
+    res.json({ notifications: rows });
   } catch (err) {
     console.error('Bildirim listesi hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
@@ -20,14 +21,15 @@ router.get('/', userAuthMiddleware, (req, res) => {
 });
 
 // GET /api/notifications/unread-count - Okunmamış bildirim sayısı
-router.get('/unread-count', userAuthMiddleware, (req, res) => {
+router.get('/unread-count', userAuthMiddleware, async (req, res) => {
   try {
-    const db = getDb();
-    const result = db.prepare(
-      'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND read = 0'
-    ).get(req.userId);
+    const pool = getPool();
+    const { rows } = await pool.query(
+      'SELECT COUNT(*)::int as count FROM notifications WHERE user_id = $1 AND "read" = 0',
+      [req.userId]
+    );
 
-    res.json({ unread_count: result.count });
+    res.json({ unread_count: rows[0].count });
   } catch (err) {
     console.error('Bildirim sayısı hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
@@ -35,20 +37,21 @@ router.get('/unread-count', userAuthMiddleware, (req, res) => {
 });
 
 // PUT /api/notifications/:id/read - Okundu olarak işaretle
-router.put('/:id/read', userAuthMiddleware, (req, res) => {
+router.put('/:id/read', userAuthMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const notification = db.prepare(
-      'SELECT * FROM notifications WHERE id = ? AND user_id = ?'
-    ).get(id, req.userId);
+    const { rows } = await pool.query(
+      'SELECT id FROM notifications WHERE id = $1 AND user_id = $2',
+      [id, req.userId]
+    );
 
-    if (!notification) {
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'Bildirim bulunamadı.' });
     }
 
-    db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(id);
+    await pool.query('UPDATE notifications SET "read" = 1 WHERE id = $1', [id]);
 
     res.json({ message: 'Bildirim okundu olarak işaretlendi.' });
   } catch (err) {

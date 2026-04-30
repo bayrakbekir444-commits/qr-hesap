@@ -2,7 +2,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const QRCode = require('qrcode');
 const PDFDocument = require('pdfkit');
-const { getDb } = require('../db/init');
+const { getPool } = require('../db/init');
 const { authMiddleware } = require('../middleware/auth');
 const { checkTableLimit } = require('../middleware/packages');
 
@@ -23,37 +23,42 @@ const pickToken = (table, type) => {
 };
 
 // GET /api/tables - Masaları listele (sipariş durumu ile)
-router.get('/', authMiddleware, (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const db = getDb();
-    const tables = db.prepare(
-      'SELECT * FROM tables WHERE restaurant_id = ? AND active = 1 ORDER BY table_number'
-    ).all(req.restaurantId);
+    const pool = getPool();
+    const { rows: tables } = await pool.query(
+      'SELECT * FROM tables WHERE restaurant_id = $1 AND active = 1 ORDER BY table_number',
+      [req.restaurantId]
+    );
 
-    const result = tables.map((table) => {
-      const openOrder = db.prepare(
-        "SELECT * FROM orders WHERE table_id = ? AND status = 'open' LIMIT 1"
-      ).get(table.id);
+    const result = [];
+    for (const table of tables) {
+      const { rows: openOrderRows } = await pool.query(
+        "SELECT * FROM orders WHERE table_id = $1 AND status = 'open' LIMIT 1",
+        [table.id]
+      );
+      const openOrder = openOrderRows[0];
 
       let orderTotal = 0;
       let itemCount = 0;
 
       if (openOrder) {
-        const totals = db.prepare(
-          'SELECT SUM(quantity * unit_price) as total, SUM(quantity) as count FROM order_items WHERE order_id = ?'
-        ).get(openOrder.id);
-        orderTotal = totals.total || 0;
-        itemCount = totals.count || 0;
+        const { rows: tRows } = await pool.query(
+          'SELECT COALESCE(SUM(quantity * unit_price), 0)::bigint as total, COALESCE(SUM(quantity), 0)::int as count FROM order_items WHERE order_id = $1',
+          [openOrder.id]
+        );
+        orderTotal = Number(tRows[0].total) || 0;
+        itemCount = tRows[0].count || 0;
       }
 
-      return {
+      result.push({
         ...table,
         has_open_order: !!openOrder,
         order_id: openOrder ? openOrder.id : null,
         order_total: orderTotal,
         item_count: itemCount,
-      };
-    });
+      });
+    }
 
     res.json(result);
   } catch (err) {
@@ -66,7 +71,6 @@ router.get('/', authMiddleware, (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { table_number, name, number } = req.body;
-    // Frontend bazen "number" ve "name" gönderiyor
     const masaNo = table_number || number;
 
     if (!masaNo) {
@@ -74,19 +78,19 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     // Paket limiti kontrol
-    const limit = checkTableLimit(req.restaurantId);
+    const limit = await checkTableLimit(req.restaurantId);
     if (!limit.ok) {
       return res.status(403).json({ error: limit.error, upgrade_required: limit.upgrade_required });
     }
 
-    const db = getDb();
+    const pool = getPool();
 
-    // Aynı numarada aktif masa var mı kontrol et
-    const existing = db.prepare(
-      'SELECT * FROM tables WHERE restaurant_id = ? AND table_number = ? AND active = 1'
-    ).get(req.restaurantId, masaNo);
+    const { rows: existRows } = await pool.query(
+      'SELECT id FROM tables WHERE restaurant_id = $1 AND table_number = $2 AND active = 1',
+      [req.restaurantId, masaNo]
+    );
 
-    if (existing) {
+    if (existRows.length > 0) {
       return res.status(409).json({ error: 'Bu numarada aktif bir masa zaten var.' });
     }
 
@@ -95,22 +99,22 @@ router.post('/', authMiddleware, async (req, res) => {
     const paymentQrToken = uuidv4();
     const qrUrl = `${CLIENT_BASE}/t/${qrToken}`;
 
-    const result = db.prepare(
-      'INSERT INTO tables (restaurant_id, table_number, name, qr_token, menu_qr_token, payment_qr_token) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run(req.restaurantId, masaNo, name || null, qrToken, menuQrToken, paymentQrToken);
+    const { rows } = await pool.query(
+      `INSERT INTO tables (restaurant_id, table_number, name, qr_token, menu_qr_token, payment_qr_token)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [req.restaurantId, masaNo, name || null, qrToken, menuQrToken, paymentQrToken]
+    );
 
-    // QR kodu base64 olarak üret
     const qrCodeDataUrl = await QRCode.toDataURL(qrUrl, {
       width: 300,
       margin: 2,
       color: { dark: '#000000', light: '#ffffff' },
     });
 
-    const table = db.prepare('SELECT * FROM tables WHERE id = ?').get(result.lastInsertRowid);
-
     res.status(201).json({
       message: 'Masa oluşturuldu.',
-      table,
+      table: rows[0],
       qr_code: qrCodeDataUrl,
       qr_url: qrUrl,
     });
@@ -121,30 +125,32 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // PUT /api/tables/:id - Masa adı/numarasını güncelle
-router.put('/:id', authMiddleware, (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, table_number } = req.body;
-    const db = getDb();
+    const pool = getPool();
 
-    const table = db.prepare(
-      'SELECT * FROM tables WHERE id = ? AND restaurant_id = ?'
-    ).get(id, req.restaurantId);
+    const { rows: tableRows } = await pool.query(
+      'SELECT * FROM tables WHERE id = $1 AND restaurant_id = $2',
+      [id, req.restaurantId]
+    );
+    const table = tableRows[0];
 
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı.' });
     }
 
-    db.prepare(
-      'UPDATE tables SET name = ?, table_number = ? WHERE id = ?'
-    ).run(
-      name !== undefined ? name : table.name,
-      table_number !== undefined ? table_number : table.table_number,
-      id
+    const { rows } = await pool.query(
+      'UPDATE tables SET name = $1, table_number = $2 WHERE id = $3 RETURNING *',
+      [
+        name !== undefined ? name : table.name,
+        table_number !== undefined ? table_number : table.table_number,
+        id,
+      ]
     );
 
-    const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(id);
-    res.json({ message: 'Masa güncellendi.', table: updated });
+    res.json({ message: 'Masa güncellendi.', table: rows[0] });
   } catch (err) {
     console.error('Masa güncelleme hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
@@ -152,20 +158,21 @@ router.put('/:id', authMiddleware, (req, res) => {
 });
 
 // DELETE /api/tables/:id - Masayı pasife al
-router.delete('/:id', authMiddleware, (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const table = db.prepare(
-      'SELECT * FROM tables WHERE id = ? AND restaurant_id = ?'
-    ).get(id, req.restaurantId);
+    const { rows: tableRows } = await pool.query(
+      'SELECT id FROM tables WHERE id = $1 AND restaurant_id = $2',
+      [id, req.restaurantId]
+    );
 
-    if (!table) {
+    if (tableRows.length === 0) {
       return res.status(404).json({ error: 'Masa bulunamadı.' });
     }
 
-    db.prepare('UPDATE tables SET active = 0 WHERE id = ?').run(id);
+    await pool.query('UPDATE tables SET active = 0 WHERE id = $1', [id]);
 
     res.json({ message: 'Masa pasife alındı.' });
   } catch (err) {
@@ -178,17 +185,19 @@ router.delete('/:id', authMiddleware, (req, res) => {
 router.get('/:id/qr', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const table = db.prepare(
-      'SELECT * FROM tables WHERE id = ? AND restaurant_id = ? AND active = 1'
-    ).get(id, req.restaurantId);
+    const { rows } = await pool.query(
+      'SELECT * FROM tables WHERE id = $1 AND restaurant_id = $2 AND active = 1',
+      [id, req.restaurantId]
+    );
+    const table = rows[0];
 
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı.' });
     }
 
-    const qrUrl = `http://localhost:5173/t/${table.qr_token}`;
+    const qrUrl = `${CLIENT_BASE}/t/${table.qr_token}`;
     const qrCodeDataUrl = await QRCode.toDataURL(qrUrl, {
       width: 300,
       margin: 2,
@@ -211,17 +220,19 @@ router.get('/:id/qr', authMiddleware, async (req, res) => {
 router.get('/:id/menu-qr', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const table = db.prepare(
-      'SELECT * FROM tables WHERE id = ? AND restaurant_id = ? AND active = 1'
-    ).get(id, req.restaurantId);
+    const { rows } = await pool.query(
+      'SELECT * FROM tables WHERE id = $1 AND restaurant_id = $2 AND active = 1',
+      [id, req.restaurantId]
+    );
+    const table = rows[0];
 
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı.' });
     }
 
-    const menuQrUrl = `http://localhost:5173/menu/${table.menu_qr_token}`;
+    const menuQrUrl = `${CLIENT_BASE}/menu/${table.menu_qr_token}`;
     const qrCodeDataUrl = await QRCode.toDataURL(menuQrUrl, {
       width: 300,
       margin: 2,
@@ -244,17 +255,19 @@ router.get('/:id/menu-qr', authMiddleware, async (req, res) => {
 router.get('/:id/payment-qr', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const table = db.prepare(
-      'SELECT * FROM tables WHERE id = ? AND restaurant_id = ? AND active = 1'
-    ).get(id, req.restaurantId);
+    const { rows } = await pool.query(
+      'SELECT * FROM tables WHERE id = $1 AND restaurant_id = $2 AND active = 1',
+      [id, req.restaurantId]
+    );
+    const table = rows[0];
 
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı.' });
     }
 
-    const paymentQrUrl = `http://localhost:5173/pay/${table.payment_qr_token}`;
+    const paymentQrUrl = `${CLIENT_BASE}/pay/${table.payment_qr_token}`;
     const qrCodeDataUrl = await QRCode.toDataURL(paymentQrUrl, {
       width: 300,
       margin: 2,
@@ -274,27 +287,30 @@ router.get('/:id/payment-qr', authMiddleware, async (req, res) => {
 });
 
 // GET /api/tables/menu/:menuQrToken/public - Menü QR ile herkese açık menü bilgisi (auth yok)
-router.get('/menu/:menuQrToken/public', (req, res) => {
+router.get('/menu/:menuQrToken/public', async (req, res) => {
   try {
     const { menuQrToken } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const table = db.prepare(
-      'SELECT t.*, r.name as restaurant_name FROM tables t JOIN restaurants r ON t.restaurant_id = r.id WHERE t.menu_qr_token = ? AND t.active = 1'
-    ).get(menuQrToken);
+    const { rows: tableRows } = await pool.query(
+      'SELECT t.*, r.name as restaurant_name FROM tables t JOIN restaurants r ON t.restaurant_id = r.id WHERE t.menu_qr_token = $1 AND t.active = 1',
+      [menuQrToken]
+    );
+    const table = tableRows[0];
 
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı veya aktif değil.' });
     }
 
-    // Menüyü getir
-    const categories = db.prepare(
-      'SELECT * FROM categories WHERE restaurant_id = ? ORDER BY sort_order, id'
-    ).all(table.restaurant_id);
+    const { rows: categories } = await pool.query(
+      'SELECT * FROM categories WHERE restaurant_id = $1 ORDER BY sort_order, id',
+      [table.restaurant_id]
+    );
 
-    const menuItems = db.prepare(
-      'SELECT * FROM menu_items WHERE restaurant_id = ? AND active = 1 ORDER BY id'
-    ).all(table.restaurant_id);
+    const { rows: menuItems } = await pool.query(
+      'SELECT * FROM menu_items WHERE restaurant_id = $1 AND active = 1 ORDER BY id',
+      [table.restaurant_id]
+    );
 
     const menu = categories.map((cat) => ({
       ...cat,
@@ -316,44 +332,49 @@ router.get('/menu/:menuQrToken/public', (req, res) => {
 });
 
 // GET /api/tables/payment/:paymentQrToken/public - Ödeme QR ile herkese açık sipariş/ödeme bilgisi (auth yok)
-router.get('/payment/:paymentQrToken/public', (req, res) => {
+router.get('/payment/:paymentQrToken/public', async (req, res) => {
   try {
     const { paymentQrToken } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const table = db.prepare(
-      'SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo, r.description as restaurant_description FROM tables t JOIN restaurants r ON t.restaurant_id = r.id WHERE t.payment_qr_token = ? AND t.active = 1'
-    ).get(paymentQrToken);
+    const { rows: tableRows } = await pool.query(
+      'SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo, r.description as restaurant_description FROM tables t JOIN restaurants r ON t.restaurant_id = r.id WHERE t.payment_qr_token = $1 AND t.active = 1',
+      [paymentQrToken]
+    );
+    const table = tableRows[0];
 
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı veya aktif değil.' });
     }
 
-    // Açık sipariş ve kalemlerini getir
-    const openOrder = db.prepare(
-      "SELECT * FROM orders WHERE table_id = ? AND status = 'open' LIMIT 1"
-    ).get(table.id);
+    const { rows: orderRows } = await pool.query(
+      "SELECT * FROM orders WHERE table_id = $1 AND status = 'open' LIMIT 1",
+      [table.id]
+    );
+    const openOrder = orderRows[0];
 
     let orderItems = [];
     let orderTotal = 0;
 
     if (openOrder) {
-      orderItems = db.prepare(
+      const { rows: itemRows } = await pool.query(
         `SELECT oi.*, mi.name as item_name
          FROM order_items oi
          JOIN menu_items mi ON oi.menu_item_id = mi.id
-         WHERE oi.order_id = ?`
-      ).all(openOrder.id);
-
+         WHERE oi.order_id = $1`,
+        [openOrder.id]
+      );
+      orderItems = itemRows;
       orderTotal = orderItems.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
     }
 
-    // Mevcut ödemeleri getir
     let payments = [];
     if (openOrder) {
-      payments = db.prepare(
-        'SELECT * FROM payments WHERE order_id = ?'
-      ).all(openOrder.id);
+      const { rows: pRows } = await pool.query(
+        'SELECT * FROM payments WHERE order_id = $1',
+        [openOrder.id]
+      );
+      payments = pRows;
     }
 
     res.json({
@@ -382,46 +403,51 @@ router.get('/payment/:paymentQrToken/public', (req, res) => {
 });
 
 // GET /api/tables/:qrToken/public - Herkese açık masa bilgisi
-router.get('/:qrToken/public', (req, res) => {
+router.get('/:qrToken/public', async (req, res) => {
   try {
     const { qrToken } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const table = db.prepare(
-      'SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo, r.description as restaurant_description FROM tables t JOIN restaurants r ON t.restaurant_id = r.id WHERE t.qr_token = ? AND t.active = 1'
-    ).get(qrToken);
+    const { rows: tableRows } = await pool.query(
+      'SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo, r.description as restaurant_description FROM tables t JOIN restaurants r ON t.restaurant_id = r.id WHERE t.qr_token = $1 AND t.active = 1',
+      [qrToken]
+    );
+    const table = tableRows[0];
 
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı veya aktif değil.' });
     }
 
-    // Açık sipariş ve kalemlerini getir
-    const openOrder = db.prepare(
-      "SELECT * FROM orders WHERE table_id = ? AND status = 'open' LIMIT 1"
-    ).get(table.id);
+    const { rows: orderRows } = await pool.query(
+      "SELECT * FROM orders WHERE table_id = $1 AND status = 'open' LIMIT 1",
+      [table.id]
+    );
+    const openOrder = orderRows[0];
 
     let orderItems = [];
     let orderTotal = 0;
 
     if (openOrder) {
-      orderItems = db.prepare(
+      const { rows: itemRows } = await pool.query(
         `SELECT oi.*, mi.name as item_name
          FROM order_items oi
          JOIN menu_items mi ON oi.menu_item_id = mi.id
-         WHERE oi.order_id = ?`
-      ).all(openOrder.id);
-
+         WHERE oi.order_id = $1`,
+        [openOrder.id]
+      );
+      orderItems = itemRows;
       orderTotal = orderItems.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
     }
 
-    // Menüyü de gönder
-    const categories = db.prepare(
-      'SELECT * FROM categories WHERE restaurant_id = ? ORDER BY sort_order, id'
-    ).all(table.restaurant_id);
+    const { rows: categories } = await pool.query(
+      'SELECT * FROM categories WHERE restaurant_id = $1 ORDER BY sort_order, id',
+      [table.restaurant_id]
+    );
 
-    const menuItems = db.prepare(
-      'SELECT * FROM menu_items WHERE restaurant_id = ? AND active = 1 ORDER BY id'
-    ).all(table.restaurant_id);
+    const { rows: menuItems } = await pool.query(
+      'SELECT * FROM menu_items WHERE restaurant_id = $1 AND active = 1 ORDER BY id',
+      [table.restaurant_id]
+    );
 
     const menu = categories.map((cat) => ({
       ...cat,
@@ -457,15 +483,18 @@ router.get('/:qrToken/public', (req, res) => {
 router.get('/qr-pdf', authMiddleware, async (req, res) => {
   try {
     const type = ['main', 'menu', 'payment'].includes(req.query.type) ? req.query.type : 'main';
-    const db = getDb();
+    const pool = getPool();
 
-    const restaurant = db.prepare(
-      'SELECT id, name FROM restaurants WHERE id = ?'
-    ).get(req.restaurantId);
+    const { rows: rRows } = await pool.query(
+      'SELECT id, name FROM restaurants WHERE id = $1',
+      [req.restaurantId]
+    );
+    const restaurant = rRows[0];
 
-    const tables = db.prepare(
-      'SELECT * FROM tables WHERE restaurant_id = ? AND active = 1 ORDER BY table_number'
-    ).all(req.restaurantId);
+    const { rows: tables } = await pool.query(
+      'SELECT * FROM tables WHERE restaurant_id = $1 AND active = 1 ORDER BY table_number',
+      [req.restaurantId]
+    );
 
     if (tables.length === 0) {
       return res.status(404).json({ error: 'Yazdırılacak masa yok.' });

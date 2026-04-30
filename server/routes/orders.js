@@ -1,41 +1,119 @@
 const express = require('express');
-const { getDb } = require('../db/init');
+const { getPool } = require('../db/init');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /api/orders/new-alerts - Son 5 dakikada güncellenen siparişler
-router.get('/new-alerts', authMiddleware, (req, res) => {
-  try {
-    const db = getDb();
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+// Helper: Açık sipariş varsa bul, yoksa oluştur (transaction içinde kullan veya tek sorgu)
+async function ensureOpenOrder(client, tableId) {
+  const { rows: orderRows } = await client.query(
+    "SELECT * FROM orders WHERE table_id = $1 AND status = 'open' LIMIT 1",
+    [tableId]
+  );
+  if (orderRows[0]) return orderRows[0];
 
-    const orders = db.prepare(
+  const { rows } = await client.query(
+    "INSERT INTO orders (table_id, status, created_at, updated_at) VALUES ($1, 'open', NOW(), NOW()) RETURNING *",
+    [tableId]
+  );
+  return rows[0];
+}
+
+// Sipariş kalemi ekleme transaction'ı (auth ya da public)
+async function addItemsToOrder({ pool, tableId, restaurantId, items }) {
+  const client = await pool.connect();
+  const addedItems = [];
+  let order;
+  try {
+    await client.query('BEGIN');
+    order = await ensureOpenOrder(client, tableId);
+
+    for (const item of items) {
+      const { rows: menuRows } = await client.query(
+        'SELECT * FROM menu_items WHERE id = $1 AND restaurant_id = $2 AND active = 1',
+        [item.menu_item_id, restaurantId]
+      );
+      const menuItem = menuRows[0];
+      if (!menuItem) {
+        throw new Error(`Ürün bulunamadı: ${item.menu_item_id}`);
+      }
+
+      const { rows: insertedRows } = await client.query(
+        `INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price, note)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id`,
+        [
+          order.id,
+          item.menu_item_id,
+          item.quantity || 1,
+          menuItem.price,
+          item.note || null,
+        ]
+      );
+
+      addedItems.push({
+        id: insertedRows[0].id,
+        menu_item_id: item.menu_item_id,
+        item_name: menuItem.name,
+        quantity: item.quantity || 1,
+        unit_price: menuItem.price,
+        note: item.note || null,
+      });
+    }
+
+    await client.query('UPDATE orders SET updated_at = NOW() WHERE id = $1', [order.id]);
+    await client.query('COMMIT');
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  // Güncel toplamı hesapla
+  const { rows: allItems } = await pool.query(
+    'SELECT quantity, unit_price FROM order_items WHERE order_id = $1',
+    [order.id]
+  );
+  const total = allItems.reduce((sum, oi) => sum + oi.quantity * oi.unit_price, 0);
+
+  return { order, addedItems, total };
+}
+
+// GET /api/orders/new-alerts - Son 5 dakikada güncellenen siparişler
+router.get('/new-alerts', authMiddleware, async (req, res) => {
+  try {
+    const pool = getPool();
+    // Son 5 dakika için Postgres native NOW() kullan
+    const { rows: orders } = await pool.query(
       `SELECT o.*, t.table_number
        FROM orders o
        JOIN tables t ON o.table_id = t.id
-       WHERE t.restaurant_id = ?
+       WHERE t.restaurant_id = $1
        AND o.status = 'open'
-       AND o.updated_at >= ?
-       ORDER BY o.updated_at DESC`
-    ).all(req.restaurantId, fiveMinutesAgo);
+       AND o.updated_at >= NOW() - INTERVAL '5 minutes'
+       ORDER BY o.updated_at DESC`,
+      [req.restaurantId]
+    );
 
-    const result = orders.map((order) => {
-      const items = db.prepare(
+    const result = [];
+    for (const order of orders) {
+      const { rows: items } = await pool.query(
         `SELECT oi.*, mi.name as item_name
          FROM order_items oi
          JOIN menu_items mi ON oi.menu_item_id = mi.id
-         WHERE oi.order_id = ?`
-      ).all(order.id);
+         WHERE oi.order_id = $1`,
+        [order.id]
+      );
 
       const total = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
 
-      return {
+      result.push({
         ...order,
         items,
         total,
-      };
-    });
+      });
+    }
 
     res.json(result);
   } catch (err) {
@@ -45,119 +123,121 @@ router.get('/new-alerts', authMiddleware, (req, res) => {
 });
 
 // POST /api/orders/merge - Masaları birleştir
-router.post('/merge', authMiddleware, (req, res) => {
+router.post('/merge', authMiddleware, async (req, res) => {
+  const pool = getPool();
+  const client = await pool.connect();
   try {
     const { source_table_id, target_table_id } = req.body;
 
     if (!source_table_id || !target_table_id) {
+      client.release();
       return res.status(400).json({ error: 'source_table_id ve target_table_id gereklidir.' });
     }
 
     if (source_table_id === target_table_id) {
+      client.release();
       return res.status(400).json({ error: 'Kaynak ve hedef masa aynı olamaz.' });
     }
 
-    const db = getDb();
+    const { rows: sourceTables } = await client.query(
+      'SELECT id FROM tables WHERE id = $1 AND restaurant_id = $2',
+      [source_table_id, req.restaurantId]
+    );
+    const { rows: targetTables } = await client.query(
+      'SELECT id FROM tables WHERE id = $1 AND restaurant_id = $2',
+      [target_table_id, req.restaurantId]
+    );
 
-    // Masaların bu restorana ait olduğunu kontrol et
-    const sourceTable = db.prepare(
-      'SELECT * FROM tables WHERE id = ? AND restaurant_id = ?'
-    ).get(source_table_id, req.restaurantId);
-
-    const targetTable = db.prepare(
-      'SELECT * FROM tables WHERE id = ? AND restaurant_id = ?'
-    ).get(target_table_id, req.restaurantId);
-
-    if (!sourceTable || !targetTable) {
+    if (sourceTables.length === 0 || targetTables.length === 0) {
+      client.release();
       return res.status(404).json({ error: 'Masa bulunamadı.' });
     }
 
-    const sourceOrder = db.prepare(
-      "SELECT * FROM orders WHERE table_id = ? AND status = 'open' LIMIT 1"
-    ).get(source_table_id);
+    const { rows: sourceOrderRows } = await client.query(
+      "SELECT * FROM orders WHERE table_id = $1 AND status = 'open' LIMIT 1",
+      [source_table_id]
+    );
+    const sourceOrder = sourceOrderRows[0];
 
     if (!sourceOrder) {
+      client.release();
       return res.status(404).json({ error: 'Kaynak masada açık sipariş bulunamadı.' });
     }
 
-    const now = new Date().toISOString();
+    await client.query('BEGIN');
 
-    // Hedef masada açık sipariş yoksa oluştur
-    let targetOrder = db.prepare(
-      "SELECT * FROM orders WHERE table_id = ? AND status = 'open' LIMIT 1"
-    ).get(target_table_id);
-
-    if (!targetOrder) {
-      const result = db.prepare(
-        'INSERT INTO orders (table_id, status, created_at, updated_at) VALUES (?, ?, ?, ?)'
-      ).run(target_table_id, 'open', now, now);
-      targetOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(result.lastInsertRowid);
-    }
+    // Hedef siparişi bul/oluştur
+    const targetOrder = await ensureOpenOrder(client, target_table_id);
 
     // Kaynak siparişin kalemlerini hedef siparişe taşı
-    const mergeTransaction = db.transaction(() => {
-      db.prepare(
-        'UPDATE order_items SET order_id = ? WHERE order_id = ?'
-      ).run(targetOrder.id, sourceOrder.id);
+    await client.query('UPDATE order_items SET order_id = $1 WHERE order_id = $2', [
+      targetOrder.id,
+      sourceOrder.id,
+    ]);
 
-      // Kaynak siparişi kapat
-      db.prepare(
-        "UPDATE orders SET status = 'closed', updated_at = ? WHERE id = ?"
-      ).run(now, sourceOrder.id);
+    // Kaynak siparişi kapat
+    await client.query(
+      "UPDATE orders SET status = 'closed', updated_at = NOW() WHERE id = $1",
+      [sourceOrder.id]
+    );
 
-      // Hedef siparişi güncelle
-      db.prepare(
-        'UPDATE orders SET updated_at = ? WHERE id = ?'
-      ).run(now, targetOrder.id);
-    });
+    // Hedef siparişi güncelle
+    await client.query('UPDATE orders SET updated_at = NOW() WHERE id = $1', [targetOrder.id]);
 
-    mergeTransaction();
+    await client.query('COMMIT');
 
-    // Yeni toplamı hesapla
-    const totals = db.prepare(
-      'SELECT SUM(quantity * unit_price) as total FROM order_items WHERE order_id = ?'
-    ).get(targetOrder.id);
+    // Yeni toplam
+    const { rows: tRows } = await client.query(
+      'SELECT COALESCE(SUM(quantity * unit_price), 0)::bigint as total FROM order_items WHERE order_id = $1',
+      [targetOrder.id]
+    );
 
     res.json({
       message: 'Masalar birleştirildi.',
       target_order_id: targetOrder.id,
-      total: totals.total || 0,
+      total: Number(tRows[0].total) || 0,
     });
   } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
     console.error('Masa birleştirme hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
+  } finally {
+    client.release();
   }
 });
 
 // GET /api/orders/:tableId - Açık siparişi getir
-router.get('/:tableId', authMiddleware, (req, res) => {
+router.get('/:tableId', authMiddleware, async (req, res) => {
   try {
     const { tableId } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    // Masanın bu restorana ait olduğunu kontrol et
-    const table = db.prepare(
-      'SELECT * FROM tables WHERE id = ? AND restaurant_id = ?'
-    ).get(tableId, req.restaurantId);
+    const { rows: tableRows } = await pool.query(
+      'SELECT id FROM tables WHERE id = $1 AND restaurant_id = $2',
+      [tableId, req.restaurantId]
+    );
 
-    if (!table) {
+    if (tableRows.length === 0) {
       return res.status(404).json({ error: 'Masa bulunamadı.' });
     }
 
-    const order = db.prepare(
-      "SELECT * FROM orders WHERE table_id = ? AND status = 'open' LIMIT 1"
-    ).get(tableId);
+    const { rows: orderRows } = await pool.query(
+      "SELECT * FROM orders WHERE table_id = $1 AND status = 'open' LIMIT 1",
+      [tableId]
+    );
+    const order = orderRows[0];
 
     if (!order) {
       return res.json({ order: null, items: [], total: 0 });
     }
 
-    const items = db.prepare(
+    const { rows: items } = await pool.query(
       `SELECT oi.*, mi.name as item_name
        FROM order_items oi
        JOIN menu_items mi ON oi.menu_item_id = mi.id
-       WHERE oi.order_id = ?`
-    ).all(order.id);
+       WHERE oi.order_id = $1`,
+      [order.id]
+    );
 
     const total = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
 
@@ -169,96 +249,43 @@ router.get('/:tableId', authMiddleware, (req, res) => {
 });
 
 // POST /api/orders/:tableId/items - Sipariş kalemi ekle (yoksa sipariş oluştur)
-router.post('/:tableId/items', authMiddleware, (req, res) => {
+router.post('/:tableId/items', authMiddleware, async (req, res) => {
   try {
     const { tableId } = req.params;
-    const { items } = req.body; // [{ menu_item_id, quantity, note }]
+    const { items } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'En az bir ürün gereklidir.' });
     }
 
-    const db = getDb();
+    const pool = getPool();
 
-    // Masanın bu restorana ait olduğunu kontrol et
-    const table = db.prepare(
-      'SELECT * FROM tables WHERE id = ? AND restaurant_id = ?'
-    ).get(tableId, req.restaurantId);
+    const { rows: tableRows } = await pool.query(
+      'SELECT id FROM tables WHERE id = $1 AND restaurant_id = $2',
+      [tableId, req.restaurantId]
+    );
 
-    if (!table) {
+    if (tableRows.length === 0) {
       return res.status(404).json({ error: 'Masa bulunamadı.' });
     }
 
-    // Açık sipariş var mı?
-    let order = db.prepare(
-      "SELECT * FROM orders WHERE table_id = ? AND status = 'open' LIMIT 1"
-    ).get(tableId);
-
-    const now = new Date().toISOString();
-
-    if (!order) {
-      const result = db.prepare(
-        'INSERT INTO orders (table_id, status, created_at, updated_at) VALUES (?, ?, ?, ?)'
-      ).run(tableId, 'open', now, now);
-      order = db.prepare('SELECT * FROM orders WHERE id = ?').get(result.lastInsertRowid);
-    }
-
-    // Ürünleri ekle
-    const insertItem = db.prepare(
-      'INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price, note) VALUES (?, ?, ?, ?, ?)'
-    );
-
-    const addedItems = [];
-
-    const addItems = db.transaction(() => {
-      for (const item of items) {
-        const menuItem = db.prepare(
-          'SELECT * FROM menu_items WHERE id = ? AND restaurant_id = ? AND active = 1'
-        ).get(item.menu_item_id, req.restaurantId);
-
-        if (!menuItem) {
-          throw new Error(`Ürün bulunamadı: ${item.menu_item_id}`);
-        }
-
-        const result = insertItem.run(
-          order.id,
-          item.menu_item_id,
-          item.quantity || 1,
-          menuItem.price,
-          item.note || null
-        );
-
-        addedItems.push({
-          id: result.lastInsertRowid,
-          menu_item_id: item.menu_item_id,
-          item_name: menuItem.name,
-          quantity: item.quantity || 1,
-          unit_price: menuItem.price,
-          note: item.note || null,
-        });
-      }
-
-      // Sipariş güncelleme zamanını güncelle
-      db.prepare('UPDATE orders SET updated_at = ? WHERE id = ?').run(now, order.id);
-    });
-
+    let result;
     try {
-      addItems();
+      result = await addItemsToOrder({
+        pool,
+        tableId,
+        restaurantId: req.restaurantId,
+        items,
+      });
     } catch (txErr) {
       return res.status(400).json({ error: txErr.message });
     }
 
-    // Güncel toplamı hesapla
-    const allItems = db.prepare(
-      'SELECT * FROM order_items WHERE order_id = ?'
-    ).all(order.id);
-    const total = allItems.reduce((sum, oi) => sum + oi.quantity * oi.unit_price, 0);
-
     res.status(201).json({
       message: 'Ürünler siparişe eklendi.',
-      order_id: order.id,
-      added_items: addedItems,
-      total,
+      order_id: result.order.id,
+      added_items: result.addedItems,
+      total: result.total,
       new_order_alert: true,
     });
   } catch (err) {
@@ -268,7 +295,7 @@ router.post('/:tableId/items', authMiddleware, (req, res) => {
 });
 
 // POST /api/orders/customer/:qrToken/items - Müşteri sipariş ekle (auth yok)
-router.post('/customer/:qrToken/items', (req, res) => {
+router.post('/customer/:qrToken/items', async (req, res) => {
   try {
     const { qrToken } = req.params;
     const { items } = req.body;
@@ -277,87 +304,35 @@ router.post('/customer/:qrToken/items', (req, res) => {
       return res.status(400).json({ error: 'En az bir ürün gereklidir.' });
     }
 
-    const db = getDb();
+    const pool = getPool();
 
-    // QR token ile masayı bul
-    const table = db.prepare(
-      'SELECT * FROM tables WHERE qr_token = ? AND active = 1'
-    ).get(qrToken);
+    const { rows: tableRows } = await pool.query(
+      'SELECT * FROM tables WHERE qr_token = $1 AND active = 1',
+      [qrToken]
+    );
+    const table = tableRows[0];
 
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı veya aktif değil.' });
     }
 
-    // Açık sipariş var mı?
-    let order = db.prepare(
-      "SELECT * FROM orders WHERE table_id = ? AND status = 'open' LIMIT 1"
-    ).get(table.id);
-
-    const now = new Date().toISOString();
-
-    if (!order) {
-      const result = db.prepare(
-        'INSERT INTO orders (table_id, status, created_at, updated_at) VALUES (?, ?, ?, ?)'
-      ).run(table.id, 'open', now, now);
-      order = db.prepare('SELECT * FROM orders WHERE id = ?').get(result.lastInsertRowid);
-    }
-
-    // Ürünleri ekle
-    const insertItem = db.prepare(
-      'INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price, note) VALUES (?, ?, ?, ?, ?)'
-    );
-
-    const addedItems = [];
-
-    const addItems = db.transaction(() => {
-      for (const item of items) {
-        const menuItem = db.prepare(
-          'SELECT * FROM menu_items WHERE id = ? AND restaurant_id = ? AND active = 1'
-        ).get(item.menu_item_id, table.restaurant_id);
-
-        if (!menuItem) {
-          throw new Error(`Ürün bulunamadı: ${item.menu_item_id}`);
-        }
-
-        const result = insertItem.run(
-          order.id,
-          item.menu_item_id,
-          item.quantity || 1,
-          menuItem.price,
-          item.note || null
-        );
-
-        addedItems.push({
-          id: result.lastInsertRowid,
-          menu_item_id: item.menu_item_id,
-          item_name: menuItem.name,
-          quantity: item.quantity || 1,
-          unit_price: menuItem.price,
-          note: item.note || null,
-        });
-      }
-
-      // Sipariş güncelleme zamanını güncelle
-      db.prepare('UPDATE orders SET updated_at = ? WHERE id = ?').run(now, order.id);
-    });
-
+    let result;
     try {
-      addItems();
+      result = await addItemsToOrder({
+        pool,
+        tableId: table.id,
+        restaurantId: table.restaurant_id,
+        items,
+      });
     } catch (txErr) {
       return res.status(400).json({ error: txErr.message });
     }
 
-    // Güncel toplamı hesapla
-    const allItems = db.prepare(
-      'SELECT * FROM order_items WHERE order_id = ?'
-    ).all(order.id);
-    const total = allItems.reduce((sum, oi) => sum + oi.quantity * oi.unit_price, 0);
-
     res.status(201).json({
       message: 'Ürünler siparişe eklendi.',
-      order_id: order.id,
-      added_items: addedItems,
-      total,
+      order_id: result.order.id,
+      added_items: result.addedItems,
+      total: result.total,
       new_order_alert: true,
     });
   } catch (err) {
@@ -367,7 +342,7 @@ router.post('/customer/:qrToken/items', (req, res) => {
 });
 
 // POST /api/orders/menu/:menuQrToken/items - Müşteri menü QR ile sipariş ekle (auth yok)
-router.post('/menu/:menuQrToken/items', (req, res) => {
+router.post('/menu/:menuQrToken/items', async (req, res) => {
   try {
     const { menuQrToken } = req.params;
     const { items } = req.body;
@@ -376,87 +351,35 @@ router.post('/menu/:menuQrToken/items', (req, res) => {
       return res.status(400).json({ error: 'En az bir ürün gereklidir.' });
     }
 
-    const db = getDb();
+    const pool = getPool();
 
-    // Menü QR token ile masayı bul
-    const table = db.prepare(
-      'SELECT * FROM tables WHERE menu_qr_token = ? AND active = 1'
-    ).get(menuQrToken);
+    const { rows: tableRows } = await pool.query(
+      'SELECT * FROM tables WHERE menu_qr_token = $1 AND active = 1',
+      [menuQrToken]
+    );
+    const table = tableRows[0];
 
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı veya aktif değil.' });
     }
 
-    // Açık sipariş var mı?
-    let order = db.prepare(
-      "SELECT * FROM orders WHERE table_id = ? AND status = 'open' LIMIT 1"
-    ).get(table.id);
-
-    const now = new Date().toISOString();
-
-    if (!order) {
-      const result = db.prepare(
-        'INSERT INTO orders (table_id, status, created_at, updated_at) VALUES (?, ?, ?, ?)'
-      ).run(table.id, 'open', now, now);
-      order = db.prepare('SELECT * FROM orders WHERE id = ?').get(result.lastInsertRowid);
-    }
-
-    // Ürünleri ekle
-    const insertItem = db.prepare(
-      'INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price, note) VALUES (?, ?, ?, ?, ?)'
-    );
-
-    const addedItems = [];
-
-    const addItems = db.transaction(() => {
-      for (const item of items) {
-        const menuItem = db.prepare(
-          'SELECT * FROM menu_items WHERE id = ? AND restaurant_id = ? AND active = 1'
-        ).get(item.menu_item_id, table.restaurant_id);
-
-        if (!menuItem) {
-          throw new Error(`Ürün bulunamadı: ${item.menu_item_id}`);
-        }
-
-        const result = insertItem.run(
-          order.id,
-          item.menu_item_id,
-          item.quantity || 1,
-          menuItem.price,
-          item.note || null
-        );
-
-        addedItems.push({
-          id: result.lastInsertRowid,
-          menu_item_id: item.menu_item_id,
-          item_name: menuItem.name,
-          quantity: item.quantity || 1,
-          unit_price: menuItem.price,
-          note: item.note || null,
-        });
-      }
-
-      // Sipariş güncelleme zamanını güncelle
-      db.prepare('UPDATE orders SET updated_at = ? WHERE id = ?').run(now, order.id);
-    });
-
+    let result;
     try {
-      addItems();
+      result = await addItemsToOrder({
+        pool,
+        tableId: table.id,
+        restaurantId: table.restaurant_id,
+        items,
+      });
     } catch (txErr) {
       return res.status(400).json({ error: txErr.message });
     }
 
-    // Güncel toplamı hesapla
-    const allItems = db.prepare(
-      'SELECT * FROM order_items WHERE order_id = ?'
-    ).all(order.id);
-    const total = allItems.reduce((sum, oi) => sum + oi.quantity * oi.unit_price, 0);
-
     res.status(201).json({
       message: 'Ürünler siparişe eklendi.',
-      order_id: order.id,
-      added_items: addedItems,
-      total,
+      order_id: result.order.id,
+      added_items: result.addedItems,
+      total: result.total,
       new_order_alert: true,
     });
   } catch (err) {
@@ -466,39 +389,41 @@ router.post('/menu/:menuQrToken/items', (req, res) => {
 });
 
 // DELETE /api/orders/:tableId/items/:itemId - Sipariş kalemini sil
-router.delete('/:tableId/items/:itemId', authMiddleware, (req, res) => {
+router.delete('/:tableId/items/:itemId', authMiddleware, async (req, res) => {
   try {
     const { tableId, itemId } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const table = db.prepare(
-      'SELECT * FROM tables WHERE id = ? AND restaurant_id = ?'
-    ).get(tableId, req.restaurantId);
+    const { rows: tableRows } = await pool.query(
+      'SELECT id FROM tables WHERE id = $1 AND restaurant_id = $2',
+      [tableId, req.restaurantId]
+    );
 
-    if (!table) {
+    if (tableRows.length === 0) {
       return res.status(404).json({ error: 'Masa bulunamadı.' });
     }
 
-    const order = db.prepare(
-      "SELECT * FROM orders WHERE table_id = ? AND status = 'open' LIMIT 1"
-    ).get(tableId);
+    const { rows: orderRows } = await pool.query(
+      "SELECT * FROM orders WHERE table_id = $1 AND status = 'open' LIMIT 1",
+      [tableId]
+    );
+    const order = orderRows[0];
 
     if (!order) {
       return res.status(404).json({ error: 'Açık sipariş bulunamadı.' });
     }
 
-    const orderItem = db.prepare(
-      'SELECT * FROM order_items WHERE id = ? AND order_id = ?'
-    ).get(itemId, order.id);
+    const { rows: orderItemRows } = await pool.query(
+      'SELECT id FROM order_items WHERE id = $1 AND order_id = $2',
+      [itemId, order.id]
+    );
 
-    if (!orderItem) {
+    if (orderItemRows.length === 0) {
       return res.status(404).json({ error: 'Sipariş kalemi bulunamadı.' });
     }
 
-    db.prepare('DELETE FROM order_items WHERE id = ?').run(itemId);
-
-    const now = new Date().toISOString();
-    db.prepare('UPDATE orders SET updated_at = ? WHERE id = ?').run(now, order.id);
+    await pool.query('DELETE FROM order_items WHERE id = $1', [itemId]);
+    await pool.query('UPDATE orders SET updated_at = NOW() WHERE id = $1', [order.id]);
 
     res.json({ message: 'Sipariş kalemi silindi.' });
   } catch (err) {
@@ -508,39 +433,44 @@ router.delete('/:tableId/items/:itemId', authMiddleware, (req, res) => {
 });
 
 // PUT /api/orders/:tableId/close - Siparişi kapat
-router.put('/:tableId/close', authMiddleware, (req, res) => {
+router.put('/:tableId/close', authMiddleware, async (req, res) => {
   try {
     const { tableId } = req.params;
-    const db = getDb();
+    const pool = getPool();
 
-    const table = db.prepare(
-      'SELECT * FROM tables WHERE id = ? AND restaurant_id = ?'
-    ).get(tableId, req.restaurantId);
+    const { rows: tableRows } = await pool.query(
+      'SELECT id FROM tables WHERE id = $1 AND restaurant_id = $2',
+      [tableId, req.restaurantId]
+    );
 
-    if (!table) {
+    if (tableRows.length === 0) {
       return res.status(404).json({ error: 'Masa bulunamadı.' });
     }
 
-    const order = db.prepare(
-      "SELECT * FROM orders WHERE table_id = ? AND status = 'open' LIMIT 1"
-    ).get(tableId);
+    const { rows: orderRows } = await pool.query(
+      "SELECT * FROM orders WHERE table_id = $1 AND status = 'open' LIMIT 1",
+      [tableId]
+    );
+    const order = orderRows[0];
 
     if (!order) {
       return res.status(404).json({ error: 'Açık sipariş bulunamadı.' });
     }
 
-    const now = new Date().toISOString();
-    db.prepare("UPDATE orders SET status = 'closed', updated_at = ? WHERE id = ?").run(now, order.id);
+    await pool.query(
+      "UPDATE orders SET status = 'closed', updated_at = NOW() WHERE id = $1",
+      [order.id]
+    );
 
-    // Sipariş toplamını hesapla
-    const totals = db.prepare(
-      'SELECT SUM(quantity * unit_price) as total FROM order_items WHERE order_id = ?'
-    ).get(order.id);
+    const { rows: tRows } = await pool.query(
+      'SELECT COALESCE(SUM(quantity * unit_price), 0)::bigint as total FROM order_items WHERE order_id = $1',
+      [order.id]
+    );
 
     res.json({
       message: 'Sipariş kapatıldı.',
       order_id: order.id,
-      total: totals.total || 0,
+      total: Number(tRows[0].total) || 0,
     });
   } catch (err) {
     console.error('Sipariş kapatma hatası:', err);
