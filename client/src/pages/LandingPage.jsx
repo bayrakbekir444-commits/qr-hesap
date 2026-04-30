@@ -74,14 +74,11 @@ export default function LandingPage() {
             </p>
             <div className="lp-hero-cta">
               <Link to="/panel/login" className="lp-btn lp-btn-primary">
-                Demo'yu Dene →
+                Hemen Başla →
               </Link>
               <a href="#pricing" className="lp-btn lp-btn-ghost">
                 Fiyatları Gör
               </a>
-            </div>
-            <div className="lp-hero-demo-info">
-              💡 Demo: <strong>Demo Restoran</strong> / <strong>123456</strong>
             </div>
           </div>
           <div className="lp-hero-visual">
