@@ -1,5 +1,10 @@
 node_modules/
 
+# Yanlışlıkla buraya kopyalanan GitHub Desktop dosyaları
+GitHub Desktop*.app/
+GitHubDesktop*
+"GitHub Desktop"*.app/
+
 # Env dosyaları (sırlar git'e gitmez)
 .env
 .env.local

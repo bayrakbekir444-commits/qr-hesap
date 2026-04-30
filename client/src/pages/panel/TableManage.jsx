@@ -38,6 +38,8 @@ export default function TableManage() {
   };
 
   const getQrUrl = (table) => {
+    const menuToken = table.menuQrToken || table.menu_qr_token;
+    if (menuToken) return `${window.location.origin}/menu/${menuToken}`;
     const token = table.qrToken || table.qr_token;
     return `${window.location.origin}/t/${token}`;
   };
@@ -54,7 +56,8 @@ export default function TableManage() {
   const downloadAllPdf = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/tables/qr-pdf?type=main', {
+      const apiBase = import.meta.env.VITE_API_URL || '/api';
+      const res = await fetch(`${apiBase}/tables/qr-pdf?type=menu`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
