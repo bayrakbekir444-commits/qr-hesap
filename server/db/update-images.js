@@ -23,26 +23,32 @@ const IMAGE_MAP = {
   'Kazandibi':        'https://images.pexels.com/photos/16668398/pexels-photo-16668398.jpeg?auto=compress&cs=tinysrgb&w=640',
 };
 
-(async () => {
-  try {
-    await initDb();
-    const pool = getPool();
-    const { rows: items } = await pool.query('SELECT id, name FROM menu_items');
-    let ok = 0;
-    for (const item of items) {
-      const url = IMAGE_MAP[item.name];
-      if (url) {
-        await pool.query('UPDATE menu_items SET image_url = $1 WHERE id = $2', [url, item.id]);
-        ok++;
-        console.log('✓', item.name);
-      } else {
-        console.log('-', item.name, '(eşleşme yok)');
-      }
+async function updateImages() {
+  const pool = getPool();
+  const { rows: items } = await pool.query('SELECT id, name FROM menu_items');
+  let ok = 0;
+  for (const item of items) {
+    const url = IMAGE_MAP[item.name];
+    if (url) {
+      await pool.query('UPDATE menu_items SET image_url = $1 WHERE id = $2', [url, item.id]);
+      ok++;
     }
-    console.log(`\n${ok}/${items.length} ürün güncellendi.`);
-    process.exit(0);
-  } catch (err) {
-    console.error('Update images hatası:', err);
-    process.exit(1);
   }
-})();
+  return { updated: ok, total: items.length };
+}
+
+if (require.main === module) {
+  (async () => {
+    try {
+      await initDb();
+      const r = await updateImages();
+      console.log(`${r.updated}/${r.total} ürün güncellendi.`);
+      process.exit(0);
+    } catch (err) {
+      console.error('Update images hatası:', err);
+      process.exit(1);
+    }
+  })();
+}
+
+module.exports = { updateImages, IMAGE_MAP };

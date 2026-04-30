@@ -1,7 +1,9 @@
 const express = require('express');
 const cors = require('cors');
-const { initDb } = require('./db/init');
+const { initDb, getPool } = require('./db/init');
 const { baslat: yedekBaslat } = require('./db/backup');
+const { seed } = require('./db/seed');
+const { updateImages } = require('./db/update-images');
 
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
@@ -70,6 +72,20 @@ app.use((err, req, res, next) => {
 (async () => {
   try {
     await initDb();
+
+    // Boş DB tespit edilirse demo seed + image URL'leri otomatik doldur
+    try {
+      const { rows } = await getPool().query("SELECT COUNT(*)::int AS c FROM restaurants");
+      if (rows[0].c === 0) {
+        console.log('🌱 Boş veritabanı tespit edildi, demo seed çalıştırılıyor...');
+        await seed();
+        const r = await updateImages();
+        console.log(`✓ Seed tamam, ${r.updated}/${r.total} ürün fotoğrafı güncellendi.`);
+      }
+    } catch (seedErr) {
+      console.error('Auto-seed hatası (devam ediliyor):', seedErr.message);
+    }
+
     yedekBaslat();
     app.listen(PORT, () => {
       console.log(`QR Hesap API http://localhost:${PORT} adresinde çalışıyor.`);
