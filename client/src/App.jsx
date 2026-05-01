@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 
 import LandingPage from './pages/LandingPage';
 import NotFoundPage from './pages/NotFoundPage';
-import PitchDeck from './pages/PitchDeck';
 import { KvkkPage, PrivacyPage, TermsPage } from './pages/legal/LegalPage';
 import CustomerView from './pages/customer/CustomerView';
 import MenuView from './pages/customer/MenuView';
@@ -30,9 +29,6 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-
-      {/* Pitch deck */}
-      <Route path="/pitch" element={<PitchDeck />} />
 
       {/* Yasal sayfalar */}
       <Route path="/yasal/kvkk" element={<KvkkPage />} />
