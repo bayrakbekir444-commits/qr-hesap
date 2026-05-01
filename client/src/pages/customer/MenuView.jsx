@@ -31,6 +31,7 @@ export default function MenuView() {
   const [lang, setLang] = useState(() => localStorage.getItem('qr_hesap_lang') || 'tr');
   const [orderItems, setOrderItems] = useState([]);
   const [orderOpen, setOrderOpen] = useState(false);
+  const [soupModal, setSoupModal] = useState(null);
 
   const handleLangChange = (code) => {
     setLang(code);
@@ -70,19 +71,36 @@ export default function MenuView() {
     }
   };
 
-  const handleAddItem = async (menuItem) => {
+  const isSoup = (name) => /çorba|corba|soup/i.test(name || '');
+
+  const handleAddItem = async (menuItem, note = null, askedSoup = false) => {
+    // Çorba ise ve henüz porsiyon sorulmadıysa modal aç
+    if (isSoup(menuItem.name) && !askedSoup) {
+      setSoupModal({ item: menuItem });
+      return;
+    }
     try {
       await api.post(`/orders/menu/${menuQrToken}/items`, {
-        menu_item_id: menuItem.id,
-        name: menuItem.name,
-        price: menuItem.price,
-        quantity: 1,
+        items: [{
+          menu_item_id: menuItem.id,
+          name: menuItem.name,
+          price: menuItem.price,
+          quantity: 1,
+          note: note || undefined,
+        }],
       });
-      showToast('Siparis eklendi!');
+      showToast(note ? `Siparis eklendi: ${note}` : 'Siparis eklendi!');
       await fetchData();
     } catch {
       showToast('Urun eklenemedi.');
     }
+  };
+
+  const handleSoupChoice = (porsiyon) => {
+    if (soupModal?.item) {
+      handleAddItem(soupModal.item, porsiyon, true);
+    }
+    setSoupModal(null);
   };
 
   if (loading) return <Loading text="Menu yukleniyor..." />;
@@ -271,6 +289,22 @@ export default function MenuView() {
         )}
 
         <div className="powered-by">QR Hesap ile siparis sistemi</div>
+
+        {/* Çorba porsiyon modalı */}
+        {soupModal && (
+          <div className="soup-modal-overlay" onClick={() => setSoupModal(null)}>
+            <div className="soup-modal" onClick={(e) => e.stopPropagation()}>
+              <h3>{soupModal.item.name}</h3>
+              <p className="soup-modal-q">Porsiyon nasıl olsun?</p>
+              <div className="soup-modal-options">
+                <button onClick={() => handleSoupChoice('Az')}>🥄 Az</button>
+                <button onClick={() => handleSoupChoice('Normal')}>🍲 Normal</button>
+                <button onClick={() => handleSoupChoice('Çok')}>🍜 Çok</button>
+              </div>
+              <button className="soup-modal-cancel" onClick={() => setSoupModal(null)}>İptal</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
