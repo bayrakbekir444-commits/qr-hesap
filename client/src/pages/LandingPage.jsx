@@ -1,5 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+
+const faqs = [
+  {
+    q: 'Kurulum ne kadar sürüyor?',
+    a: 'Hesap açtıktan sonra menünüzü ve masalarınızı eklemek ortalama 30 dakika sürer. Aynı gün içinde QR kodlarını yazdırıp masalara yapıştırabilirsiniz.',
+  },
+  {
+    q: 'Aylık ücret dışında gizli ödeme var mı?',
+    a: 'Hayır. Paket ücreti dışında hiçbir gizli ücret yok. KDV dahildir. İstediğiniz zaman iptal edebilirsiniz.',
+  },
+  {
+    q: 'Müşteri ödeme nasıl yapıyor?',
+    a: 'Müşteri menüden sipariş verir, "Hesabı kapat" butonuna basar ve kart bilgisini girer. Para doğrudan iyzico üzerinden restoranın hesabına geçer. (iyzico entegrasyonu Pro paket sonrası)',
+  },
+  {
+    q: 'QR kodları nasıl yazdırırım?',
+    a: 'Panelin Masa Yönetimi sayfasından her masa için ayrı PNG indirebilir veya tek tıkla tüm masaları PDF olarak indirip matbaaya verebilirsiniz.',
+  },
+  {
+    q: 'İnternetim yokken çalışır mı?',
+    a: 'Restoran panelinin internet bağlantısı gerekir. Müşteri telefonu ise mobil veri veya restoranın WiFi\'sini kullanır. Garson çağırma ve sipariş bildirimleri anlık olarak gelir.',
+  },
+  {
+    q: 'Personel sayısı sınırı var mı?',
+    a: 'Pro pakette sınırsız personel ekleyebilirsiniz. Her birine kendi giriş bilgisi tanımlanır.',
+  },
+  {
+    q: 'Fiş/fatura veriyor mu?',
+    a: 'Sistem her sipariş için dijital fiş üretir. e-Fatura/e-Arşiv entegrasyonu ihtiyaç halinde Zincir paketine dahildir.',
+  },
+];
 
 const features = [
   { icon: '📷', title: 'Fotoğraflı Menü', desc: 'Mercimek çorbası, baklava, kebap... her ürün gerçek fotoğrafıyla.' },
@@ -47,6 +78,8 @@ const plans = [
 ];
 
 export default function LandingPage() {
+  const [openFaq, setOpenFaq] = useState(null);
+
   return (
     <div className="lp">
       {/* Header */}
@@ -57,6 +90,7 @@ export default function LandingPage() {
             <a href="#features">Özellikler</a>
             <a href="#how">Nasıl Çalışır</a>
             <a href="#pricing">Fiyatlar</a>
+            <a href="#faq">SSS</a>
             <Link to="/panel/login" className="lp-nav-cta">Giriş Yap</Link>
           </nav>
         </div>
@@ -182,6 +216,25 @@ export default function LandingPage() {
                 >
                   {p.cta}
                 </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="lp-section">
+        <div className="lp-container" style={{ maxWidth: 800 }}>
+          <h2 className="lp-section-title">Sıkça Sorulan Sorular</h2>
+          <p className="lp-section-sub">Aklındaki soruların cevabı burada</p>
+          <div className="lp-faq">
+            {faqs.map((f, i) => (
+              <div key={i} className={`lp-faq-item ${openFaq === i ? 'open' : ''}`}>
+                <button className="lp-faq-q" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                  <span>{f.q}</span>
+                  <span className="lp-faq-icon">{openFaq === i ? '−' : '+'}</span>
+                </button>
+                {openFaq === i && <div className="lp-faq-a">{f.a}</div>}
               </div>
             ))}
           </div>

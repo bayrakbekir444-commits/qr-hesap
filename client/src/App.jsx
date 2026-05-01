@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 import LandingPage from './pages/LandingPage';
+import NotFoundPage from './pages/NotFoundPage';
 import CustomerView from './pages/customer/CustomerView';
 import MenuView from './pages/customer/MenuView';
 import PaymentView from './pages/customer/PaymentView';
@@ -56,6 +57,9 @@ export default function App() {
         <Route path="settings" element={<RestaurantSettings />} />
         <Route path="coupons" element={<Coupons />} />
       </Route>
+
+      {/* 404 catch-all */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
