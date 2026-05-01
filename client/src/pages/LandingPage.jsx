@@ -102,7 +102,7 @@ export default function LandingPage() {
           <div className="lp-hero-text">
             <span className="lp-badge">🚀 Türkiye'nin yeni nesil restoran sistemi</span>
             <h1 className="lp-hero-title">
-              Restoranınız için <span className="lp-accent">QR Menü ve Hesap Sistemi</span>
+              Müşteriniz <span className="lp-accent">QR ile sipariş</span>, tek tuşla <span className="lp-accent">ödeme</span>
             </h1>
             <p className="lp-hero-desc">
               Müşterileriniz QR kodu okutsun, fotoğraflı menüden sipariş versin, kasada beklemeden ödesin.
