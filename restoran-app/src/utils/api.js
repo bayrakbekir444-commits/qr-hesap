@@ -2,6 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
+const PRODUCTION_API = 'https://qr-hesap.onrender.com';
 const FALLBACK_HOST = '192.168.1.7';
 
 // Expo dev server host'unu otomatik bulur
@@ -26,7 +27,12 @@ const getDevHost = () => {
   return FALLBACK_HOST;
 };
 
-export const API_URL = `http://${getDevHost()}:3001`;
+// Önce env, sonra production, en son local dev
+// EXPO_PUBLIC_API_URL set edilirse onu kullan
+// Aksi halde her ortamda canlı Render'a git (basit)
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  PRODUCTION_API;
 
 console.log('🔗 API_URL =', API_URL);
 
