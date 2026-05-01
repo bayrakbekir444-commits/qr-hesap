@@ -280,6 +280,9 @@ export default function MenuView() {
                           {lowStock && (
                             <span className="mv-low-stock-badge">Son {stock} adet!</span>
                           )}
+                          {!!item.is_special && (
+                            <span className="mv-special-badge">⭐ Şefin Önerisi</span>
+                          )}
                         </div>
                         <div className="mv-food-body">
                           <span className="mv-food-name">{getItemName(item, lang)}</span>

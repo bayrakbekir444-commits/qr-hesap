@@ -149,7 +149,10 @@ export default function PaymentSuccess({ amount, onClose, qrToken, orderId }) {
           </div>
           <div className="receipt-actions">
             <button className="btn btn-gold btn-full" onClick={handleShareReceipt}>
-              {copied ? 'Kopyalandi!' : 'Paylas'}
+              {copied ? 'Kopyalandı!' : '📤 Paylaş'}
+            </button>
+            <button className="btn btn-outline btn-full" onClick={() => window.print()}>
+              🖨️ Yazdır / PDF
             </button>
             <button className="btn btn-ghost btn-full" onClick={() => setShowReceipt(false)}>
               Geri
@@ -263,6 +266,12 @@ export default function PaymentSuccess({ amount, onClose, qrToken, orderId }) {
 
   return (
     <div className="success-overlay">
+      {/* Konfeti */}
+      <div className="success-confetti" aria-hidden>
+        {[...Array(24)].map((_, i) => (
+          <span key={i} className={`confetti-piece confetti-${i % 6}`} style={{ left: `${(i * 4.2) % 100}%`, animationDelay: `${(i % 8) * 0.12}s` }} />
+        ))}
+      </div>
       <div className="success-card">
         <div className="success-checkmark">
           <svg viewBox="0 0 52 52" className="checkmark-svg">
@@ -270,9 +279,9 @@ export default function PaymentSuccess({ amount, onClose, qrToken, orderId }) {
             <path className="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
           </svg>
         </div>
-        <h2 className="success-title">Odeme Basarili!</h2>
+        <h2 className="success-title">🎉 Ödeme Başarılı!</h2>
         {amount && <p className="success-amount">{amount}</p>}
-        <p className="success-message">Tesekkur ederiz, odemeniz alindi.</p>
+        <p className="success-message">Teşekkür ederiz, tekrar bekleriz! 🍽️</p>
 
         <div className="success-actions-col">
           <button className="btn btn-outline btn-full btn-sm" onClick={handleFetchReceipt} disabled={receiptLoading}>
