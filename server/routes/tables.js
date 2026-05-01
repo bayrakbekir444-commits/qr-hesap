@@ -317,6 +317,23 @@ router.get('/menu/:menuQrToken/public', async (req, res) => {
       items: menuItems.filter((item) => item.category_id === cat.id),
     }));
 
+    // Bu masanın açık siparişini de getir (müşteri sepetini göstermek için)
+    const { rows: openOrderRows } = await pool.query(
+      "SELECT * FROM orders WHERE table_id = $1 AND status = 'open' ORDER BY id DESC LIMIT 1",
+      [table.id]
+    );
+    let order = null;
+    if (openOrderRows[0]) {
+      const o = openOrderRows[0];
+      const { rows: orderItems } = await pool.query(
+        `SELECT oi.*, mi.name AS item_name, oi.unit_price AS price
+         FROM order_items oi LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
+         WHERE oi.order_id = $1 ORDER BY oi.id`,
+        [o.id]
+      );
+      order = { ...o, items: orderItems };
+    }
+
     res.json({
       table: {
         id: table.id,
@@ -325,6 +342,7 @@ router.get('/menu/:menuQrToken/public', async (req, res) => {
         payment_qr_token: table.payment_qr_token,
       },
       menu,
+      order,
     });
   } catch (err) {
     console.error('Menü QR herkese açık bilgi hatası:', err);
