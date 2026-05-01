@@ -85,9 +85,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="lp-header">
         <div className="lp-container lp-header-inner">
-          <div className="lp-logo">
-            <img src="/demo-logo.svg" alt="QR Hesap" className="lp-logo-img" />
-          </div>
+          <div className="lp-logo">🧾 QR Hesap</div>
           <nav className="lp-nav">
             <a href="#features">Özellikler</a>
             <a href="#how">Nasıl Çalışır</a>
@@ -258,9 +256,7 @@ export default function LandingPage() {
       <footer className="lp-footer">
         <div className="lp-container lp-footer-inner">
           <div>
-            <div className="lp-logo">
-              <img src="/demo-logo.svg" alt="QR Hesap" className="lp-logo-img lp-logo-img-light" />
-            </div>
+            <div className="lp-logo">🧾 QR Hesap</div>
             <p>Restoranlar için QR menü ve hesap sistemi.</p>
           </div>
           <div className="lp-footer-cols">
