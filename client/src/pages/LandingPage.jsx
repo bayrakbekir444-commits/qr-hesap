@@ -258,9 +258,9 @@ export default function LandingPage() {
             </div>
             <div>
               <h4>Yasal</h4>
-              <a href="#">KVKK</a>
-              <a href="#">Gizlilik</a>
-              <a href="#">Kullanım Koşulları</a>
+              <Link to="/yasal/kvkk">KVKK</Link>
+              <Link to="/yasal/gizlilik">Gizlilik</Link>
+              <Link to="/yasal/kullanim">Kullanım Koşulları</Link>
             </div>
             <div>
               <h4>İletişim</h4>

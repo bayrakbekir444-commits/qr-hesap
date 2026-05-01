@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 
 import LandingPage from './pages/LandingPage';
 import NotFoundPage from './pages/NotFoundPage';
+import { KvkkPage, PrivacyPage, TermsPage } from './pages/legal/LegalPage';
 import CustomerView from './pages/customer/CustomerView';
 import MenuView from './pages/customer/MenuView';
 import PaymentView from './pages/customer/PaymentView';
@@ -28,6 +29,11 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+
+      {/* Yasal sayfalar */}
+      <Route path="/yasal/kvkk" element={<KvkkPage />} />
+      <Route path="/yasal/gizlilik" element={<PrivacyPage />} />
+      <Route path="/yasal/kullanim" element={<TermsPage />} />
 
       {/* Customer-facing routes (legacy single QR) */}
       <Route path="/t/:qrToken" element={<CustomerView />} />

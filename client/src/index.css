@@ -4010,3 +4010,144 @@ a { color: var(--gold); text-decoration: none; }
   background: #fff;
   border-color: rgba(231, 111, 81, 0.2);
 }
+
+/* ============================================
+   YASAL SAYFALAR (KVKK / Gizlilik / Kullanım)
+   ============================================ */
+.legal-page {
+  min-height: 100vh;
+  background: #fff7ee;
+  color: #2c1810;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.legal-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+}
+
+.legal-header {
+  background: #fff;
+  border-bottom: 1px solid rgba(231, 111, 81, 0.1);
+  padding: 16px 0;
+}
+.legal-header .legal-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.legal-logo {
+  font-weight: 800;
+  font-size: 18px;
+  color: #2c1810;
+  text-decoration: none;
+}
+.legal-back {
+  color: #c1432a;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.legal-back:hover { color: #e76f51; }
+
+.legal-main {
+  flex: 1;
+  padding: 40px 0 60px;
+}
+
+.legal-content h1 {
+  font-size: 32px;
+  font-weight: 800;
+  color: #2c1810;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+}
+
+.legal-update {
+  color: #8b6f4e;
+  font-size: 13px;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(231, 111, 81, 0.1);
+}
+
+.legal-content h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #2c1810;
+  margin: 32px 0 12px;
+  padding-top: 8px;
+}
+
+.legal-content p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #4a2e1f;
+  margin-bottom: 14px;
+}
+
+.legal-content ul {
+  margin: 12px 0 18px 24px;
+  padding: 0;
+}
+
+.legal-content li {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #4a2e1f;
+  margin-bottom: 6px;
+}
+
+.legal-content strong {
+  color: #2c1810;
+}
+
+.legal-content a {
+  color: #c1432a;
+  text-decoration: underline;
+}
+.legal-content a:hover { color: #e76f51; }
+
+.legal-disclaimer {
+  background: rgba(245, 166, 35, 0.12);
+  border-left: 4px solid #f5a623;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-top: 40px;
+  font-size: 14px;
+  color: #6b4423;
+  line-height: 1.6;
+}
+
+.legal-footer {
+  background: #2c1810;
+  color: #d4a373;
+  padding: 24px 0;
+}
+.legal-footer .legal-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.legal-links {
+  display: flex;
+  gap: 18px;
+}
+.legal-links a {
+  color: #d4a373;
+  text-decoration: none;
+  font-size: 13px;
+}
+.legal-links a:hover { color: #e76f51; }
+
+@media (max-width: 600px) {
+  .legal-content h1 { font-size: 26px; }
+  .legal-content h2 { font-size: 19px; }
+}
