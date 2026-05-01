@@ -1794,6 +1794,7 @@ a { color: var(--gold); text-decoration: none; }
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  position: relative;
 }
 
 .mv-food-image img {
@@ -3438,3 +3439,316 @@ a { color: var(--gold); text-decoration: none; }
   pointer-events: auto;
   cursor: default;
 }
+
+/* ============================================
+   STOK TAKİBİ — kart üstü stok rozeti ve giriş
+   ============================================ */
+.card-stock-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 4px;
+}
+
+.stock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(26, 188, 156, 0.15);
+  color: #1abc9c;
+  border: 1px solid rgba(26, 188, 156, 0.3);
+}
+
+.stock-badge.stock-infinite {
+  background: rgba(149, 165, 166, 0.15);
+  color: #95a5a6;
+  border-color: rgba(149, 165, 166, 0.3);
+}
+
+.stock-badge.stock-ok {
+  background: rgba(26, 188, 156, 0.15);
+  color: #1abc9c;
+  border-color: rgba(26, 188, 156, 0.35);
+}
+
+.stock-badge.stock-low {
+  background: rgba(243, 156, 18, 0.18);
+  color: #f39c12;
+  border-color: rgba(243, 156, 18, 0.4);
+}
+
+.stock-badge.stock-critical {
+  background: rgba(231, 76, 60, 0.18);
+  color: #e74c3c;
+  border-color: rgba(231, 76, 60, 0.45);
+  animation: stock-pulse 1.6s ease-in-out infinite;
+}
+
+.stock-badge.stock-out {
+  background: rgba(127, 140, 141, 0.18);
+  color: #bdc3c7;
+  border-color: rgba(127, 140, 141, 0.4);
+}
+
+@keyframes stock-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.card-stock-edit {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 4px 0 6px;
+}
+
+.card-stock-edit input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  background: #34495e;
+  border: 1px solid #4a6076;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 12px;
+}
+
+.card-stock-edit input:focus {
+  outline: none;
+  border-color: #1abc9c;
+}
+
+/* Müşteri menüsünde "Son X adet!" rozeti */
+.mv-low-stock-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4);
+  z-index: 2;
+  animation: stock-pulse 1.6s ease-in-out infinite;
+}
+
+/* ============================================
+   KATEGORİ DRAG-DROP
+   ============================================ */
+.mm-cat-hint {
+  font-size: 11px;
+  color: #95a5a6;
+  padding: 0 4px 8px;
+  font-style: italic;
+}
+
+.mm-cat-list li {
+  user-select: none;
+}
+
+.mm-cat-list li.dragging {
+  opacity: 0.4;
+  background: #2c3e50;
+}
+
+.mm-cat-list li.drag-over {
+  border-top: 2px solid #1abc9c;
+  background: rgba(26, 188, 156, 0.18);
+}
+
+.mm-cat-drag {
+  display: inline-block;
+  color: #7f8c8d;
+  font-size: 14px;
+  cursor: grab;
+  padding-right: 4px;
+  letter-spacing: -2px;
+}
+
+.mm-cat-list li:hover .mm-cat-drag,
+.mm-cat-list li.active .mm-cat-drag {
+  color: #ecf0f1;
+}
+
+/* ============================================
+   YORUMLAR PANELİ
+   ============================================ */
+.reviews-page {
+  padding: 0;
+}
+
+.review-summary {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.review-summary-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 0 0 auto;
+}
+
+.review-avg-num {
+  font-size: 48px;
+  font-weight: 700;
+  color: #f1c40f;
+  line-height: 1;
+}
+
+.review-avg-stars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.review-avg-count {
+  color: #95a5a6;
+  font-size: 13px;
+}
+
+.review-summary-bars {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.review-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #ecf0f1;
+}
+
+.review-bar-label {
+  width: 28px;
+  flex: 0 0 28px;
+  color: #f1c40f;
+}
+
+.review-bar-track {
+  flex: 1;
+  height: 8px;
+  background: #34495e;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.review-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f1c40f, #f39c12);
+  transition: width 0.3s ease;
+}
+
+.review-bar-count {
+  width: 28px;
+  flex: 0 0 28px;
+  text-align: right;
+  color: #95a5a6;
+}
+
+.review-stars {
+  display: inline-flex;
+  gap: 2px;
+  font-size: 14px;
+  color: #34495e;
+}
+
+.review-stars-big {
+  font-size: 22px;
+}
+
+.review-stars .star.filled {
+  color: #f1c40f;
+}
+
+.review-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+.review-filter-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #34495e;
+  color: #ecf0f1;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.review-filter-btn:hover {
+  background: #3d566e;
+}
+
+.review-filter-btn.active {
+  background: #1abc9c;
+  color: #fff;
+  border-color: #16a085;
+}
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.review-card-meta {
+  font-size: 12px;
+  color: #95a5a6;
+}
+
+.review-card-body {
+  color: #ecf0f1;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.review-no-comment {
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+.review-empty {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.review-empty-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.review-empty-text {
+  color: #95a5a6;
+  font-size: 14px;
+}
+

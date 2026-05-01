@@ -8,9 +8,14 @@ export default function MenuManage() {
   const [loading, setLoading] = useState(true);
 
   const [catForm, setCatForm] = useState({ name: '', editId: null });
-  const [itemForm, setItemForm] = useState({ name: '', name_en: '', name_ar: '', price: '', categoryId: '', editId: null, image_url: '', is_special: false, special_discount: 0 });
+  const [itemForm, setItemForm] = useState({ name: '', name_en: '', name_ar: '', price: '', categoryId: '', editId: null, image_url: '', is_special: false, special_discount: 0, stock_count: '' });
   const [showItemForm, setShowItemForm] = useState(false);
   const [activeCategoryId, setActiveCategoryId] = useState(null);
+  const [stockEdits, setStockEdits] = useState({}); // { itemId: 'value' }
+
+  // Drag-drop state
+  const [dragId, setDragId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -60,6 +65,9 @@ export default function MenuManage() {
     e.preventDefault();
     if (!itemForm.name.trim() || !itemForm.price || !itemForm.categoryId) return;
     try {
+      const stockVal = itemForm.stock_count === '' || itemForm.stock_count === null
+        ? null
+        : Number(itemForm.stock_count);
       const payload = {
         name: itemForm.name,
         name_en: itemForm.name_en || '',
@@ -69,13 +77,14 @@ export default function MenuManage() {
         image_url: itemForm.image_url || null,
         is_special: itemForm.is_special ? 1 : 0,
         special_discount: Number(itemForm.special_discount) || 0,
+        stock_count: stockVal,
       };
       if (itemForm.editId) {
         await api.put(`/menu/items/${itemForm.editId}`, payload);
       } else {
         await api.post('/menu/items', payload);
       }
-      setItemForm({ name: '', name_en: '', name_ar: '', price: '', categoryId: '', editId: null, image_url: '', is_special: false, special_discount: 0 });
+      setItemForm({ name: '', name_en: '', name_ar: '', price: '', categoryId: '', editId: null, image_url: '', is_special: false, special_discount: 0, stock_count: '' });
       setShowItemForm(false);
       fetchData();
     } catch { /* ignore */ }
@@ -100,6 +109,7 @@ export default function MenuManage() {
       image_url: item.image_url || '',
       is_special: !!item.is_special,
       special_discount: item.special_discount || 0,
+      stock_count: item.stock_count == null ? '' : String(item.stock_count),
     });
     setShowItemForm(true);
   };
@@ -109,6 +119,90 @@ export default function MenuManage() {
       await api.patch(`/menu/items/${item.id}/toggle`);
       fetchData();
     } catch {}
+  };
+
+  const saveStockCount = async (item) => {
+    const raw = stockEdits[item.id];
+    if (raw === undefined) return;
+    const trimmed = String(raw).trim();
+    let value;
+    if (trimmed === '' || trimmed === '∞') {
+      value = null; // sınırsız
+    } else {
+      const parsed = parseInt(trimmed, 10);
+      if (!Number.isFinite(parsed) || parsed < 0) return;
+      value = parsed;
+    }
+    try {
+      await api.put(`/menu/items/${item.id}`, { stock_count: value });
+      setStockEdits((prev) => {
+        const copy = { ...prev };
+        delete copy[item.id];
+        return copy;
+      });
+      fetchData();
+    } catch {}
+  };
+
+  const clearStock = async (item) => {
+    try {
+      await api.put(`/menu/items/${item.id}`, { stock_count: null });
+      fetchData();
+    } catch {}
+  };
+
+  // Kategori drag-drop handlers
+  const handleDragStart = (e, id) => {
+    setDragId(id);
+    try {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(id));
+    } catch {}
+  };
+
+  const handleDragOver = (e, id) => {
+    e.preventDefault();
+    if (dragOverId !== id) setDragOverId(id);
+    try { e.dataTransfer.dropEffect = 'move'; } catch {}
+  };
+
+  const handleDragLeave = () => {
+    setDragOverId(null);
+  };
+
+  const handleDrop = async (e, targetId) => {
+    e.preventDefault();
+    const sourceId = dragId;
+    setDragId(null);
+    setDragOverId(null);
+    if (!sourceId || sourceId === targetId) return;
+
+    const ids = categories.map((c) => c.id);
+    const fromIdx = ids.indexOf(sourceId);
+    const toIdx = ids.indexOf(targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+
+    const newOrder = [...ids];
+    newOrder.splice(fromIdx, 1);
+    newOrder.splice(toIdx, 0, sourceId);
+
+    // Optimistic update
+    const newCategories = newOrder.map((id) => categories.find((c) => c.id === id)).filter(Boolean);
+    setCategories(newCategories);
+
+    try {
+      await api.put('/menu/categories/reorder', { order: newOrder });
+      // Sunucudan tekrar fetch (opsiyonel)
+      fetchData();
+    } catch {
+      // Hata olursa eski sıralamaya dön
+      fetchData();
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDragId(null);
+    setDragOverId(null);
   };
 
   if (loading) return <Loading />;
@@ -128,12 +222,24 @@ export default function MenuManage() {
     return '🍽️';
   };
 
+  const renderStockBadge = (item) => {
+    if (item.stock_count == null) {
+      return <span className="stock-badge stock-infinite" title="Sınırsız stok">∞ Sınırsız</span>;
+    }
+    const n = Number(item.stock_count);
+    let cls = 'stock-badge stock-ok';
+    if (n <= 0) cls = 'stock-badge stock-out';
+    else if (n < 5) cls = 'stock-badge stock-critical';
+    else if (n < 10) cls = 'stock-badge stock-low';
+    return <span className={cls}>{n} adet</span>;
+  };
+
   return (
     <div className="menu-manage">
       <div className="mm-page-header">
         <h1 className="panel-page-title">Menu Yonetimi</h1>
         <button className="btn btn-accent btn-sm" onClick={() => {
-          setItemForm({ name: '', name_en: '', name_ar: '', price: '', categoryId: activeCategoryId || categories[0]?.id || '', editId: null, image_url: '', is_special: false, special_discount: 0 });
+          setItemForm({ name: '', name_en: '', name_ar: '', price: '', categoryId: activeCategoryId || categories[0]?.id || '', editId: null, image_url: '', is_special: false, special_discount: 0, stock_count: '' });
           setShowItemForm(!showItemForm);
         }}>
           {showItemForm ? 'Kapat' : '+ Yeni Urun'}
@@ -206,6 +312,16 @@ export default function MenuManage() {
                 onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })}
               />
             </div>
+            <div className="form-group">
+              <label>Stok (boş = sınırsız)</label>
+              <input
+                type="number"
+                min="0"
+                placeholder="örn: 25 (boş bırakırsanız sınırsız stok)"
+                value={itemForm.stock_count}
+                onChange={(e) => setItemForm({ ...itemForm, stock_count: e.target.value })}
+              />
+            </div>
             <div className="form-row">
               <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <input
@@ -247,6 +363,7 @@ export default function MenuManage() {
       <div className="mm-container">
         <aside className="mm-sidebar">
           <h2>Menü</h2>
+          <div className="mm-cat-hint">İpucu: Kategorileri sürükleyerek sıralayabilirsiniz</div>
           <form className="mm-cat-form" onSubmit={handleCatSubmit}>
             <input
               type="text"
@@ -260,22 +377,42 @@ export default function MenuManage() {
             )}
           </form>
           <ul className="mm-cat-list">
-            {categories.map((cat) => (
-              <li
-                key={cat.id}
-                className={cat.id === activeCategoryId ? 'active' : ''}
-                onClick={() => setActiveCategoryId(cat.id)}
-              >
-                <span className="mm-cat-name">
-                  <span className="mm-cat-emoji">{categoryEmoji(cat.name)}</span>
-                  {cat.name}
-                </span>
-                <span className="mm-cat-actions" onClick={(e) => e.stopPropagation()}>
-                  <button className="mm-cat-icon" onClick={() => setCatForm({ name: cat.name, editId: cat.id })} title="Düzenle">✎</button>
-                  <button className="mm-cat-icon danger" onClick={() => handleDeleteCat(cat.id)} title="Sil">✕</button>
-                </span>
-              </li>
-            ))}
+            {categories.map((cat) => {
+              const isDragging = dragId === cat.id;
+              const isOver = dragOverId === cat.id && dragId !== null && dragId !== cat.id;
+              const cls = [
+                cat.id === activeCategoryId ? 'active' : '',
+                isDragging ? 'dragging' : '',
+                isOver ? 'drag-over' : '',
+              ].filter(Boolean).join(' ');
+              return (
+                <li
+                  key={cat.id}
+                  className={cls}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, cat.id)}
+                  onDragOver={(e) => handleDragOver(e, cat.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, cat.id)}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => setActiveCategoryId(cat.id)}
+                  style={{
+                    opacity: isDragging ? 0.4 : 1,
+                    cursor: 'grab',
+                  }}
+                >
+                  <span className="mm-cat-drag" title="Sürükleyin">⋮⋮</span>
+                  <span className="mm-cat-name">
+                    <span className="mm-cat-emoji">{categoryEmoji(cat.name)}</span>
+                    {cat.name}
+                  </span>
+                  <span className="mm-cat-actions" onClick={(e) => e.stopPropagation()}>
+                    <button className="mm-cat-icon" onClick={() => setCatForm({ name: cat.name, editId: cat.id })} title="Düzenle">✎</button>
+                    <button className="mm-cat-icon danger" onClick={() => handleDeleteCat(cat.id)} title="Sil">✕</button>
+                  </span>
+                </li>
+              );
+            })}
             {categories.length === 0 && <li className="mm-cat-empty">Henüz kategori yok</li>}
           </ul>
         </aside>
@@ -291,6 +428,9 @@ export default function MenuManage() {
             activeItems.map((item) => {
               const fallbackImg = `https://loremflickr.com/400/300/${encodeURIComponent((item.name || 'food') + ',food')}?lock=${item.id}`;
               const imgSrc = item.image_url || fallbackImg;
+              const stockEditValue = stockEdits[item.id] !== undefined
+                ? stockEdits[item.id]
+                : (item.stock_count == null ? '' : String(item.stock_count));
               return (
               <div key={item.id} className={`card ${!item.active ? 'inactive' : ''}`}>
                 <div className="card-img-wrap">
@@ -305,6 +445,34 @@ export default function MenuManage() {
                 <div className="card-content">
                   <div className="card-title">{item.name}</div>
                   <div className="card-price">{formatTL(item.price)}</div>
+                  <div className="card-stock-row">
+                    {renderStockBadge(item)}
+                  </div>
+                  <div className="card-stock-edit">
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Stok (boş = ∞)"
+                      value={stockEditValue}
+                      onChange={(e) => setStockEdits({ ...stockEdits, [item.id]: e.target.value })}
+                      onBlur={() => {
+                        if (stockEdits[item.id] !== undefined) saveStockCount(item);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); saveStockCount(item); }
+                      }}
+                    />
+                    {item.stock_count != null && (
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        title="Sınırsız stok yap"
+                        onClick={() => clearStock(item)}
+                      >
+                        ∞
+                      </button>
+                    )}
+                  </div>
                   <div className="card-actions">
                     <button
                       onClick={() => toggleStock(item)}

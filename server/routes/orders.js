@@ -29,13 +29,37 @@ async function addItemsToOrder({ pool, tableId, restaurantId, items }) {
     order = await ensureOpenOrder(client, tableId);
 
     for (const item of items) {
+      const qty = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
+
+      // Satır kilidi: aynı anda iki müşteri sipariş verirse stok tutarlı kalsın
       const { rows: menuRows } = await client.query(
-        'SELECT * FROM menu_items WHERE id = $1 AND restaurant_id = $2 AND active = 1',
+        'SELECT * FROM menu_items WHERE id = $1 AND restaurant_id = $2 AND active = 1 FOR UPDATE',
         [item.menu_item_id, restaurantId]
       );
       const menuItem = menuRows[0];
       if (!menuItem) {
-        throw new Error(`Ürün bulunamadı: ${item.menu_item_id}`);
+        throw new Error(`Ürün bulunamadı veya stokta yok: ${item.menu_item_id}`);
+      }
+
+      // Stok kontrolü: stock_count NULL ise sınırsız, sayı ise yeterlilik kontrol et
+      if (menuItem.stock_count !== null && menuItem.stock_count !== undefined) {
+        if (menuItem.stock_count < qty) {
+          throw new Error(`Stok yetersiz: ${menuItem.stock_count} kaldı (${menuItem.name})`);
+        }
+
+        const newStock = menuItem.stock_count - qty;
+        // Stok 0'a indiğinde ürünü pasife al (artık menüde görünmesin)
+        if (newStock <= 0) {
+          await client.query(
+            'UPDATE menu_items SET stock_count = $1, active = 0 WHERE id = $2',
+            [0, menuItem.id]
+          );
+        } else {
+          await client.query(
+            'UPDATE menu_items SET stock_count = $1 WHERE id = $2',
+            [newStock, menuItem.id]
+          );
+        }
       }
 
       const { rows: insertedRows } = await client.query(
@@ -45,7 +69,7 @@ async function addItemsToOrder({ pool, tableId, restaurantId, items }) {
         [
           order.id,
           item.menu_item_id,
-          item.quantity || 1,
+          qty,
           menuItem.price,
           item.note || null,
         ]
@@ -55,7 +79,7 @@ async function addItemsToOrder({ pool, tableId, restaurantId, items }) {
         id: insertedRows[0].id,
         menu_item_id: item.menu_item_id,
         item_name: menuItem.name,
-        quantity: item.quantity || 1,
+        quantity: qty,
         unit_price: menuItem.price,
         note: item.note || null,
       });

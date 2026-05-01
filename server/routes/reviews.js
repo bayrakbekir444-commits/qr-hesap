@@ -60,17 +60,19 @@ router.post('/', async (req, res) => {
 });
 
 // GET /api/reviews - Değerlendirmeleri listele (auth gerekli)
+// Restoranın tüm yorumları + masa numarası + sipariş tarihi (max 100)
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const pool = getPool();
 
     const { rows } = await pool.query(
-      `SELECT r.*, o.table_id, t.table_number
+      `SELECT r.*, t.table_number, o.created_at AS order_date
        FROM reviews r
        JOIN orders o ON r.order_id = o.id
        JOIN tables t ON o.table_id = t.id
-       WHERE r.restaurant_id = $1
-       ORDER BY r.created_at DESC`,
+       WHERE t.restaurant_id = $1
+       ORDER BY r.created_at DESC
+       LIMIT 100`,
       [req.restaurantId]
     );
 

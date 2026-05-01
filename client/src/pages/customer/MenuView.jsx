@@ -201,6 +201,8 @@ export default function MenuView() {
                   {menuByCategory[category].map((item) => {
                     const fallbackImg = `https://loremflickr.com/400/300/${encodeURIComponent((item.name || 'food') + ',food')}?lock=${item.id}`;
                     const imgSrc = item.image_url || fallbackImg;
+                    const stock = item.stock_count;
+                    const lowStock = stock != null && stock > 0 && stock < 5;
                     return (
                       <div key={item.id} className="mv-food-card">
                         <div className="mv-food-image">
@@ -212,6 +214,9 @@ export default function MenuView() {
                           <div className="mv-food-image-placeholder" style={{ display: 'none' }}>
                             {(getItemName(item, lang) || '?').charAt(0).toUpperCase()}
                           </div>
+                          {lowStock && (
+                            <span className="mv-low-stock-badge">Son {stock} adet!</span>
+                          )}
                         </div>
                         <div className="mv-food-body">
                           <span className="mv-food-name">{getItemName(item, lang)}</span>

@@ -18,6 +18,7 @@ import Reports from './pages/panel/Reports';
 import StaffManage from './pages/panel/StaffManage';
 import RestaurantSettings from './pages/panel/RestaurantSettings';
 import Coupons from './pages/panel/Coupons';
+import Reviews from './pages/panel/Reviews';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="staff" element={<StaffManage />} />
         <Route path="settings" element={<RestaurantSettings />} />
         <Route path="coupons" element={<Coupons />} />
+        <Route path="reviews" element={<Reviews />} />
       </Route>
 
       {/* 404 catch-all */}

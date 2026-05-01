@@ -55,6 +55,55 @@ router.post('/categories', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /api/menu/categories/reorder - Kategori sıralamasını güncelle (drag-drop)
+// ÖNEMLİ: Bu endpoint /categories/:id'den ÖNCE tanımlanmalı, aksi halde
+// Express ':id' parametresine 'reorder' değerini atar.
+router.put('/categories/reorder', authMiddleware, async (req, res) => {
+  const pool = getPool();
+  const client = await pool.connect();
+  let inTx = false;
+  try {
+    const { order } = req.body;
+    if (!Array.isArray(order) || order.length === 0) {
+      return res.status(400).json({ error: 'order dizisi gereklidir.' });
+    }
+
+    const ids = order.map((x) => parseInt(x, 10)).filter((x) => Number.isFinite(x));
+    if (ids.length !== order.length) {
+      return res.status(400).json({ error: 'Geçersiz kategori id.' });
+    }
+
+    const { rows: ownRows } = await client.query(
+      'SELECT id FROM categories WHERE restaurant_id = $1 AND id = ANY($2::int[])',
+      [req.restaurantId, ids]
+    );
+    if (ownRows.length !== ids.length) {
+      return res.status(403).json({ error: 'Bazı kategoriler bu restorana ait değil.' });
+    }
+
+    await client.query('BEGIN');
+    inTx = true;
+    for (let i = 0; i < ids.length; i++) {
+      await client.query(
+        'UPDATE categories SET sort_order = $1 WHERE id = $2 AND restaurant_id = $3',
+        [i, ids[i], req.restaurantId]
+      );
+    }
+    await client.query('COMMIT');
+    inTx = false;
+
+    res.json({ message: 'Kategori sıralaması güncellendi.', count: ids.length });
+  } catch (err) {
+    if (inTx) {
+      try { await client.query('ROLLBACK'); } catch {}
+    }
+    console.error('Kategori sıralama hatası:', err);
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  } finally {
+    client.release();
+  }
+});
+
 // PUT /api/menu/categories/:id - Kategori güncelle
 router.put('/categories/:id', authMiddleware, async (req, res) => {
   try {
@@ -183,7 +232,7 @@ router.patch('/items/:id/toggle', authMiddleware, async (req, res) => {
 router.put('/items/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, category_id, active, name_en, name_ar, image_url, is_special, special_discount } = req.body;
+    const { name, price, category_id, active, name_en, name_ar, image_url, is_special, special_discount, stock_count } = req.body;
 
     const pool = getPool();
 
@@ -197,22 +246,41 @@ router.put('/items/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Ürün bulunamadı.' });
     }
 
+    // stock_count: undefined = dokunma, null = sınırsız, sayı = stok sayısı
+    let nextStock;
+    if (stock_count === undefined) {
+      nextStock = item.stock_count;
+    } else if (stock_count === null || stock_count === '' ) {
+      nextStock = null;
+    } else {
+      const parsed = parseInt(stock_count, 10);
+      nextStock = Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+    }
+
+    // Stok > 0 girildiğinde ürünü tekrar aktif yap (kolaylık)
+    let nextActive = active !== undefined ? active : item.active;
+    if (stock_count !== undefined && nextStock !== null && nextStock > 0 && active === undefined) {
+      nextActive = 1;
+    }
+
     const { rows } = await pool.query(
       `UPDATE menu_items
        SET name = $1, price = $2, category_id = $3, active = $4,
-           name_en = $5, name_ar = $6, image_url = $7, is_special = $8, special_discount = $9
-       WHERE id = $10
+           name_en = $5, name_ar = $6, image_url = $7, is_special = $8, special_discount = $9,
+           stock_count = $10
+       WHERE id = $11
        RETURNING *`,
       [
         name !== undefined ? name : item.name,
         price !== undefined ? price : item.price,
         category_id !== undefined ? category_id : item.category_id,
-        active !== undefined ? active : item.active,
+        nextActive,
         name_en !== undefined ? name_en : (item.name_en || ''),
         name_ar !== undefined ? name_ar : (item.name_ar || ''),
         image_url !== undefined ? image_url : item.image_url,
         is_special !== undefined ? (is_special ? 1 : 0) : item.is_special,
         special_discount !== undefined ? special_discount : item.special_discount,
+        nextStock,
         id,
       ]
     );
@@ -223,6 +291,7 @@ router.put('/items/:id', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Sunucu hatası.' });
   }
 });
+
 
 // DELETE /api/menu/items/:id - Ürünü pasife al (soft delete)
 router.delete('/items/:id', authMiddleware, async (req, res) => {
