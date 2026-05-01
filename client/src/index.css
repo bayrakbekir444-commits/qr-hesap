@@ -3262,3 +3262,34 @@ a { color: var(--gold); text-decoration: none; }
 .soup-modal-cancel:hover {
   color: var(--text);
 }
+
+/* WhatsApp floating button */
+.lp-whatsapp {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #25d366;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+  cursor: pointer;
+  z-index: 999;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: lp-whatsapp-pulse 2s ease-in-out infinite;
+}
+
+.lp-whatsapp:hover {
+  transform: scale(1.1) rotate(-5deg);
+  box-shadow: 0 8px 28px rgba(37, 211, 102, 0.6);
+  animation: none;
+}
+
+@keyframes lp-whatsapp-pulse {
+  0%, 100% { box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45), 0 0 0 0 rgba(37, 211, 102, 0.55); }
+  50% { box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45), 0 0 0 14px rgba(37, 211, 102, 0); }
+}
