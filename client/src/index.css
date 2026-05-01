@@ -4682,10 +4682,11 @@ a { color: var(--gold); text-decoration: none; }
 
 /* Müşteri menüsü restoran logo */
 .restaurant-logo-img {
-  width: 140px;
-  height: 140px;
+  width: 220px;
+  height: 220px;
+  max-width: 60vw;
   object-fit: contain;
-  margin: 0 auto 12px;
+  margin: 0 auto 16px;
   display: block;
   background: transparent;
   padding: 0;
