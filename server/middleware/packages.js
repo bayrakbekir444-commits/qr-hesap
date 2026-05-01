@@ -3,7 +3,7 @@ const { getPool } = require('../db/init');
 const PACKAGES = {
   temel: {
     label: 'Temel',
-    monthly_fee: 400,
+    monthly_fee: 800,
     max_tables: 10,
     features: {
       reports: false,
@@ -13,7 +13,7 @@ const PACKAGES = {
   },
   pro: {
     label: 'Pro',
-    monthly_fee: 800,
+    monthly_fee: 2000,
     max_tables: 30,
     features: {
       reports: true,
@@ -23,7 +23,7 @@ const PACKAGES = {
   },
   zincir: {
     label: 'Zincir',
-    monthly_fee: 2000,
+    monthly_fee: 4000,
     max_tables: 999,
     features: {
       reports: true,
