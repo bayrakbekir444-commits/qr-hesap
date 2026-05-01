@@ -184,6 +184,24 @@ export default function MenuView() {
           <span>{waiterCalled ? 'Garson Cagrildi' : 'Garson Cagir'}</span>
         </button>
 
+        {/* Category quick-jump tabs */}
+        {categoryNames.length > 1 && (
+          <div className="mv-cat-tabs">
+            {categoryNames.map((category) => (
+              <button
+                key={category}
+                className="mv-cat-tab"
+                onClick={() => {
+                  const el = document.getElementById(`cat-${category}`);
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Menu */}
         {categoryNames.length === 0 ? (
           <div className="empty-state">
@@ -192,7 +210,7 @@ export default function MenuView() {
         ) : (
           <div className="mv-menu">
             {categoryNames.map((category) => (
-              <div key={category} className="mv-category">
+              <div key={category} id={`cat-${category}`} className="mv-category">
                 <div className="mv-category-header">
                   <span className="mv-category-name">{category}</span>
                   <span className="mv-category-count">{menuByCategory[category].length} urun</span>

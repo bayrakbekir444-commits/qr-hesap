@@ -3752,3 +3752,43 @@ a { color: var(--gold); text-decoration: none; }
   font-size: 14px;
 }
 
+
+/* Müşteri menüsü kategori sekmeleri (yatay kaydırılabilir chip'ler) */
+.mv-cat-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 4px;
+  margin: 0 -4px 8px;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: linear-gradient(180deg, rgba(15, 15, 35, 0.95), rgba(15, 15, 35, 0.85));
+  backdrop-filter: blur(8px);
+  scrollbar-width: none;
+}
+.mv-cat-tabs::-webkit-scrollbar { display: none; }
+
+.mv-cat-tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.mv-cat-tab:hover {
+  background: rgba(245, 166, 35, 0.18);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.mv-cat-tab:active {
+  transform: scale(0.95);
+}
