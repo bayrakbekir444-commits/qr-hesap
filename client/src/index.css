@@ -4678,3 +4678,19 @@ a { color: var(--gold); text-decoration: none; }
   .pd-header h2 { font-size: 32px; }
   .pd-grid-2, .pd-steps, .pd-features, .pd-stats, .pd-plans { grid-template-columns: 1fr; }
 }
+
+/* Müşteri menüsü restoran logo */
+.restaurant-logo-img {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  border-radius: 16px;
+  margin: 0 auto 12px;
+  display: block;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 8px;
+}
+.mv-theme-light .restaurant-logo-img {
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}

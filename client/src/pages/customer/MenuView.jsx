@@ -130,6 +130,7 @@ export default function MenuView() {
   const menu = data?.menu || data?.restaurant?.menu || [];
   const tableName = data?.table?.name || data?.tableName || `Masa ${data?.table?.table_number || data?.table?.number || ''}`.trim();
   const restaurantName = data?.table?.restaurant_name || data?.restaurant?.name || data?.restaurantName || 'Restoran';
+  const restaurantLogo = data?.table?.restaurant_logo || data?.restaurant?.logo_url;
 
   // Backend iki format dönebilir:
   // 1) [{ id, name, items: [...] }]  (kategori objeleri)
@@ -186,9 +187,13 @@ export default function MenuView() {
 
         {/* Header */}
         <div className="customer-header">
-          <div className="restaurant-badge">
-            <span className="restaurant-icon">&#9733;</span>
-          </div>
+          {restaurantLogo ? (
+            <img src={restaurantLogo} alt={restaurantName} className="restaurant-logo-img" />
+          ) : (
+            <div className="restaurant-badge">
+              <span className="restaurant-icon">&#9733;</span>
+            </div>
+          )}
           <h1 className="restaurant-name">{restaurantName}</h1>
           <div className="table-badge">{tableName}</div>
         </div>

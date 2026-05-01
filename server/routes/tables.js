@@ -293,7 +293,7 @@ router.get('/menu/:menuQrToken/public', async (req, res) => {
     const pool = getPool();
 
     const { rows: tableRows } = await pool.query(
-      'SELECT t.*, r.name as restaurant_name FROM tables t JOIN restaurants r ON t.restaurant_id = r.id WHERE t.menu_qr_token = $1 AND t.active = 1',
+      'SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo, r.description as restaurant_description FROM tables t JOIN restaurants r ON t.restaurant_id = r.id WHERE t.menu_qr_token = $1 AND t.active = 1',
       [menuQrToken]
     );
     const table = tableRows[0];
@@ -339,6 +339,8 @@ router.get('/menu/:menuQrToken/public', async (req, res) => {
         id: table.id,
         table_number: table.table_number,
         restaurant_name: table.restaurant_name,
+        restaurant_logo: table.restaurant_logo,
+        restaurant_description: table.restaurant_description,
         payment_qr_token: table.payment_qr_token,
       },
       menu,
