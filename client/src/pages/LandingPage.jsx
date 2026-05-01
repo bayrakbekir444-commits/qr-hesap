@@ -119,34 +119,13 @@ export default function LandingPage() {
           </div>
           <div className="lp-hero-visual">
             <div className="lp-phone">
-              <div className="lp-phone-screen">
-                <div className="lp-phone-header">
-                  <span>★</span>
-                  <strong>Demo Restoran</strong>
-                  <span className="lp-phone-tag">Masa 4</span>
-                </div>
-                <div className="lp-phone-card">
-                  <div className="lp-phone-img" style={{ background: 'linear-gradient(135deg, #f4a261, #e76f51)' }}>🍲</div>
-                  <div className="lp-phone-text">
-                    <strong>Mercimek Çorbası</strong>
-                    <span>₺45</span>
-                  </div>
-                </div>
-                <div className="lp-phone-card">
-                  <div className="lp-phone-img" style={{ background: 'linear-gradient(135deg, #e76f51, #c1432a)' }}>🍖</div>
-                  <div className="lp-phone-text">
-                    <strong>Adana Kebap</strong>
-                    <span>₺250</span>
-                  </div>
-                </div>
-                <div className="lp-phone-card">
-                  <div className="lp-phone-img" style={{ background: 'linear-gradient(135deg, #f4a261, #d49c4e)' }}>🥙</div>
-                  <div className="lp-phone-text">
-                    <strong>Lahmacun</strong>
-                    <span>₺80</span>
-                  </div>
-                </div>
-                <div className="lp-phone-bottom">3 ürün · ₺375</div>
+              <div className="lp-phone-screen lp-phone-live">
+                <iframe
+                  src="/menu/7c4d3316-3ea9-458b-b062-b217339ef824"
+                  className="lp-phone-iframe"
+                  title="Canlı müşteri menüsü"
+                  loading="lazy"
+                />
               </div>
             </div>
           </div>
