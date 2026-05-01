@@ -105,14 +105,26 @@ export default function MenuView() {
   const tableName = data?.table?.name || data?.tableName || `Masa ${data?.table?.number || ''}`;
   const restaurantName = data?.restaurant?.name || data?.restaurantName || 'Restoran';
 
-  const menuByCategory = menu.reduce((acc, item) => {
-    const cat = item.category || 'Diger';
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(item);
-    return acc;
-  }, {});
+  // Backend iki format dönebilir:
+  // 1) [{ id, name, items: [...] }]  (kategori objeleri)
+  // 2) [{ id, name, price, category, ... }]  (flat item listesi)
+  const isCategoryFormat = menu.length > 0 && Array.isArray(menu[0]?.items);
 
-  const categoryNames = Object.keys(menuByCategory);
+  const menuByCategory = isCategoryFormat
+    ? menu.reduce((acc, cat) => {
+        acc[cat.name] = (cat.items || []).filter((it) => it.active !== 0);
+        return acc;
+      }, {})
+    : menu.reduce((acc, item) => {
+        const cat = item.category || 'Diger';
+        if (!acc[cat]) acc[cat] = [];
+        acc[cat].push(item);
+        return acc;
+      }, {});
+
+  const categoryNames = isCategoryFormat
+    ? menu.map((c) => c.name).filter((n) => menuByCategory[n] && menuByCategory[n].length > 0)
+    : Object.keys(menuByCategory);
   const orderTotal = orderItems.reduce((s, i) => s + i.price * i.quantity, 0);
   const orderCount = orderItems.reduce((s, i) => s + i.quantity, 0);
 
