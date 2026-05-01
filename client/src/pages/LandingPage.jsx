@@ -265,7 +265,7 @@ export default function LandingPage() {
             <div>
               <h4>İletişim</h4>
               <a href="mailto:info@qrhesap.com">info@qrhesap.com</a>
-              <a href="https://wa.me/905555555555" target="_blank" rel="noreferrer">WhatsApp</a>
+              <a href="https://wa.me/905436960574" target="_blank" rel="noreferrer">WhatsApp</a>
             </div>
           </div>
         </div>
@@ -288,7 +288,7 @@ export default function LandingPage() {
 
       {/* WhatsApp Floating Button */}
       <a
-        href="https://wa.me/905555555555?text=Merhaba%2C%20QR%20Hesap%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum"
+        href="https://wa.me/905436960574?text=Merhaba%2C%20QR%20Hesap%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum"
         target="_blank"
         rel="noreferrer"
         className="lp-whatsapp"
