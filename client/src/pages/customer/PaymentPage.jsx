@@ -24,6 +24,12 @@ export default function PaymentPage() {
   const paymentType = location.state?.type || 'full';
   const shareIndex = location.state?.shareIndex;
   const splitCount = location.state?.splitCount;
+  const rawItems = location.state?.items || [];
+  const items = rawItems.map((it) => ({
+    ...it,
+    name: it.name || it.item_name || 'Ürün',
+    price: it.price ?? it.unit_price ?? 0,
+  }));
 
   const [tipRate, setTipRate] = useState(0);
   const [customTip, setCustomTip] = useState('');
@@ -102,6 +108,23 @@ export default function PaymentPage() {
             <p className="page-subtitle">{(shareIndex ?? 0) + 1}. kisinin payi</p>
           )}
         </div>
+
+        {paymentType === 'full' && items.length > 0 && (
+          <div className="card">
+            <h3 className="card-title">🍽️ Sipariş Detayı</h3>
+            <div className="bill-items">
+              {items.map((item, i) => (
+                <div key={i} className="bill-item">
+                  <div className="bill-item-left">
+                    <span className="bill-item-qty">{item.quantity}x</span>
+                    <span className="bill-item-name">{item.name}</span>
+                  </div>
+                  <span className="bill-item-price">{formatTL(item.price * item.quantity)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="card">
           <div className="payment-amount-row">

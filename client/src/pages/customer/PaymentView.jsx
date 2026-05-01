@@ -72,10 +72,16 @@ export default function PaymentView() {
     );
   }
 
-  const items = data?.order?.items || data?.items || [];
+  const rawItems = data?.order?.items || data?.items || [];
+  // Backend bazen item_name/unit_price, bazen name/price döndürüyor — normalize
+  const items = rawItems.map((it) => ({
+    ...it,
+    name: it.name || it.item_name || 'Ürün',
+    price: it.price ?? it.unit_price ?? 0,
+  }));
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
-  const tableName = data?.table?.name || data?.tableName || `Masa ${data?.table?.number || ''}`;
-  const restaurantName = data?.restaurant?.name || data?.restaurantName || 'Restoran';
+  const tableName = data?.table?.name || data?.tableName || `Masa ${data?.table?.table_number || data?.table?.number || ''}`.trim();
+  const restaurantName = data?.table?.restaurant_name || data?.restaurant?.name || data?.restaurantName || 'Restoran';
   const orderId = data?.order?.id || data?.orderId;
 
   const paidTotal = payments.reduce((s, p) => s + (p.amount || 0), 0);
@@ -145,7 +151,7 @@ export default function PaymentView() {
                   className="btn btn-accent btn-full"
                   onClick={() =>
                     navigate(`/pay/${paymentQrToken}/checkout`, {
-                      state: { amount: remainingTotal, orderId, type: 'full' },
+                      state: { amount: remainingTotal, orderId, type: 'full', items },
                     })
                   }
                 >
