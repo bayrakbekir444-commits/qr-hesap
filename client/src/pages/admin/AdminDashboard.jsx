@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
 const adminFetch = async (url, opts = {}) => {
   const token = localStorage.getItem('admin_token');
-  return fetch(url, {
+  // url '/api/...' geliyorsa baseURL'a göre düzelt (relative path bypass)
+  const fullUrl = url.startsWith('/api/') ? `${API_BASE}${url.slice(4)}` : url;
+  return fetch(fullUrl, {
     ...opts,
     headers: {
       ...(opts.headers || {}),

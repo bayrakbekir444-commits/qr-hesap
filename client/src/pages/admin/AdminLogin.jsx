@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../utils/api';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -10,20 +11,11 @@ export default function AdminLogin() {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Giriş başarısız.');
-        return;
-      }
-      localStorage.setItem('admin_token', data.token);
+      const res = await api.post('/admin/login', form);
+      localStorage.setItem('admin_token', res.data.token);
       navigate('/admin', { replace: true });
-    } catch {
-      setError('Bağlantı hatası.');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Bağlantı hatası.');
     }
   };
 
