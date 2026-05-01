@@ -128,8 +128,8 @@ export default function MenuView() {
   }
 
   const menu = data?.menu || data?.restaurant?.menu || [];
-  const tableName = data?.table?.name || data?.tableName || `Masa ${data?.table?.number || ''}`;
-  const restaurantName = data?.restaurant?.name || data?.restaurantName || 'Restoran';
+  const tableName = data?.table?.name || data?.tableName || `Masa ${data?.table?.table_number || data?.table?.number || ''}`.trim();
+  const restaurantName = data?.table?.restaurant_name || data?.restaurant?.name || data?.restaurantName || 'Restoran';
 
   // Backend iki format dönebilir:
   // 1) [{ id, name, items: [...] }]  (kategori objeleri)
