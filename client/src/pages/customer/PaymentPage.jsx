@@ -26,6 +26,8 @@ export default function PaymentPage() {
   const splitCount = location.state?.splitCount;
 
   const [tipRate, setTipRate] = useState(0);
+  const [customTip, setCustomTip] = useState('');
+  const [tipMode, setTipMode] = useState('rate'); // 'rate' or 'custom'
   const [cardType, setCardType] = useState('visa');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -37,7 +39,9 @@ export default function PaymentPage() {
     { id: 'troy', name: 'Troy', icon: '🇹🇷' },
   ];
 
-  const tipAmount = baseAmount * tipRate;
+  const tipAmount = tipMode === 'custom'
+    ? Math.round((parseFloat(customTip) || 0) * 100) // TL → kuruş
+    : Math.round(baseAmount * tipRate);
   const totalAmount = baseAmount + tipAmount;
 
   const handlePay = async (cardData) => {
@@ -105,18 +109,41 @@ export default function PaymentPage() {
             <span>{formatTL(baseAmount)}</span>
           </div>
 
-          <h3 className="card-title" style={{ marginTop: '1rem' }}>Bahsis Ekle</h3>
+          <h3 className="card-title" style={{ marginTop: '1rem' }}>💝 Bahşiş Ekle</h3>
           <div className="tip-options">
             {TIP_OPTIONS.map((t) => (
               <button
                 key={t.value}
-                className={`tip-btn ${tipRate === t.value ? 'active' : ''}`}
-                onClick={() => setTipRate(t.value)}
+                type="button"
+                className={`tip-btn ${tipMode === 'rate' && tipRate === t.value ? 'active' : ''}`}
+                onClick={() => { setTipMode('rate'); setTipRate(t.value); setCustomTip(''); }}
               >
                 {t.label}
               </button>
             ))}
+            <button
+              type="button"
+              className={`tip-btn ${tipMode === 'custom' ? 'active' : ''}`}
+              onClick={() => { setTipMode('custom'); setTipRate(0); }}
+            >
+              Özel
+            </button>
           </div>
+          {tipMode === 'custom' && (
+            <div className="tip-custom-row">
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="Bahşiş tutarı (₺)"
+                value={customTip}
+                onChange={(e) => setCustomTip(e.target.value)}
+                min="0"
+                step="0.5"
+                className="tip-custom-input"
+              />
+              <span className="tip-custom-unit">₺</span>
+            </div>
+          )}
 
           {tipRate > 0 && (
             <div className="payment-amount-row tip-row">

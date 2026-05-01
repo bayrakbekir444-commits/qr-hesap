@@ -4174,3 +4174,185 @@ a { color: var(--gold); text-decoration: none; }
 .mv-checkout-btn:active {
   transform: scale(0.98);
 }
+
+/* ============================================
+   3D KART (gerçekçi kredi kartı)
+   ============================================ */
+.cc-card-3d {
+  perspective: 1200px;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto 24px;
+  height: 220px;
+  position: relative;
+}
+
+.cc-card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 22px;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  backface-visibility: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), inset 0 0 60px rgba(255, 255, 255, 0.05);
+  transition: transform 0.6s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cc-card-front { transform: rotateY(0deg); }
+.cc-card-back { transform: rotateY(180deg); }
+.cc-card-3d.flipped .cc-card-front { transform: rotateY(-180deg); }
+.cc-card-3d.flipped .cc-card-back { transform: rotateY(0deg); }
+
+.cc-shine {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 55%, transparent 70%);
+  pointer-events: none;
+}
+
+.cc-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.cc-chip {
+  width: 50px;
+  height: 38px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #d4a017, #f5d76e, #d4a017);
+  position: relative;
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,0.15);
+}
+.cc-chip::before, .cc-chip::after {
+  content: '';
+  position: absolute;
+  background: rgba(0,0,0,0.18);
+}
+.cc-chip::before { top: 9px; left: 4px; right: 4px; height: 2px; }
+.cc-chip::after { bottom: 9px; left: 4px; right: 4px; height: 2px; }
+
+.cc-brand {
+  font-family: 'Arial Black', sans-serif;
+  font-style: italic;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.95);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.cc-preview-number {
+  font-size: 22px;
+  letter-spacing: 3px;
+  font-weight: 600;
+  margin-bottom: auto;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  font-family: 'Courier New', monospace;
+}
+
+.cc-preview-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 16px;
+}
+
+.cc-label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 1px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+  font-family: 'Inter', sans-serif;
+}
+
+.cc-preview-name,
+.cc-preview-expiry {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Arka yüz */
+.cc-magnetic {
+  position: absolute;
+  top: 22px;
+  left: 0;
+  right: 0;
+  height: 44px;
+  background: rgba(0,0,0,0.7);
+}
+
+.cc-cvc-strip {
+  margin-top: 76px;
+  background: rgba(255,255,255,0.95);
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 14px;
+  border-radius: 4px;
+  position: relative;
+}
+
+.cc-cvc-strip .cc-label {
+  position: absolute;
+  left: 14px;
+  color: rgba(0,0,0,0.6);
+  margin: 0;
+}
+
+.cc-cvc-box {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 16px;
+  color: #1a1a2e;
+  letter-spacing: 4px;
+}
+
+.cc-back-brand {
+  position: absolute;
+  bottom: 18px;
+  right: 22px;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 18px;
+  opacity: 0.85;
+}
+
+/* Custom bahşiş input */
+.tip-custom-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(245, 166, 35, 0.08);
+  border: 1.5px solid rgba(245, 166, 35, 0.3);
+  border-radius: 10px;
+}
+.tip-custom-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+}
+.tip-custom-input::placeholder { color: var(--text-secondary); }
+.tip-custom-unit {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 18px;
+}
