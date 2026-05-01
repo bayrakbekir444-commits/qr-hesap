@@ -4694,3 +4694,64 @@ a { color: var(--gold); text-decoration: none; }
   border-radius: 0;
   box-shadow: none;
 }
+
+/* Sadakat puanı modalı */
+.loyalty-modal { max-width: 400px; }
+.loyalty-phone-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 16px;
+  outline: none;
+  text-align: center;
+  letter-spacing: 1px;
+}
+.loyalty-phone-input:focus { border-color: var(--gold); }
+
+.loyalty-points-box {
+  background: linear-gradient(135deg, var(--gold), var(--gold-hover));
+  padding: 28px;
+  border-radius: 16px;
+  text-align: center;
+  margin: 16px 0;
+  color: #1a1a2e;
+  box-shadow: 0 8px 24px rgba(245, 166, 35, 0.4);
+}
+.loyalty-points-num {
+  font-size: 56px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+.loyalty-points-label {
+  font-size: 13px;
+  letter-spacing: 4px;
+  font-weight: 700;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+.loyalty-tx-list {
+  margin-top: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+}
+.loyalty-tx-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.loyalty-tx-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 14px;
+  border-bottom: 1px dashed rgba(255,255,255,0.06);
+}
+.loyalty-tx-row:last-child { border: none; }

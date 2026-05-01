@@ -36,6 +36,10 @@ export default function MenuView() {
   const [activeTab, setActiveTab] = useState(null);
   const [search, setSearch] = useState('');
   const [theme, setTheme] = useState(() => localStorage.getItem('qr_hesap_mv_theme') || 'dark');
+  const [loyaltyOpen, setLoyaltyOpen] = useState(false);
+  const [loyaltyPhone, setLoyaltyPhone] = useState(() => localStorage.getItem('qr_hesap_loyalty_phone') || '');
+  const [loyaltyData, setLoyaltyData] = useState(null);
+  const [loyaltyLoading, setLoyaltyLoading] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('qr_hesap_mv_theme', theme);
@@ -111,6 +115,20 @@ export default function MenuView() {
     setSoupModal(null);
   };
 
+  const fetchLoyalty = async () => {
+    if (!loyaltyPhone.trim()) return;
+    setLoyaltyLoading(true);
+    try {
+      const res = await api.get(`/loyalty/${loyaltyPhone.trim()}`);
+      setLoyaltyData(res.data);
+      localStorage.setItem('qr_hesap_loyalty_phone', loyaltyPhone.trim());
+    } catch {
+      setLoyaltyData({ member: null, transactions: [] });
+    } finally {
+      setLoyaltyLoading(false);
+    }
+  };
+
   const handleShare = async () => {
     const url = window.location.href;
     const title = `${data?.table?.restaurant_name || 'Restoran'} — Menü`;
@@ -176,8 +194,16 @@ export default function MenuView() {
         {/* Toast */}
         {toast && <div className="toast-notification">{toast}</div>}
 
-        {/* Top bar: theme + share */}
+        {/* Top bar: loyalty + share + theme */}
         <div className="mv-topbar">
+          <button
+            className="mv-theme-btn"
+            onClick={() => { setLoyaltyOpen(true); if (loyaltyPhone) fetchLoyalty(); }}
+            aria-label="Puanım"
+            title="Puanım"
+          >
+            🎁
+          </button>
           <button
             className="mv-theme-btn"
             onClick={handleShare}
@@ -401,6 +427,68 @@ export default function MenuView() {
         )}
 
         <div className="powered-by">QR Hesap ile siparis sistemi</div>
+
+        {/* Sadakat puanı modalı */}
+        {loyaltyOpen && (
+          <div className="soup-modal-overlay" onClick={() => setLoyaltyOpen(false)}>
+            <div className="soup-modal loyalty-modal" onClick={(e) => e.stopPropagation()}>
+              <h3>🎁 Sadakat Puanım</h3>
+              {!loyaltyData ? (
+                <>
+                  <p className="soup-modal-q">Telefon numaranız ile puanınızı sorgulayın</p>
+                  <input
+                    type="tel"
+                    className="loyalty-phone-input"
+                    placeholder="05XX XXX XX XX"
+                    value={loyaltyPhone}
+                    onChange={(e) => setLoyaltyPhone(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && fetchLoyalty()}
+                  />
+                  <button
+                    className="lp-btn lp-btn-primary"
+                    style={{ width: '100%', justifyContent: 'center', marginTop: 12 }}
+                    onClick={fetchLoyalty}
+                    disabled={loyaltyLoading || !loyaltyPhone.trim()}
+                  >
+                    {loyaltyLoading ? 'Yükleniyor...' : 'Sorgula'}
+                  </button>
+                </>
+              ) : !loyaltyData.member ? (
+                <>
+                  <p className="soup-modal-q">Henüz puanınız yok. Bu numarayla ilk siparişinizi verince puan kazanmaya başlayacaksınız!</p>
+                  <button
+                    className="soup-modal-cancel"
+                    onClick={() => { setLoyaltyData(null); }}
+                  >Geri</button>
+                </>
+              ) : (
+                <>
+                  <div className="loyalty-points-box">
+                    <div className="loyalty-points-num">{loyaltyData.member.points}</div>
+                    <div className="loyalty-points-label">PUAN</div>
+                  </div>
+                  <p className="soup-modal-q">Toplam harcama: {((loyaltyData.member.total_spent || 0) / 100).toFixed(2)} ₺</p>
+                  {loyaltyData.transactions?.length > 0 && (
+                    <div className="loyalty-tx-list">
+                      <div className="loyalty-tx-title">Son işlemler</div>
+                      {loyaltyData.transactions.slice(0, 5).map((tx) => (
+                        <div key={tx.id} className="loyalty-tx-row">
+                          <span>{tx.type === 'earn' ? '➕' : '➖'} {tx.points} puan</span>
+                          <span style={{ opacity: 0.6, fontSize: 12 }}>{new Date(tx.created_at).toLocaleDateString('tr-TR')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+              <button
+                className="soup-modal-cancel"
+                onClick={() => { setLoyaltyOpen(false); }}
+                style={{ marginTop: 12 }}
+              >Kapat</button>
+            </div>
+          </div>
+        )}
 
         {/* Çorba porsiyon modalı */}
         {soupModal && (
