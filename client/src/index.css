@@ -3427,4 +3427,14 @@ a { color: var(--gold); text-decoration: none; }
   border: 0;
   display: block;
   background: #1a1a2e;
+  pointer-events: none;
+  user-select: none;
+}
+/* Şeffaf overlay — iframe'e click/scroll iletmesin */
+.lp-phone-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  cursor: default;
 }
