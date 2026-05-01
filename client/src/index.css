@@ -4411,3 +4411,50 @@ a { color: var(--gold); text-decoration: none; }
   .success-overlay { position: static !important; padding: 0 !important; }
   .success-card { box-shadow: none !important; }
 }
+
+/* Kupon kodu (PaymentPage) */
+.coupon-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.coupon-input {
+  flex: 1;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  outline: none;
+  text-transform: uppercase;
+}
+.coupon-input:focus { border-color: var(--gold); }
+.coupon-input::placeholder { letter-spacing: normal; font-weight: 400; color: var(--text-secondary); }
+
+.coupon-applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1.5px solid rgba(46, 204, 113, 0.4);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #2ecc71;
+  font-size: 14px;
+}
+.coupon-applied strong { color: var(--text); }
+.coupon-remove {
+  background: rgba(231, 76, 60, 0.15);
+  border: none;
+  color: #e74c3c;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+}
+.coupon-remove:hover { background: #e74c3c; color: #fff; }

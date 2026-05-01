@@ -47,14 +47,32 @@ router.get('/', async (req, res) => {
 router.get('/validate/:code', async (req, res) => {
   try {
     const { code } = req.params;
-    const { restaurant_id } = req.query;
-    if (!code || !restaurant_id) {
-      return res.status(400).json({ error: 'Kod ve restaurant_id gerekli.' });
+    const { restaurant_id, payment_token, menu_token } = req.query;
+    if (!code) {
+      return res.status(400).json({ error: 'Kod gerekli.' });
     }
+
     const pool = getPool();
+
+    // restaurant_id verilmediyse, token'dan çıkar
+    let rid = restaurant_id ? Number(restaurant_id) : null;
+    if (!rid && (payment_token || menu_token)) {
+      const col = payment_token ? 'payment_qr_token' : 'menu_qr_token';
+      const tok = payment_token || menu_token;
+      const { rows: trows } = await pool.query(
+        `SELECT restaurant_id FROM tables WHERE ${col} = $1 AND active = 1`,
+        [tok]
+      );
+      if (trows[0]) rid = trows[0].restaurant_id;
+    }
+
+    if (!rid) {
+      return res.status(400).json({ error: 'Restoran bulunamadı.' });
+    }
+
     const { rows } = await pool.query(
       'SELECT * FROM campaigns WHERE restaurant_id = $1 AND code = $2 AND active = 1',
-      [restaurant_id, code.toUpperCase()]
+      [rid, code.toUpperCase()]
     );
     const campaign = rows[0];
 

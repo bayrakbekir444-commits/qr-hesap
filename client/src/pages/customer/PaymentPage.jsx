@@ -35,6 +35,34 @@ export default function PaymentPage() {
   const [customTip, setCustomTip] = useState('');
   const [tipMode, setTipMode] = useState('rate'); // 'rate' or 'custom'
   const [cardType, setCardType] = useState('visa');
+  const [couponCode, setCouponCode] = useState('');
+  const [coupon, setCoupon] = useState(null); // {name, discount_type, discount_value}
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState(null);
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError(null);
+    try {
+      const params = paymentQrToken ? { payment_token: paymentQrToken } : { menu_token: qrToken };
+      const res = await api.get(`/campaigns/validate/${couponCode.trim().toUpperCase()}`, { params });
+      setCoupon(res.data);
+    } catch (err) {
+      setCouponError(err.response?.data?.error || 'Kupon doğrulanamadı.');
+      setCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => { setCoupon(null); setCouponCode(''); setCouponError(null); };
+
+  const discountAmount = coupon
+    ? (coupon.discount_type === 'percentage'
+        ? baseAmount * (coupon.discount_value / 100)
+        : coupon.discount_value)
+    : 0;
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
@@ -48,7 +76,7 @@ export default function PaymentPage() {
   const tipAmount = tipMode === 'custom'
     ? (parseFloat(String(customTip).replace(',', '.')) || 0)
     : (baseAmount * tipRate);
-  const totalAmount = baseAmount + tipAmount;
+  const totalAmount = Math.max(0, baseAmount - discountAmount + tipAmount);
 
   const handlePay = async (cardData) => {
     setLoading(true);
@@ -131,6 +159,35 @@ export default function PaymentPage() {
             <span>Tutar</span>
             <span>{formatTL(baseAmount)}</span>
           </div>
+
+          <h3 className="card-title" style={{ marginTop: '1rem' }}>🎟️ Kupon Kodu</h3>
+          {!coupon ? (
+            <div className="coupon-row">
+              <input
+                type="text"
+                className="coupon-input"
+                placeholder="Kupon kodunuzu girin"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === 'Enter' && applyCoupon()}
+              />
+              <button type="button" className="btn btn-outline btn-sm" onClick={applyCoupon} disabled={couponLoading || !couponCode.trim()}>
+                {couponLoading ? '...' : 'Uygula'}
+              </button>
+            </div>
+          ) : (
+            <div className="coupon-applied">
+              <span>✓ <strong>{coupon.name}</strong> · {coupon.discount_type === 'percentage' ? `%${coupon.discount_value}` : formatTL(coupon.discount_value)} indirim</span>
+              <button type="button" className="coupon-remove" onClick={removeCoupon}>✕</button>
+            </div>
+          )}
+          {couponError && <div className="error-message" style={{ marginTop: 8 }}>{couponError}</div>}
+          {discountAmount > 0 && (
+            <div className="payment-amount-row" style={{ color: '#2ecc71' }}>
+              <span>İndirim</span>
+              <span>−{formatTL(discountAmount)}</span>
+            </div>
+          )}
 
           <h3 className="card-title" style={{ marginTop: '1rem' }}>💝 Bahşiş Ekle</h3>
           <div className="tip-options">
