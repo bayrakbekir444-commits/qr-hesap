@@ -1765,55 +1765,32 @@ a { color: var(--gold); text-decoration: none; }
 }
 
 .mv-items {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .mv-food-card {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: hidden;
   transition: all 0.2s ease;
 }
 
 .mv-food-card:hover {
   border-color: rgba(255, 255, 255, 0.15);
   background: var(--card-hover);
-  transform: translateY(-2px);
 }
 
-.mv-food-image {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  background: var(--card-hover);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.mv-food-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.mv-food-image-placeholder {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  opacity: 0.6;
-}
-
-.mv-food-body {
-  padding: 0.65rem 0.75rem 0.75rem;
+.mv-food-info {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.15rem;
+  flex: 1;
   min-width: 0;
 }
 
@@ -1821,30 +1798,22 @@ a { color: var(--gold); text-decoration: none; }
   font-weight: 600;
   font-size: 0.95rem;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .mv-food-desc {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.mv-food-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 0.35rem;
+  max-width: 250px;
 }
 
 .mv-food-price {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--gold);
+  margin-top: 0.1rem;
 }
 
 .mv-add-btn {

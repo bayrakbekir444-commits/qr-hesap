@@ -168,39 +168,23 @@ export default function MenuView() {
                   <span className="mv-category-count">{menuByCategory[category].length} urun</span>
                 </div>
                 <div className="mv-items">
-                  {menuByCategory[category].map((item) => {
-                    const fallbackImg = `https://loremflickr.com/400/300/${encodeURIComponent((item.name || 'food') + ',food')}?lock=${item.id}`;
-                    const imgSrc = item.image_url || fallbackImg;
-                    return (
+                  {menuByCategory[category].map((item) => (
                     <div key={item.id} className="mv-food-card">
-                      <div className="mv-food-image">
-                        <img
-                          src={imgSrc}
-                          alt={getItemName(item, lang)}
-                          onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
-                        />
-                        <div className="mv-food-image-placeholder" style={{ display: 'none' }}>
-                          {(getItemName(item, lang) || '?').charAt(0).toUpperCase()}
-                        </div>
-                      </div>
-                      <div className="mv-food-body">
+                      <div className="mv-food-info">
                         <span className="mv-food-name">{getItemName(item, lang)}</span>
                         {getItemDesc(item, lang) && (
                           <span className="mv-food-desc">{getItemDesc(item, lang)}</span>
                         )}
-                        <div className="mv-food-row">
-                          <span className="mv-food-price">{formatTL(item.price)}</span>
-                          <button
-                            className="mv-add-btn"
-                            onClick={() => handleAddItem(item)}
-                          >
-                            +
-                          </button>
-                        </div>
+                        <span className="mv-food-price">{formatTL(item.price)}</span>
                       </div>
+                      <button
+                        className="mv-add-btn"
+                        onClick={() => handleAddItem(item)}
+                      >
+                        +
+                      </button>
                     </div>
-                    );
-                  })}
+                  ))}
                 </div>
               </div>
             ))}
