@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api, { formatTL } from '../../utils/api';
 import Loading from '../../components/Loading';
 
@@ -23,6 +23,7 @@ function getItemDesc(item, lang) {
 
 export default function MenuView() {
   const { menuQrToken } = useParams();
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -350,6 +351,19 @@ export default function MenuView() {
                   <span>Toplam</span>
                   <span className="mv-order-total-amount">{formatTL(orderTotal)}</span>
                 </div>
+                <button
+                  className="mv-checkout-btn"
+                  onClick={() => {
+                    const payToken = data?.table?.payment_qr_token;
+                    if (payToken) {
+                      navigate(`/pay/${payToken}`);
+                    } else {
+                      showToast('Ödeme şu an kullanılamıyor.');
+                    }
+                  }}
+                >
+                  💳 Hesabı Kapat / Öde
+                </button>
               </div>
             )}
           </div>

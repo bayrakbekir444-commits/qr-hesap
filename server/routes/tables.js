@@ -322,6 +322,7 @@ router.get('/menu/:menuQrToken/public', async (req, res) => {
         id: table.id,
         table_number: table.table_number,
         restaurant_name: table.restaurant_name,
+        payment_qr_token: table.payment_qr_token,
       },
       menu,
     });

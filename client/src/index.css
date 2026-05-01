@@ -4151,3 +4151,26 @@ a { color: var(--gold); text-decoration: none; }
   .legal-content h1 { font-size: 26px; }
   .legal-content h2 { font-size: 19px; }
 }
+
+/* Müşteri menüsü ödeme butonu */
+.mv-checkout-btn {
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-hover));
+  color: #1a1a2e;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(245, 166, 35, 0.35);
+}
+.mv-checkout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(245, 166, 35, 0.5);
+}
+.mv-checkout-btn:active {
+  transform: scale(0.98);
+}
