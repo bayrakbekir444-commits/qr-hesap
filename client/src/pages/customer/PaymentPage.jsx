@@ -46,8 +46,8 @@ export default function PaymentPage() {
   ];
 
   const tipAmount = tipMode === 'custom'
-    ? Math.round((parseFloat(customTip) || 0) * 100) // TL → kuruş
-    : Math.round(baseAmount * tipRate);
+    ? (parseFloat(String(customTip).replace(',', '.')) || 0)
+    : (baseAmount * tipRate);
   const totalAmount = baseAmount + tipAmount;
 
   const handlePay = async (cardData) => {
