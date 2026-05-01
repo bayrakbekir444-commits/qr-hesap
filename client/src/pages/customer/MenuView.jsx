@@ -33,6 +33,12 @@ export default function MenuView() {
   const [orderOpen, setOrderOpen] = useState(false);
   const [soupModal, setSoupModal] = useState(null);
   const [activeTab, setActiveTab] = useState(null);
+  const [search, setSearch] = useState('');
+  const [theme, setTheme] = useState(() => localStorage.getItem('qr_hesap_mv_theme') || 'dark');
+
+  useEffect(() => {
+    localStorage.setItem('qr_hesap_mv_theme', theme);
+  }, [theme]);
 
   const handleLangChange = (code) => {
     setLang(code);
@@ -148,10 +154,21 @@ export default function MenuView() {
   const orderCount = orderItems.reduce((s, i) => s + i.quantity, 0);
 
   return (
-    <div className="customer-page">
+    <div className={`customer-page mv-theme-${theme}`}>
       <div className="customer-container">
         {/* Toast */}
         {toast && <div className="toast-notification">{toast}</div>}
+
+        {/* Top bar: language + theme */}
+        <div className="mv-topbar">
+          <button
+            className="mv-theme-btn"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            aria-label="Tema değiştir"
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+        </div>
 
         {/* Language toggle */}
         <div className="lang-toggle">
@@ -185,8 +202,25 @@ export default function MenuView() {
           <span>{waiterCalled ? 'Garson Cagrildi' : 'Garson Cagir'}</span>
         </button>
 
-        {/* Category tabs — sadece aktif kategori gösterilir */}
+        {/* Search box */}
         {categoryNames.length > 0 && (
+          <div className="mv-search-wrap">
+            <span className="mv-search-icon">🔍</span>
+            <input
+              type="search"
+              className="mv-search"
+              placeholder="Ürün ara..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button className="mv-search-clear" onClick={() => setSearch('')}>×</button>
+            )}
+          </div>
+        )}
+
+        {/* Category tabs — sadece aktif kategori gösterilir (arama yokken) */}
+        {!search.trim() && categoryNames.length > 0 && (
           <div className="mv-cat-tabs">
             {categoryNames.map((category) => (
               <button
@@ -200,21 +234,33 @@ export default function MenuView() {
           </div>
         )}
 
-        {/* Menu — sadece seçili kategori */}
+        {/* Menu — arama varsa tüm kategorilerde filtre, yoksa sadece seçili */}
         {categoryNames.length === 0 ? (
           <div className="empty-state">
             <p>Menu henuz yuklenmedi.</p>
           </div>
         ) : (
           <div className="mv-menu">
-            {categoryNames.filter((c) => c === (activeTab || categoryNames[0])).map((category) => (
+            {(search.trim()
+              ? categoryNames.filter((cat) =>
+                  menuByCategory[cat].some((it) =>
+                    (getItemName(it, lang) || '').toLowerCase().includes(search.trim().toLowerCase())
+                  )
+                )
+              : categoryNames.filter((c) => c === (activeTab || categoryNames[0]))
+            ).map((category) => (
               <div key={category} className="mv-category">
                 <div className="mv-category-header">
                   <span className="mv-category-name">{category}</span>
                   <span className="mv-category-count">{menuByCategory[category].length} urun</span>
                 </div>
                 <div className="mv-items">
-                  {menuByCategory[category].map((item) => {
+                  {menuByCategory[category]
+                    .filter((it) =>
+                      !search.trim() ||
+                      (getItemName(it, lang) || '').toLowerCase().includes(search.trim().toLowerCase())
+                    )
+                    .map((item) => {
                     const fallbackImg = `https://loremflickr.com/400/300/${encodeURIComponent((item.name || 'food') + ',food')}?lock=${item.id}`;
                     const imgSrc = item.image_url || fallbackImg;
                     const stock = item.stock_count;

@@ -3799,3 +3799,214 @@ a { color: var(--gold); text-decoration: none; }
 .mv-cat-tab:active {
   transform: scale(0.95);
 }
+
+/* Footer sosyal medya */
+.lp-footer-social {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin: 24px 0 16px;
+}
+.lp-footer-social a {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 247, 238, 0.08);
+  color: #d4a373;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.lp-footer-social a:hover {
+  background: #e76f51;
+  color: #fff;
+  transform: translateY(-3px);
+}
+
+/* Demo videosu placeholder */
+.lp-video {
+  margin-top: 60px;
+  display: flex;
+  justify-content: center;
+}
+.lp-video-frame {
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(135deg, #1a0e0a, #2c1810);
+  border-radius: 16px;
+  border: 2px solid rgba(231, 111, 81, 0.25);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lp-video-frame:hover {
+  border-color: #e76f51;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(231, 111, 81, 0.2);
+}
+.lp-video-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #d4a373;
+  text-align: center;
+  padding: 20px;
+}
+.lp-video-play {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e76f51, #c1432a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #fff;
+  margin-bottom: 16px;
+  padding-left: 8px;
+  box-shadow: 0 8px 24px rgba(231, 111, 81, 0.5);
+}
+.lp-video-placeholder h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff7ee;
+  margin-bottom: 4px;
+}
+.lp-video-placeholder p {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+/* Müşteri menüsü top bar — tema toggle */
+.mv-topbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 0;
+}
+.mv-theme-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mv-theme-btn:hover {
+  background: rgba(245, 166, 35, 0.2);
+  transform: scale(1.05);
+}
+
+/* Müşteri menüsü arama */
+.mv-search-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+.mv-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.mv-search {
+  width: 100%;
+  padding: 12px 36px 12px 40px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
+.mv-search:focus {
+  border-color: var(--gold);
+  background: rgba(255, 255, 255, 0.1);
+}
+.mv-search::placeholder {
+  color: var(--text-secondary);
+}
+.mv-search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Müşteri menüsü light tema */
+.customer-page.mv-theme-light {
+  background: linear-gradient(180deg, #fff7ee 0%, #ffeacd 100%);
+  color: #2c1810;
+}
+.mv-theme-light .restaurant-name { color: #2c1810; }
+.mv-theme-light .table-badge {
+  background: rgba(231, 111, 81, 0.15);
+  color: #c1432a;
+}
+.mv-theme-light .mv-cat-tabs {
+  background: linear-gradient(180deg, rgba(255,247,238,0.95), rgba(255,247,238,0.85));
+}
+.mv-theme-light .mv-cat-tab {
+  background: #fff;
+  border-color: rgba(231, 111, 81, 0.2);
+  color: #2c1810;
+}
+.mv-theme-light .mv-cat-tab.active {
+  background: #e76f51;
+  border-color: #e76f51;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(231, 111, 81, 0.4);
+}
+.mv-theme-light .mv-cat-tab:hover {
+  background: rgba(231, 111, 81, 0.1);
+  border-color: #e76f51;
+  color: #c1432a;
+}
+.mv-theme-light .mv-food-card {
+  background: #fff;
+  border-color: rgba(231, 111, 81, 0.12);
+}
+.mv-theme-light .mv-food-card:hover {
+  background: #fff;
+  border-color: #e76f51;
+}
+.mv-theme-light .mv-food-image { background: #f4ecdf; }
+.mv-theme-light .mv-food-name { color: #2c1810; }
+.mv-theme-light .mv-food-desc { color: #6b4423; }
+.mv-theme-light .mv-food-price { color: #c1432a; }
+.mv-theme-light .mv-category-name { color: #2c1810; }
+.mv-theme-light .mv-category-count { color: #8b6f4e; }
+.mv-theme-light .mv-search {
+  background: #fff;
+  border-color: rgba(231, 111, 81, 0.2);
+  color: #2c1810;
+}
+.mv-theme-light .mv-search:focus { border-color: #e76f51; }
+.mv-theme-light .mv-theme-btn {
+  background: #fff;
+  border-color: rgba(231, 111, 81, 0.2);
+}
