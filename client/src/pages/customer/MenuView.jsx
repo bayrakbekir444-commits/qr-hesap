@@ -9,6 +9,38 @@ const LANGUAGES = [
   { code: 'ar', label: 'AR' },
 ];
 
+const I18N = {
+  tr: {
+    callWaiter: 'Garson Çağır', waiterCalled: 'Garson Çağrıldı',
+    myOrder: 'Siparişlerim', total: 'Toplam', closeBill: '💳 Hesabı Kapat / Öde',
+    loading: 'Menü yükleniyor...', empty: 'Menü henüz yüklenmedi.',
+    search: 'Ürün ara...', urun: 'ürün', portion: 'Porsiyon nasıl olsun?',
+    less: 'Az', normal: 'Normal', more: 'Çok', cancel: 'İptal',
+    items: 'ürün', myPoints: 'Sadakat Puanım', orderAdded: 'Sipariş eklendi!',
+    addError: 'Ürün eklenemedi.',
+  },
+  en: {
+    callWaiter: 'Call Waiter', waiterCalled: 'Waiter Called',
+    myOrder: 'My Order', total: 'Total', closeBill: '💳 Close Bill / Pay',
+    loading: 'Loading menu...', empty: 'Menu not loaded yet.',
+    search: 'Search items...', urun: 'items', portion: 'Portion size?',
+    less: 'Less', normal: 'Normal', more: 'More', cancel: 'Cancel',
+    items: 'items', myPoints: 'My Loyalty Points', orderAdded: 'Order added!',
+    addError: 'Could not add.',
+  },
+  ar: {
+    callWaiter: 'اتصل بالنادل', waiterCalled: 'تم استدعاء النادل',
+    myOrder: 'طلبي', total: 'المجموع', closeBill: '💳 إغلاق الفاتورة / دفع',
+    loading: 'جاري التحميل...', empty: 'القائمة لم تُحمَّل بعد.',
+    search: 'ابحث عن منتج...', urun: 'منتجات', portion: 'حجم الحصة؟',
+    less: 'قليل', normal: 'عادي', more: 'كثير', cancel: 'إلغاء',
+    items: 'منتجات', myPoints: 'نقاط الولاء', orderAdded: 'تمت الإضافة!',
+    addError: 'تعذرت الإضافة.',
+  },
+};
+
+const t = (key, lang) => (I18N[lang] || I18N.tr)[key] || I18N.tr[key] || key;
+
 function getItemName(item, lang) {
   if (lang === 'en' && item.name_en) return item.name_en;
   if (lang === 'ar' && item.name_ar) return item.name_ar;
@@ -19,6 +51,12 @@ function getItemDesc(item, lang) {
   if (lang === 'en' && item.description_en) return item.description_en;
   if (lang === 'ar' && item.description_ar) return item.description_ar;
   return item.description;
+}
+
+function getCategoryName(cat, lang) {
+  if (lang === 'en' && cat.name_en) return cat.name_en;
+  if (lang === 'ar' && cat.name_ar) return cat.name_ar;
+  return cat.name;
 }
 
 export default function MenuView() {
@@ -144,7 +182,7 @@ export default function MenuView() {
     }
   };
 
-  if (loading) return <Loading text="Menu yukleniyor..." />;
+  if (loading) return <Loading text={t('loading', lang)} />;
 
   if (error) {
     return (
@@ -170,26 +208,26 @@ export default function MenuView() {
   // 2) [{ id, name, price, category, ... }]  (flat item listesi)
   const isCategoryFormat = menu.length > 0 && Array.isArray(menu[0]?.items);
 
-  const menuByCategory = isCategoryFormat
-    ? menu.reduce((acc, cat) => {
-        acc[cat.name] = (cat.items || []).filter((it) => it.active !== 0);
-        return acc;
-      }, {})
-    : menu.reduce((acc, item) => {
-        const cat = item.category || 'Diger';
-        if (!acc[cat]) acc[cat] = [];
-        acc[cat].push(item);
-        return acc;
-      }, {});
+  // Kategori objesini key olarak tut, böylece dil değişimi çalışır
+  const categoryObjects = isCategoryFormat
+    ? menu.filter((c) => (c.items || []).some((it) => it.active !== 0))
+    : [{ name: 'Diğer', items: menu }];
 
-  const categoryNames = isCategoryFormat
-    ? menu.map((c) => c.name).filter((n) => menuByCategory[n] && menuByCategory[n].length > 0)
-    : Object.keys(menuByCategory);
+  const menuByCategory = categoryObjects.reduce((acc, cat) => {
+    acc[cat.name] = (cat.items || []).filter((it) => it.active !== 0);
+    return acc;
+  }, {});
+
+  const categoryNames = categoryObjects.map((c) => c.name);
+  const getCatLabel = (catName) => {
+    const obj = categoryObjects.find((c) => c.name === catName);
+    return obj ? getCategoryName(obj, lang) : catName;
+  };
   const orderTotal = orderItems.reduce((s, i) => s + i.price * i.quantity, 0);
   const orderCount = orderItems.reduce((s, i) => s + i.quantity, 0);
 
   return (
-    <div className={`customer-page mv-theme-${theme}`}>
+    <div className={`customer-page mv-theme-${theme}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <div className="customer-container">
         {/* Toast */}
         {toast && <div className="toast-notification">{toast}</div>}
@@ -254,7 +292,7 @@ export default function MenuView() {
           disabled={waiterCalled}
         >
           <span className="waiter-call-icon">&#128276;</span>
-          <span>{waiterCalled ? 'Garson Cagrildi' : 'Garson Cagir'}</span>
+          <span>{waiterCalled ? t('waiterCalled', lang) : t('callWaiter', lang)}</span>
         </button>
 
         {/* Search box */}
@@ -264,7 +302,7 @@ export default function MenuView() {
             <input
               type="search"
               className="mv-search"
-              placeholder="Ürün ara..."
+              placeholder={t('search', lang)}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -283,7 +321,7 @@ export default function MenuView() {
                 className={`mv-cat-tab ${(activeTab || categoryNames[0]) === category ? 'active' : ''}`}
                 onClick={() => setActiveTab(category)}
               >
-                {category}
+                {getCatLabel(category)}
               </button>
             ))}
           </div>
@@ -292,7 +330,7 @@ export default function MenuView() {
         {/* Menu — arama varsa tüm kategorilerde filtre, yoksa sadece seçili */}
         {categoryNames.length === 0 ? (
           <div className="empty-state">
-            <p>Menu henuz yuklenmedi.</p>
+            <p>{t('empty', lang)}</p>
           </div>
         ) : (
           <div className="mv-menu">
@@ -306,8 +344,8 @@ export default function MenuView() {
             ).map((category) => (
               <div key={category} className="mv-category">
                 <div className="mv-category-header">
-                  <span className="mv-category-name">{category}</span>
-                  <span className="mv-category-count">{menuByCategory[category].length} urun</span>
+                  <span className="mv-category-name">{getCatLabel(category)}</span>
+                  <span className="mv-category-count">{menuByCategory[category].length} {t('urun', lang)}</span>
                 </div>
                 <div className="mv-items">
                   {menuByCategory[category]
@@ -371,7 +409,7 @@ export default function MenuView() {
             >
               <div className="mv-order-toggle-left">
                 <span className="mv-order-badge">{orderCount}</span>
-                <span className="mv-order-toggle-text">Siparislerim</span>
+                <span className="mv-order-toggle-text">{t('myOrder', lang)}</span>
               </div>
               <span className="mv-order-total">{formatTL(orderTotal)}</span>
               <span className={`menu-order-arrow ${orderOpen ? 'open' : ''}`}>&#9660;</span>
@@ -405,7 +443,7 @@ export default function MenuView() {
                   );
                 })}
                 <div className="mv-order-total-row">
-                  <span>Toplam</span>
+                  <span>{t('total', lang)}</span>
                   <span className="mv-order-total-amount">{formatTL(orderTotal)}</span>
                 </div>
                 <button
@@ -419,7 +457,7 @@ export default function MenuView() {
                     }
                   }}
                 >
-                  💳 Hesabı Kapat / Öde
+                  {t('closeBill', lang)}
                 </button>
               </div>
             )}
@@ -494,14 +532,14 @@ export default function MenuView() {
         {soupModal && (
           <div className="soup-modal-overlay" onClick={() => setSoupModal(null)}>
             <div className="soup-modal" onClick={(e) => e.stopPropagation()}>
-              <h3>{soupModal.item.name}</h3>
-              <p className="soup-modal-q">Porsiyon nasıl olsun?</p>
+              <h3>{getItemName(soupModal.item, lang)}</h3>
+              <p className="soup-modal-q">{t('portion', lang)}</p>
               <div className="soup-modal-options">
-                <button onClick={() => handleSoupChoice('Az')}>🥄 Az</button>
-                <button onClick={() => handleSoupChoice('Normal')}>🍲 Normal</button>
-                <button onClick={() => handleSoupChoice('Çok')}>🍜 Çok</button>
+                <button onClick={() => handleSoupChoice('Az')}>🥄 {t('less', lang)}</button>
+                <button onClick={() => handleSoupChoice('Normal')}>🍲 {t('normal', lang)}</button>
+                <button onClick={() => handleSoupChoice('Çok')}>🍜 {t('more', lang)}</button>
               </div>
-              <button className="soup-modal-cancel" onClick={() => setSoupModal(null)}>İptal</button>
+              <button className="soup-modal-cancel" onClick={() => setSoupModal(null)}>{t('cancel', lang)}</button>
             </div>
           </div>
         )}
