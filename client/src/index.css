@@ -3401,3 +3401,14 @@ a { color: var(--gold); text-decoration: none; }
   padding-top: 20px;
   border-top: 1px dashed rgba(231, 111, 81, 0.2);
 }
+
+/* Logo image (header + footer) */
+.lp-logo-img {
+  height: 42px;
+  width: auto;
+  display: block;
+}
+.lp-logo-img-light {
+  filter: brightness(0) invert(1) brightness(0.95);
+  height: 38px;
+}
