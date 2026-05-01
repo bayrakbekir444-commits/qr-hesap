@@ -4682,19 +4682,14 @@ a { color: var(--gold); text-decoration: none; }
 
 /* Müşteri menüsü restoran logo */
 .restaurant-logo-img {
-  width: 110px;
-  height: 110px;
+  width: 140px;
+  height: 140px;
   object-fit: contain;
-  border-radius: 50%;
-  margin: 0 auto 14px;
+  margin: 0 auto 12px;
   display: block;
-  background: #fff;
-  padding: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  border: 3px solid var(--gold);
-}
-.mv-theme-light .restaurant-logo-img {
-  background: #fff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  border-color: #e76f51;
+  background: transparent;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
