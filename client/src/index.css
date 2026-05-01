@@ -3888,6 +3888,7 @@ a { color: var(--gold); text-decoration: none; }
   display: flex;
   justify-content: flex-end;
   padding: 8px 0;
+  gap: 8px;
 }
 .mv-theme-btn {
   background: rgba(255, 255, 255, 0.08);

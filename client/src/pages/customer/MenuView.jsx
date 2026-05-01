@@ -111,6 +111,21 @@ export default function MenuView() {
     setSoupModal(null);
   };
 
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = `${data?.table?.restaurant_name || 'Restoran'} — Menü`;
+    const text = `${title}\nQR Hesap ile menüye göz at:`;
+    if (navigator.share) {
+      try { await navigator.share({ title, text, url }); return; } catch {}
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('Link kopyalandı! 📋');
+    } catch {
+      showToast('Paylaşım desteklenmiyor.');
+    }
+  };
+
   if (loading) return <Loading text="Menu yukleniyor..." />;
 
   if (error) {
@@ -161,8 +176,16 @@ export default function MenuView() {
         {/* Toast */}
         {toast && <div className="toast-notification">{toast}</div>}
 
-        {/* Top bar: language + theme */}
+        {/* Top bar: theme + share */}
         <div className="mv-topbar">
+          <button
+            className="mv-theme-btn"
+            onClick={handleShare}
+            aria-label="Paylaş"
+            title="Menüyü paylaş"
+          >
+            📤
+          </button>
           <button
             className="mv-theme-btn"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
