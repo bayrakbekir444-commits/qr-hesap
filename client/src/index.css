@@ -1765,32 +1765,31 @@ a { color: var(--gold); text-decoration: none; }
 }
 
 .mv-items {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-  padding: 8px 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
 }
 
 .mv-food-card {
-  background-color: #ffffff;
-  border-radius: 10px;
-  width: 250px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: transform 0.2s;
   display: flex;
   flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .mv-food-card:hover {
-  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--card-hover);
+  transform: translateY(-2px);
 }
 
 .mv-food-image {
   width: 100%;
-  height: 180px;
-  background: #f0f0f0;
+  aspect-ratio: 1 / 1;
+  background: var(--card-hover);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1806,26 +1805,30 @@ a { color: var(--gold); text-decoration: none; }
 .mv-food-image-placeholder {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #bbb;
+  color: var(--text-secondary);
+  opacity: 0.6;
 }
 
 .mv-food-body {
-  padding: 15px;
-  text-align: center;
+  padding: 0.65rem 0.75rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.2rem;
+  min-width: 0;
 }
 
 .mv-food-name {
-  font-size: 18px;
-  font-weight: bold;
-  color: #222;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mv-food-desc {
-  font-size: 13px;
-  color: #666;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1835,16 +1838,13 @@ a { color: var(--gold); text-decoration: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 8px;
-  gap: 8px;
+  margin-top: 0.35rem;
 }
 
 .mv-food-price {
-  color: #e67e22;
-  font-size: 16px;
+  font-size: 0.95rem;
   font-weight: 700;
-  flex: 1;
-  text-align: left;
+  color: var(--gold);
 }
 
 .mv-add-btn {
@@ -1854,10 +1854,10 @@ a { color: var(--gold); text-decoration: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #e67e22;
-  border: none;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1.5px solid rgba(46, 204, 113, 0.3);
   border-radius: 50%;
-  color: #fff;
+  color: var(--success);
   font-size: 1.3rem;
   font-weight: 700;
   cursor: pointer;
@@ -1865,7 +1865,8 @@ a { color: var(--gold); text-decoration: none; }
 }
 
 .mv-add-btn:hover {
-  background: #d35400;
+  background: rgba(46, 204, 113, 0.25);
+  border-color: var(--success);
   transform: scale(1.1);
 }
 
