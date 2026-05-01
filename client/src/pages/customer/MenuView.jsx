@@ -32,6 +32,7 @@ export default function MenuView() {
   const [orderItems, setOrderItems] = useState([]);
   const [orderOpen, setOrderOpen] = useState(false);
   const [soupModal, setSoupModal] = useState(null);
+  const [activeTab, setActiveTab] = useState(null);
 
   const handleLangChange = (code) => {
     setLang(code);
@@ -184,17 +185,14 @@ export default function MenuView() {
           <span>{waiterCalled ? 'Garson Cagrildi' : 'Garson Cagir'}</span>
         </button>
 
-        {/* Category quick-jump tabs */}
-        {categoryNames.length > 1 && (
+        {/* Category tabs — sadece aktif kategori gösterilir */}
+        {categoryNames.length > 0 && (
           <div className="mv-cat-tabs">
             {categoryNames.map((category) => (
               <button
                 key={category}
-                className="mv-cat-tab"
-                onClick={() => {
-                  const el = document.getElementById(`cat-${category}`);
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
+                className={`mv-cat-tab ${(activeTab || categoryNames[0]) === category ? 'active' : ''}`}
+                onClick={() => setActiveTab(category)}
               >
                 {category}
               </button>
@@ -202,15 +200,15 @@ export default function MenuView() {
           </div>
         )}
 
-        {/* Menu */}
+        {/* Menu — sadece seçili kategori */}
         {categoryNames.length === 0 ? (
           <div className="empty-state">
             <p>Menu henuz yuklenmedi.</p>
           </div>
         ) : (
           <div className="mv-menu">
-            {categoryNames.map((category) => (
-              <div key={category} id={`cat-${category}`} className="mv-category">
+            {categoryNames.filter((c) => c === (activeTab || categoryNames[0])).map((category) => (
+              <div key={category} className="mv-category">
                 <div className="mv-category-header">
                   <span className="mv-category-name">{category}</span>
                   <span className="mv-category-count">{menuByCategory[category].length} urun</span>
