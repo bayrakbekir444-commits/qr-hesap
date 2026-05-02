@@ -3832,20 +3832,26 @@ a { color: var(--gold); text-decoration: none; }
 }
 .lp-video-frame {
   width: 100%;
-  max-width: 720px;
-  aspect-ratio: 16 / 9;
+  max-width: 360px;
+  aspect-ratio: 9 / 16;
   background: linear-gradient(135deg, #1a0e0a, #2c1810);
   border-radius: 16px;
   border: 2px solid rgba(231, 111, 81, 0.25);
   position: relative;
   overflow: hidden;
-  cursor: pointer;
   transition: all 0.2s;
 }
 .lp-video-frame:hover {
   border-color: #e76f51;
   transform: translateY(-2px);
   box-shadow: 0 12px 30px rgba(231, 111, 81, 0.2);
+}
+.lp-video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #000;
 }
 .lp-video-placeholder {
   position: absolute;

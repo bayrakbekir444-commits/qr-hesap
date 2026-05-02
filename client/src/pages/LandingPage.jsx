@@ -166,14 +166,17 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Demo videosu placeholder */}
+          {/* Demo videosu */}
           <div className="lp-video">
             <div className="lp-video-frame">
-              <div className="lp-video-placeholder">
-                <div className="lp-video-play">▶</div>
-                <h3>Demo Videosu</h3>
-                <p>1 dakikalık tanıtım — yakında</p>
-              </div>
+              <video
+                className="lp-video-player"
+                src="/videos/demo.mp4"
+                poster="/videos/demo-poster.jpg"
+                controls
+                playsInline
+                preload="metadata"
+              />
             </div>
           </div>
         </div>
