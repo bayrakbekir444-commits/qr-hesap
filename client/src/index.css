@@ -4829,3 +4829,37 @@ a { color: var(--gold); text-decoration: none; }
 .review-respond-btn:hover {
   background: rgba(245, 166, 35, 0.1) !important;
 }
+
+/* Panel destek WhatsApp butonu */
+.panel-support-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #25d366;
+  color: #fff !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 50px;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+  font-weight: 700;
+  font-size: 14px;
+  z-index: 999;
+  transition: all 0.2s ease;
+}
+.panel-support-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.6);
+}
+.panel-support-label { letter-spacing: 0.3px; }
+@media (max-width: 600px) {
+  .panel-support-label { display: none; }
+  .panel-support-btn {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    padding: 0;
+    justify-content: center;
+  }
+}
