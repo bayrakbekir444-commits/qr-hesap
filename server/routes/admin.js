@@ -127,7 +127,8 @@ router.delete('/restaurants/:id', adminMiddleware, async (req, res) => {
 // POST /api/admin/restaurants — Yeni restoran oluştur
 router.post('/restaurants', adminMiddleware, async (req, res) => {
   try {
-    const { name, password, package_type = 'temel', months = 1 } = req.body;
+    const { v4: uuidv4 } = require('uuid');
+    const { name, password, package_type = 'temel', months = 1, table_count = 0 } = req.body;
     if (!name || !password) {
       return res.status(400).json({ error: 'İsim ve şifre gerekli.' });
     }
@@ -150,8 +151,18 @@ router.post('/restaurants', adminMiddleware, async (req, res) => {
        VALUES ($1, $2, $3, $4) RETURNING id`,
       [name, hash, package_type, expiresStr]
     );
+    const restaurantId = rows[0].id;
 
-    res.status(201).json({ message: 'Restoran oluşturuldu.', id: rows[0].id });
+    // Otomatik masa oluştur
+    const tableCountNum = Math.min(Math.max(parseInt(table_count, 10) || 0, 0), 100);
+    if (tableCountNum > 0) {
+      const insertTable = 'INSERT INTO tables (restaurant_id, table_number, qr_token, menu_qr_token, payment_qr_token) VALUES ($1, $2, $3, $4, $5)';
+      for (let i = 1; i <= tableCountNum; i++) {
+        await pool.query(insertTable, [restaurantId, i, uuidv4(), uuidv4(), uuidv4()]);
+      }
+    }
+
+    res.status(201).json({ message: 'Restoran oluşturuldu.', id: restaurantId, tables_created: tableCountNum });
   } catch (err) {
     console.error('Restoran oluşturma hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });

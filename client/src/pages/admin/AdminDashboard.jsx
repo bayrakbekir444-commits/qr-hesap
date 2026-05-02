@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
-  const [newForm, setNewForm] = useState({ name: '', password: '', package_type: 'temel', months: 1 });
+  const [newForm, setNewForm] = useState({ name: '', password: '', package_type: 'temel', months: 1, table_count: 10 });
 
   const yukle = async () => {
     try {
@@ -86,7 +86,7 @@ export default function AdminDashboard() {
         alert(d.error || 'Oluşturulamadı.');
         return;
       }
-      setNewForm({ name: '', password: '', package_type: 'temel', months: 1 });
+      setNewForm({ name: '', password: '', package_type: 'temel', months: 1, table_count: 10 });
       setShowNew(false);
       yukle();
     } catch {}
@@ -146,6 +146,7 @@ export default function AdminDashboard() {
                 <option value="zincir">Zincir</option>
               </select>
               <input placeholder="Ay" type="number" value={newForm.months} onChange={(e) => setNewForm({ ...newForm, months: e.target.value })} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #d1d5db' }} />
+              <input placeholder="Masa sayısı" type="number" min="0" max="100" value={newForm.table_count} onChange={(e) => setNewForm({ ...newForm, table_count: e.target.value })} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #d1d5db' }} title="Otomatik oluşturulacak masa sayısı (0-100)" />
               <button type="submit" className="btn btn-accent btn-sm">Oluştur</button>
             </div>
           </form>
