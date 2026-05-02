@@ -140,13 +140,36 @@ export default function AdminDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
               <input placeholder="Restoran Adı" value={newForm.name} onChange={(e) => setNewForm({ ...newForm, name: e.target.value })} required style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #d1d5db' }} />
               <input placeholder="Başlangıç Şifresi" type="text" value={newForm.password} onChange={(e) => setNewForm({ ...newForm, password: e.target.value })} required style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #d1d5db' }} />
-              <select value={newForm.package_type} onChange={(e) => setNewForm({ ...newForm, package_type: e.target.value })} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #d1d5db' }}>
+              <select value={newForm.package_type} onChange={(e) => {
+                const PKG_LIMITS = { temel: 10, pro: 30, zincir: 999 };
+                const newPkg = e.target.value;
+                const max = PKG_LIMITS[newPkg] || 10;
+                setNewForm({ ...newForm, package_type: newPkg, table_count: Math.min(newForm.table_count, max) });
+              }} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #d1d5db' }}>
                 <option value="temel">Temel</option>
                 <option value="pro">Pro</option>
                 <option value="zincir">Zincir</option>
               </select>
               <input placeholder="Ay" type="number" value={newForm.months} onChange={(e) => setNewForm({ ...newForm, months: e.target.value })} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #d1d5db' }} />
-              <input placeholder="Masa sayısı" type="number" min="0" max="100" value={newForm.table_count} onChange={(e) => setNewForm({ ...newForm, table_count: e.target.value })} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #d1d5db' }} title="Otomatik oluşturulacak masa sayısı (0-100)" />
+              {(() => {
+                const PKG_LIMITS = { temel: 10, pro: 30, zincir: 999 };
+                const max = PKG_LIMITS[newForm.package_type] || 10;
+                return (
+                  <input
+                    placeholder={`Masa (max ${max})`}
+                    type="number"
+                    min="0"
+                    max={max}
+                    value={newForm.table_count}
+                    onChange={(e) => {
+                      const v = Math.min(parseInt(e.target.value, 10) || 0, max);
+                      setNewForm({ ...newForm, table_count: v });
+                    }}
+                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #d1d5db' }}
+                    title={`${newForm.package_type} paketinde max ${max} masa`}
+                  />
+                );
+              })()}
               <button type="submit" className="btn btn-accent btn-sm">Oluştur</button>
             </div>
           </form>

@@ -153,8 +153,15 @@ router.post('/restaurants', adminMiddleware, async (req, res) => {
     );
     const restaurantId = rows[0].id;
 
-    // Otomatik masa oluştur
-    const tableCountNum = Math.min(Math.max(parseInt(table_count, 10) || 0, 0), 100);
+    // Otomatik masa oluştur — paket limitini aşma
+    const pkgCfg = PACKAGES[package_type] || PACKAGES.temel;
+    const requestedCount = parseInt(table_count, 10) || 0;
+    if (requestedCount > pkgCfg.max_tables) {
+      return res.status(400).json({
+        error: `${pkgCfg.label} paketinde en fazla ${pkgCfg.max_tables} masa eklenebilir.`,
+      });
+    }
+    const tableCountNum = Math.min(Math.max(requestedCount, 0), 100);
     if (tableCountNum > 0) {
       const insertTable = 'INSERT INTO tables (restaurant_id, table_number, qr_token, menu_qr_token, payment_qr_token) VALUES ($1, $2, $3, $4, $5)';
       for (let i = 1; i <= tableCountNum; i++) {
