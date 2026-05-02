@@ -19,7 +19,11 @@ router.post('/login', async (req, res) => {
     }
 
     const pool = getPool();
-    const { rows } = await pool.query('SELECT * FROM restaurants WHERE name = $1', [name]);
+    // TRIM ile case-insensitive arama (yazım hatalarını affetsin)
+    const { rows } = await pool.query(
+      'SELECT * FROM restaurants WHERE LOWER(TRIM(name)) = LOWER(TRIM($1))',
+      [name]
+    );
     const restaurant = rows[0];
 
     if (!restaurant) {
