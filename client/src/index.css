@@ -4755,3 +4755,77 @@ a { color: var(--gold); text-decoration: none; }
   border-bottom: 1px dashed rgba(255,255,255,0.06);
 }
 .loyalty-tx-row:last-child { border: none; }
+
+/* Review response (panel) */
+.review-response {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(245, 166, 35, 0.05);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+}
+.review-response-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.review-response-text {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  margin-bottom: 8px;
+}
+.review-response-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 8px;
+}
+.review-response-textarea:focus { border-color: var(--gold); }
+.review-response-actions {
+  display: flex;
+  gap: 8px;
+}
+.review-response-actions button {
+  padding: 6px 14px;
+  background: var(--gold);
+  color: #1a1a2e;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.review-response-actions button.ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.review-response-actions button.danger {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+}
+.review-respond-btn {
+  background: transparent !important;
+  color: var(--gold) !important;
+  border: 1.5px dashed rgba(245, 166, 35, 0.4) !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.review-respond-btn:hover {
+  background: rgba(245, 166, 35, 0.1) !important;
+}

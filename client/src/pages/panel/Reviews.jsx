@@ -19,6 +19,70 @@ function formatRelativeTime(dateStr) {
   return `${Math.floor(mo / 12)} yıl önce`;
 }
 
+function ReviewResponse({ review, onUpdate }) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(review.response || '');
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api.put(`/reviews/${review.id}/respond`, { response: text });
+      setEditing(false);
+      onUpdate?.();
+    } catch {} finally { setSaving(false); }
+  };
+
+  const remove = async () => {
+    if (!confirm('Cevabı silmek istediğinize emin misiniz?')) return;
+    setSaving(true);
+    try {
+      await api.put(`/reviews/${review.id}/respond`, { response: '' });
+      setText('');
+      setEditing(false);
+      onUpdate?.();
+    } catch {} finally { setSaving(false); }
+  };
+
+  if (review.response && !editing) {
+    return (
+      <div className="review-response">
+        <div className="review-response-label">💬 Cevabınız:</div>
+        <div className="review-response-text">{review.response}</div>
+        <div className="review-response-actions">
+          <button onClick={() => { setText(review.response); setEditing(true); }}>Düzenle</button>
+          <button onClick={remove} className="danger">Sil</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (editing) {
+    return (
+      <div className="review-response">
+        <textarea
+          className="review-response-textarea"
+          rows={3}
+          placeholder="Müşteriye cevabınızı yazın..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          autoFocus
+        />
+        <div className="review-response-actions">
+          <button onClick={save} disabled={saving || !text.trim()}>{saving ? 'Kaydediliyor...' : 'Kaydet'}</button>
+          <button onClick={() => { setEditing(false); setText(review.response || ''); }} className="ghost">İptal</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="review-response">
+      <button className="review-respond-btn" onClick={() => setEditing(true)}>+ Cevap Yaz</button>
+    </div>
+  );
+}
+
 function Stars({ rating, size = 'normal' }) {
   const r = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
   const cls = `review-stars ${size === 'big' ? 'review-stars-big' : ''}`;
@@ -151,6 +215,7 @@ export default function Reviews() {
                   (Yorum bırakılmamış)
                 </div>
               )}
+              <ReviewResponse review={r} onUpdate={fetchReviews} />
             </div>
           ))}
         </div>

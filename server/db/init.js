@@ -56,6 +56,8 @@ async function runAlterTables(client) {
     "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS code TEXT",
     "ALTER TABLE payments ADD COLUMN IF NOT EXISTS card_type TEXT",
     "ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS stock_count INTEGER DEFAULT NULL",
+    "ALTER TABLE reviews ADD COLUMN IF NOT EXISTS response TEXT",
+    "ALTER TABLE reviews ADD COLUMN IF NOT EXISTS response_at TIMESTAMPTZ",
   ];
 
   for (const sql of alterStatements) {

@@ -83,4 +83,38 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /api/reviews/:id/respond - Yoruma cevap yaz (auth gerekli)
+router.put('/:id/respond', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { response } = req.body;
+    const pool = getPool();
+
+    // Bu yorum gerçekten bu restoranın mı?
+    const { rows: chk } = await pool.query(
+      `SELECT r.id FROM reviews r
+       JOIN orders o ON r.order_id = o.id
+       JOIN tables t ON o.table_id = t.id
+       WHERE r.id = $1 AND t.restaurant_id = $2`,
+      [id, req.restaurantId]
+    );
+    if (chk.length === 0) return res.status(404).json({ error: 'Yorum bulunamadı.' });
+
+    if (!response || !response.trim()) {
+      // Cevabı temizle
+      await pool.query('UPDATE reviews SET response = NULL, response_at = NULL WHERE id = $1', [id]);
+      return res.json({ message: 'Cevap kaldırıldı.' });
+    }
+
+    await pool.query(
+      'UPDATE reviews SET response = $1, response_at = NOW() WHERE id = $2',
+      [response.trim(), id]
+    );
+    res.json({ message: 'Cevap kaydedildi.' });
+  } catch (err) {
+    console.error('Yorum cevap hatası:', err);
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  }
+});
+
 module.exports = router;
