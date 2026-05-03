@@ -263,6 +263,7 @@ export default function LandingPage() {
               <h4>Yasal</h4>
               <Link to="/yasal/kvkk">KVKK</Link>
               <Link to="/yasal/gizlilik">Gizlilik</Link>
+              <Link to="/yasal/cerez">Çerez</Link>
               <Link to="/yasal/kullanim">Kullanım Koşulları</Link>
             </div>
             <div>
