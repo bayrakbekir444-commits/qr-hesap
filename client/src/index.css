@@ -4717,6 +4717,32 @@ a { color: var(--gold); text-decoration: none; }
 }
 .loyalty-phone-input:focus { border-color: var(--gold); }
 
+.loyalty-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary, rgba(255,255,255,0.7));
+  cursor: pointer;
+  text-align: left;
+}
+.loyalty-consent input[type="checkbox"] {
+  margin-top: 2px;
+  accent-color: var(--gold, #d4af37);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.loyalty-consent a {
+  color: var(--gold, #d4af37);
+  text-decoration: underline;
+}
+
 .loyalty-points-box {
   background: linear-gradient(135deg, var(--gold), var(--gold-hover));
   padding: 28px;

@@ -18,6 +18,7 @@ export default function PaymentView() {
   const [loyaltyData, setLoyaltyData] = useState(null);
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
   const [loyaltyError, setLoyaltyError] = useState(null);
+  const [loyaltyConsent, setLoyaltyConsent] = useState(false);
 
   const fetchData = useCallback(() => {
     return api
@@ -42,7 +43,7 @@ export default function PaymentView() {
   }, [fetchData]);
 
   const handleLoyaltyCheck = async () => {
-    if (!loyaltyPhone.trim()) return;
+    if (!loyaltyPhone.trim() || !loyaltyConsent) return;
     setLoyaltyLoading(true);
     setLoyaltyError(null);
     try {
@@ -199,16 +200,27 @@ export default function PaymentView() {
                   placeholder="05XX XXX XX XX"
                   value={loyaltyPhone}
                   onChange={(e) => setLoyaltyPhone(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLoyaltyCheck()}
+                  onKeyDown={(e) => e.key === 'Enter' && loyaltyConsent && handleLoyaltyCheck()}
                 />
                 <button
                   className="btn btn-gold btn-sm"
                   onClick={handleLoyaltyCheck}
-                  disabled={loyaltyLoading}
+                  disabled={loyaltyLoading || !loyaltyConsent || !loyaltyPhone.trim()}
                 >
                   {loyaltyLoading ? 'Sorgulaniyor...' : 'Sorgula'}
                 </button>
               </div>
+              <label className="loyalty-consent">
+                <input
+                  type="checkbox"
+                  checked={loyaltyConsent}
+                  onChange={(e) => setLoyaltyConsent(e.target.checked)}
+                />
+                <span>
+                  Telefon numaramın sadakat puanı amacıyla işlenmesine onay veriyorum.{' '}
+                  <a href="/yasal/kvkk" target="_blank" rel="noreferrer">KVKK Aydınlatma Metni</a>
+                </span>
+              </label>
 
               {loyaltyError && (
                 <div className="error-message" style={{ marginTop: '0.5rem' }}>{loyaltyError}</div>

@@ -78,6 +78,8 @@ export default function MenuView() {
   const [loyaltyPhone, setLoyaltyPhone] = useState(() => localStorage.getItem('qr_hesap_loyalty_phone') || '');
   const [loyaltyData, setLoyaltyData] = useState(null);
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
+  // KVKK açık rıza — telefon daha önce kaydedildiyse rıza zaten verilmiş demek
+  const [loyaltyConsent, setLoyaltyConsent] = useState(() => !!localStorage.getItem('qr_hesap_loyalty_phone'));
 
   useEffect(() => {
     localStorage.setItem('qr_hesap_mv_theme', theme);
@@ -154,7 +156,7 @@ export default function MenuView() {
   };
 
   const fetchLoyalty = async () => {
-    if (!loyaltyPhone.trim()) return;
+    if (!loyaltyPhone.trim() || !loyaltyConsent) return;
     setLoyaltyLoading(true);
     try {
       const res = await api.get(`/loyalty/${loyaltyPhone.trim()}`);
@@ -480,13 +482,24 @@ export default function MenuView() {
                     placeholder="05XX XXX XX XX"
                     value={loyaltyPhone}
                     onChange={(e) => setLoyaltyPhone(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && fetchLoyalty()}
+                    onKeyDown={(e) => e.key === 'Enter' && loyaltyConsent && fetchLoyalty()}
                   />
+                  <label className="loyalty-consent">
+                    <input
+                      type="checkbox"
+                      checked={loyaltyConsent}
+                      onChange={(e) => setLoyaltyConsent(e.target.checked)}
+                    />
+                    <span>
+                      Telefon numaramın sadakat puanı amacıyla işlenmesine onay veriyorum.{' '}
+                      <a href="/yasal/kvkk" target="_blank" rel="noreferrer">KVKK Aydınlatma Metni</a>
+                    </span>
+                  </label>
                   <button
                     className="lp-btn lp-btn-primary"
                     style={{ width: '100%', justifyContent: 'center', marginTop: 12 }}
                     onClick={fetchLoyalty}
-                    disabled={loyaltyLoading || !loyaltyPhone.trim()}
+                    disabled={loyaltyLoading || !loyaltyPhone.trim() || !loyaltyConsent}
                   >
                     {loyaltyLoading ? 'Yükleniyor...' : 'Sorgula'}
                   </button>
