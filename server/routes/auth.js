@@ -143,11 +143,28 @@ router.get('/restaurant', authMiddleware, async (req, res) => {
   try {
     const pool = getPool();
     const { rows } = await pool.query(
-      'SELECT id, name, logo_url, description, phone, email FROM restaurants WHERE id = $1',
+      'SELECT id, name, logo_url, description, phone, email, hide_branding, package_type FROM restaurants WHERE id = $1',
       [req.restaurantId]
     );
     res.json(rows[0]);
   } catch {
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  }
+});
+
+// PUT /api/auth/restaurant/branding — Whitelabel toggle
+router.put('/restaurant/branding', authMiddleware, async (req, res) => {
+  try {
+    const { hide_branding } = req.body;
+    const pool = getPool();
+    const value = hide_branding ? 1 : 0;
+    await pool.query(
+      'UPDATE restaurants SET hide_branding = $1 WHERE id = $2',
+      [value, req.restaurantId]
+    );
+    res.json({ message: 'Güncellendi.', hide_branding: !!value });
+  } catch (err) {
+    console.error('Branding toggle hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
   }
 });

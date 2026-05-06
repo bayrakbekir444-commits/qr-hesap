@@ -293,7 +293,12 @@ router.get('/menu/:menuQrToken/public', async (req, res) => {
     const pool = getPool();
 
     const { rows: tableRows } = await pool.query(
-      'SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo, r.description as restaurant_description FROM tables t JOIN restaurants r ON t.restaurant_id = r.id WHERE t.menu_qr_token = $1 AND t.active = 1',
+      `SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo,
+              r.description as restaurant_description,
+              r.hide_branding as restaurant_hide_branding,
+              r.package_type as restaurant_package
+       FROM tables t JOIN restaurants r ON t.restaurant_id = r.id
+       WHERE t.menu_qr_token = $1 AND t.active = 1`,
       [menuQrToken]
     );
     const table = tableRows[0];
@@ -301,6 +306,9 @@ router.get('/menu/:menuQrToken/public', async (req, res) => {
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı veya aktif değil.' });
     }
+
+    // Whitelabel sadece pro+ paketlerde mümkün; temel paketlerde her zaman göster
+    const hideBranding = table.restaurant_hide_branding === 1;
 
     const { rows: categories } = await pool.query(
       'SELECT * FROM categories WHERE restaurant_id = $1 ORDER BY sort_order, id',
@@ -342,6 +350,7 @@ router.get('/menu/:menuQrToken/public', async (req, res) => {
         restaurant_logo: table.restaurant_logo,
         restaurant_description: table.restaurant_description,
         payment_qr_token: table.payment_qr_token,
+        hide_branding: hideBranding,
       },
       menu,
       order,
@@ -359,7 +368,12 @@ router.get('/payment/:paymentQrToken/public', async (req, res) => {
     const pool = getPool();
 
     const { rows: tableRows } = await pool.query(
-      'SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo, r.description as restaurant_description FROM tables t JOIN restaurants r ON t.restaurant_id = r.id WHERE t.payment_qr_token = $1 AND t.active = 1',
+      `SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo,
+              r.description as restaurant_description,
+              r.hide_branding as restaurant_hide_branding,
+              r.package_type as restaurant_package
+       FROM tables t JOIN restaurants r ON t.restaurant_id = r.id
+       WHERE t.payment_qr_token = $1 AND t.active = 1`,
       [paymentQrToken]
     );
     const table = tableRows[0];
@@ -398,6 +412,8 @@ router.get('/payment/:paymentQrToken/public', async (req, res) => {
       payments = pRows;
     }
 
+    const hideBranding = table.restaurant_hide_branding === 1;
+
     res.json({
       table: {
         id: table.id,
@@ -405,6 +421,7 @@ router.get('/payment/:paymentQrToken/public', async (req, res) => {
         restaurant_name: table.restaurant_name,
         restaurant_logo: table.restaurant_logo,
         restaurant_description: table.restaurant_description,
+        hide_branding: hideBranding,
       },
       order: openOrder
         ? {
@@ -430,7 +447,12 @@ router.get('/:qrToken/public', async (req, res) => {
     const pool = getPool();
 
     const { rows: tableRows } = await pool.query(
-      'SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo, r.description as restaurant_description FROM tables t JOIN restaurants r ON t.restaurant_id = r.id WHERE t.qr_token = $1 AND t.active = 1',
+      `SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo,
+              r.description as restaurant_description,
+              r.hide_branding as restaurant_hide_branding,
+              r.package_type as restaurant_package
+       FROM tables t JOIN restaurants r ON t.restaurant_id = r.id
+       WHERE t.qr_token = $1 AND t.active = 1`,
       [qrToken]
     );
     const table = tableRows[0];
@@ -475,6 +497,8 @@ router.get('/:qrToken/public', async (req, res) => {
       items: menuItems.filter((item) => item.category_id === cat.id),
     }));
 
+    const hideBranding = table.restaurant_hide_branding === 1;
+
     res.json({
       table: {
         id: table.id,
@@ -482,6 +506,7 @@ router.get('/:qrToken/public', async (req, res) => {
         restaurant_name: table.restaurant_name,
         restaurant_logo: table.restaurant_logo,
         restaurant_description: table.restaurant_description,
+        hide_branding: hideBranding,
       },
       order: openOrder
         ? {

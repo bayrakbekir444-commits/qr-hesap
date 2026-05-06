@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api, { formatTL } from '../../utils/api';
 import BillSummary from '../../components/BillSummary';
 import Loading from '../../components/Loading';
+import BrandingFooter from '../../components/BrandingFooter';
 
 const LANGUAGES = [
   { code: 'tr', label: 'TR' },
@@ -752,8 +753,8 @@ export default function CustomerView() {
           )}
         </div>
 
-        <div className="powered-by">QR Hesap ile guvenli odeme</div>
       </div>
+      <BrandingFooter hide={data?.table?.hide_branding} />
     </div>
   );
 }

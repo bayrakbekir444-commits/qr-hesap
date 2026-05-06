@@ -4,6 +4,8 @@ import Loading from '../../components/Loading';
 
 export default function RestaurantSettings() {
   const [form, setForm] = useState({ logo_url: '', description: '', phone: '', email: '' });
+  const [hideBranding, setHideBranding] = useState(false);
+  const [brandingMsg, setBrandingMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -17,9 +19,22 @@ export default function RestaurantSettings() {
           phone: res.data.phone || '',
           email: res.data.email || '',
         });
+        setHideBranding(res.data.hide_branding === 1);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const toggleBranding = async () => {
+    const next = !hideBranding;
+    try {
+      await api.put('/auth/restaurant/branding', { hide_branding: next });
+      setHideBranding(next);
+      setBrandingMsg(next ? '✓ QR Hesap rozeti gizlendi' : '✓ QR Hesap rozeti görünür');
+      setTimeout(() => setBrandingMsg(''), 3000);
+    } catch (e) {
+      setBrandingMsg(e?.response?.data?.error || 'Güncellenemedi.');
+    }
+  };
 
   const kaydet = async (e) => {
     e.preventDefault();
@@ -94,6 +109,28 @@ export default function RestaurantSettings() {
 
         <button type="submit" className="btn btn-accent">Kaydet</button>
       </form>
+
+      <div className="panel-card" style={{ marginTop: '1.5rem' }}>
+        <h3 style={{ marginTop: 0, fontSize: '1rem' }}>✨ Beyaz Etiket</h3>
+        <p style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+          Müşteri menüsünün altındaki "QR Hesap ile çalışıyor" yazısını gizler.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem' }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={hideBranding}
+              onChange={toggleBranding}
+            />
+            <span>QR Hesap rozetini gizle</span>
+          </label>
+        </div>
+        {brandingMsg && (
+          <div style={{ marginTop: '0.75rem', background: '#eff6ff', color: '#1e40af', padding: '0.5rem 0.75rem', borderRadius: '8px', fontSize: '0.875rem' }}>
+            {brandingMsg}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

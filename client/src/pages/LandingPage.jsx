@@ -12,7 +12,7 @@ const faqs = [
   },
   {
     q: 'Müşteri ödeme nasıl yapıyor?',
-    a: 'Müşteri menüden sipariş verir, "Hesabı kapat" butonuna basar ve kart bilgisini girer. Para doğrudan iyzico üzerinden restoranın hesabına geçer. (iyzico entegrasyonu Pro paket sonrası)',
+    a: 'Müşteri menüden sipariş verir, "Hesabı kapat" butonuna basar ve kart bilgisini girer. Para doğrudan iyzico üzerinden restoranın hesabına geçer.',
   },
   {
     q: 'QR kodları nasıl yazdırırım?',
@@ -24,11 +24,11 @@ const faqs = [
   },
   {
     q: 'Personel sayısı sınırı var mı?',
-    a: 'Pro pakette sınırsız personel ekleyebilirsiniz. Her birine kendi giriş bilgisi tanımlanır.',
+    a: 'Sınırsız personel ekleyebilirsiniz. Her birine kendi giriş bilgisi tanımlanır.',
   },
   {
     q: 'Fiş/fatura veriyor mu?',
-    a: 'Sistem her sipariş için dijital fiş üretir. e-Fatura/e-Arşiv entegrasyonu ihtiyaç halinde Zincir paketine dahildir.',
+    a: 'Sistem her sipariş için dijital fiş üretir. e-Fatura/e-Arşiv entegrasyonu ihtiyaç halinde dahil edilebilir.',
   },
 ];
 
@@ -49,31 +49,22 @@ const steps = [
 
 const plans = [
   {
-    name: 'Temel',
-    price: '₺800',
-    period: '/ ay',
-    desc: 'Küçük kafeler için',
-    features: ['10 masa', 'Fotoğraflı QR menü', 'Sipariş alma', 'Garson çağırma', 'Çoklu dil'],
-    cta: 'Hemen Başla',
-    popular: false,
-  },
-  {
-    name: 'Pro',
-    price: '₺2.000',
-    period: '/ ay',
-    desc: 'Profesyonel restoranlar için',
-    features: ['30 masa', 'Detaylı raporlar', 'PDF export', 'Çoklu personel', 'PDF QR yazdırma', 'Öncelikli destek'],
-    cta: 'Pro\'ya Geç',
+    name: 'Tüm Özellikler',
+    price: 'İletişime Geç',
+    period: '',
+    desc: 'Restoranına özel teklif al',
+    features: [
+      'Sınırsız masa',
+      'Fotoğraflı QR menü, çoklu dil',
+      'Sipariş + ödeme akışı',
+      'Mutfak ekranı (KDS)',
+      'Detaylı raporlar',
+      'Çoklu personel & şube',
+      'Beyaz etiket (logosuz)',
+      'Birebir destek',
+    ],
+    cta: 'WhatsApp ile İletişim',
     popular: true,
-  },
-  {
-    name: 'Zincir',
-    price: '₺4.000',
-    period: '/ ay',
-    desc: 'Şubesi olan markalar için',
-    features: ['Sınırsız masa', 'Sınırsız şube', 'Merkezi yönetim', 'API erişimi', 'Özel entegrasyon', 'Birebir destek'],
-    cta: 'İletişime Geç',
-    popular: false,
   },
 ];
 
@@ -185,16 +176,14 @@ export default function LandingPage() {
       {/* Pricing */}
       <section id="pricing" className="lp-section">
         <div className="lp-container">
-          <h2 className="lp-section-title">Şeffaf fiyatlandırma</h2>
-          <p className="lp-section-sub">Her ölçek için bir paket — gizli ücret yok</p>
-          <div className="lp-plans">
+          <h2 className="lp-section-title">Tek plan, sınırsız özellik</h2>
+          <p className="lp-section-sub">Restoranına özel teklif için iletişime geç</p>
+          <div className="lp-plans" style={{ justifyContent: 'center' }}>
             {plans.map((p, i) => (
-              <div key={i} className={`lp-plan ${p.popular ? 'popular' : ''}`}>
-                {p.popular && <div className="lp-plan-tag">⭐ En Çok Tercih Edilen</div>}
+              <div key={i} className={`lp-plan ${p.popular ? 'popular' : ''}`} style={{ maxWidth: 480 }}>
                 <h3>{p.name}</h3>
                 <div className="lp-plan-price">
-                  <span className="lp-plan-amount">{p.price}</span>
-                  {p.period && <span className="lp-plan-period">{p.period}</span>}
+                  <span className="lp-plan-amount" style={{ fontSize: '1.6rem' }}>{p.price}</span>
                 </div>
                 <p className="lp-plan-desc">{p.desc}</p>
                 <ul className="lp-plan-features">
@@ -202,13 +191,15 @@ export default function LandingPage() {
                     <li key={j}>✓ {f}</li>
                   ))}
                 </ul>
-                <Link
-                  to="/panel/login"
-                  className={`lp-btn ${p.popular ? 'lp-btn-primary' : 'lp-btn-outline'}`}
+                <a
+                  href="https://wa.me/905436960574?text=Merhaba%2C%20QR%20Hesap%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="lp-btn lp-btn-primary"
                   style={{ width: '100%', justifyContent: 'center' }}
                 >
-                  {p.cta}
-                </Link>
+                  💬 {p.cta}
+                </a>
               </div>
             ))}
           </div>

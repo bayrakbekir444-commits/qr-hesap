@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api, { formatTL } from '../../utils/api';
 import BillSummary from '../../components/BillSummary';
 import Loading from '../../components/Loading';
+import BrandingFooter from '../../components/BrandingFooter';
 
 export default function PaymentView() {
   const { paymentQrToken } = useParams();
@@ -242,8 +243,8 @@ export default function PaymentView() {
           )}
         </div>
 
-        <div className="powered-by">QR Hesap ile guvenli odeme</div>
       </div>
+      <BrandingFooter hide={data?.table?.hide_branding} />
     </div>
   );
 }

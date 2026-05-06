@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api, { formatTL } from '../../utils/api';
 import Loading from '../../components/Loading';
-import PackageBadge from '../../components/PackageBadge';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -21,8 +20,6 @@ export default function Dashboard() {
     <div className="dashboard">
       <h1 className="panel-page-title">Genel Bakis</h1>
       <p className="panel-page-subtitle">Bugunun ozeti</p>
-
-      <PackageBadge />
 
       <div className="stats-grid">
         <div className="stat-card">

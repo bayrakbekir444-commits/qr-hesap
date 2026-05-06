@@ -5122,3 +5122,56 @@ a { color: var(--gold); text-decoration: none; }
   font-size: 12px;
   opacity: 0.6;
 }
+
+/* === QR Hesap Branding Footer === */
+.branding-footer {
+  width: 100%;
+  padding: 16px 12px 24px;
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+.branding-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(10, 126, 164, 0.2);
+  border-radius: 100px;
+  font-size: 12px;
+  color: #475569;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.branding-link:hover {
+  background: #fff;
+  border-color: #0a7ea4;
+  color: #0a7ea4;
+  box-shadow: 0 4px 12px rgba(10, 126, 164, 0.15);
+  transform: translateY(-1px);
+}
+.branding-icon {
+  font-size: 14px;
+  filter: drop-shadow(0 0 2px rgba(255, 200, 0, 0.5));
+}
+.branding-text-soft { color: #94a3b8; }
+.branding-text-bold {
+  font-weight: 800;
+  background: linear-gradient(135deg, #0a7ea4, #0ea5e9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.branding-arrow {
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 300;
+  transition: transform 0.2s ease;
+}
+.branding-link:hover .branding-arrow {
+  color: #0a7ea4;
+  transform: translateX(2px);
+}
