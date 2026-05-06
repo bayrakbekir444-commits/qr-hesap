@@ -172,6 +172,7 @@ export default function PanelLayout() {
   const links = [
     { to: '/panel', label: 'Genel Bakis', icon: '\u2302' },
     { to: '/panel/orders', label: 'Siparisler', icon: '\u2615' },
+    { to: '/panel/kitchen', label: 'Mutfak Ekrani', icon: '\ud83c\udf73', external: true },
     { to: '/panel/menu', label: 'Menu Yonetimi', icon: '\u2630' },
     { to: '/panel/tables', label: 'Masa Yonetimi', icon: '\u25A6' },
     { to: '/panel/reports', label: 'Raporlar', icon: '\u2261' },
@@ -193,7 +194,20 @@ export default function PanelLayout() {
           <span>Restoran Paneli</span>
         </div>
         <nav className="panel-nav">
-          {links.map((l) => (
+          {links.map((l) => l.external ? (
+            <a
+              key={l.to}
+              href={l.to}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="panel-nav-link"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <span className="panel-nav-icon">{l.icon}</span>
+              {l.label}
+              <span className="panel-nav-ext">↗</span>
+            </a>
+          ) : (
             <NavLink
               key={l.to}
               to={l.to}

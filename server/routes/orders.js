@@ -1,6 +1,7 @@
 const express = require('express');
 const { getPool } = require('../db/init');
 const { authMiddleware } = require('../middleware/auth');
+const { emitToRestaurant } = require('../utils/realtime');
 
 const router = express.Router();
 
@@ -100,6 +101,26 @@ async function addItemsToOrder({ pool, tableId, restaurantId, items }) {
     [order.id]
   );
   const total = allItems.reduce((sum, oi) => sum + oi.quantity * oi.unit_price, 0);
+
+  // Tablo bilgisini çek (KDS için)
+  let tableNumber = null;
+  try {
+    const { rows: tRows } = await pool.query(
+      'SELECT table_number FROM tables WHERE id = $1',
+      [tableId]
+    );
+    tableNumber = tRows[0]?.table_number || null;
+  } catch {}
+
+  // Realtime: yeni sipariş kalemlerini KDS / panel'e bildir
+  emitToRestaurant(restaurantId, 'order:items_added', {
+    order_id: order.id,
+    table_id: tableId,
+    table_number: tableNumber,
+    items: addedItems,
+    total,
+    at: new Date().toISOString(),
+  });
 
   return { order, addedItems, total };
 }

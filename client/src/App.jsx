@@ -9,6 +9,7 @@ import MenuView from './pages/customer/MenuView';
 import PaymentView from './pages/customer/PaymentView';
 import SplitBill from './pages/customer/SplitBill';
 import PaymentPage from './pages/customer/PaymentPage';
+import PaymentResultPage from './pages/customer/PaymentResultPage';
 
 import Login from './pages/panel/Login';
 import Dashboard from './pages/panel/Dashboard';
@@ -20,6 +21,7 @@ import StaffManage from './pages/panel/StaffManage';
 import RestaurantSettings from './pages/panel/RestaurantSettings';
 import Coupons from './pages/panel/Coupons';
 import Reviews from './pages/panel/Reviews';
+import Kitchen from './pages/panel/Kitchen';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
@@ -35,6 +37,9 @@ export default function App() {
       <Route path="/yasal/gizlilik" element={<PrivacyPage />} />
       <Route path="/yasal/cerez" element={<CookiePage />} />
       <Route path="/yasal/kullanim" element={<TermsPage />} />
+
+      {/* Ödeme sonuç (iyzico 3DS callback iframe için) */}
+      <Route path="/odeme-sonuc" element={<PaymentResultPage />} />
 
       {/* Customer-facing routes (legacy single QR) */}
       <Route path="/t/:qrToken" element={<CustomerView />} />
@@ -66,6 +71,9 @@ export default function App() {
         <Route path="coupons" element={<Coupons />} />
         <Route path="reviews" element={<Reviews />} />
       </Route>
+
+      {/* KDS - Mutfak ekranı (panel layout dışında, tam ekran) */}
+      <Route path="/panel/kitchen" element={<Kitchen />} />
 
       {/* 404 catch-all */}
       <Route path="*" element={<NotFoundPage />} />

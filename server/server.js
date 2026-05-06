@@ -1,9 +1,11 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const { initDb, getPool } = require('./db/init');
 const { baslat: yedekBaslat } = require('./db/backup');
 const { seed } = require('./db/seed');
 const { updateImages } = require('./db/update-images');
+const { initRealtime } = require('./utils/realtime');
 
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
@@ -51,6 +53,7 @@ app.use('/api/receipts', receiptsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/kitchen', require('./routes/kitchen'));
 
 // Sağlık kontrolü
 app.get('/api/health', (req, res) => {
@@ -87,8 +90,12 @@ app.use((err, req, res, next) => {
     }
 
     yedekBaslat();
-    app.listen(PORT, () => {
-      console.log(`QR Hesap API http://localhost:${PORT} adresinde çalışıyor.`);
+
+    const httpServer = http.createServer(app);
+    initRealtime(httpServer);
+
+    httpServer.listen(PORT, () => {
+      console.log(`QR Hesap API http://localhost:${PORT} adresinde çalışıyor (Socket.IO aktif).`);
     });
   } catch (err) {
     console.error('Veritabanı başlatma hatası:', err);

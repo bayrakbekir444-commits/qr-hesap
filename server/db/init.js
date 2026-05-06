@@ -58,6 +58,12 @@ async function runAlterTables(client) {
     "ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS stock_count INTEGER DEFAULT NULL",
     "ALTER TABLE reviews ADD COLUMN IF NOT EXISTS response TEXT",
     "ALTER TABLE reviews ADD COLUMN IF NOT EXISTS response_at TIMESTAMPTZ",
+    "ALTER TABLE payments ADD COLUMN IF NOT EXISTS iyzico_payment_id TEXT",
+    "ALTER TABLE payments ADD COLUMN IF NOT EXISTS iyzico_conversation_id TEXT",
+    "ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider TEXT DEFAULT 'mock'",
+    "ALTER TABLE payments ADD COLUMN IF NOT EXISTS error_message TEXT",
+    "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS kitchen_status TEXT DEFAULT 'pending'",
+    "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS kitchen_updated_at TIMESTAMPTZ",
   ];
 
   for (const sql of alterStatements) {

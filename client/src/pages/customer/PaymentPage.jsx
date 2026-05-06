@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api, { formatTL } from '../../utils/api';
 import CreditCardForm from '../../components/CreditCardForm';
 import PaymentSuccess from '../../components/PaymentSuccess';
+
+const PAYMENT_PROVIDER = import.meta.env.VITE_PAYMENT_PROVIDER || 'mock';
 
 const TIP_OPTIONS = [
   { label: '%0', value: 0 },
@@ -66,6 +68,9 @@ export default function PaymentPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const [threedsHtml, setThreedsHtml] = useState(null); // iyzico 3DS form HTML (base64)
+  const [pendingPaymentId, setPendingPaymentId] = useState(null);
+  const pollRef = useRef(null);
 
   const CARD_TYPES = [
     { id: 'visa', name: 'Visa', icon: '���' },
@@ -81,6 +86,43 @@ export default function PaymentPage() {
   const handlePay = async (cardData) => {
     setLoading(true);
     setError(null);
+
+    if (PAYMENT_PROVIDER === 'iyzico') {
+      // 3DS akışı
+      try {
+        const expRaw = String(cardData.expiry || cardData.cardExpiry || '').replace(/\s/g, '');
+        const [mm, yy] = expRaw.split('/');
+        const res = await api.post('/payments/iyzico/initialize', {
+          order_id: orderId,
+          payer_name: cardData.cardHolder,
+          amount: totalAmount - tipAmount,
+          tip: tipAmount,
+          split_count: splitCount,
+          split_index: shareIndex,
+          card: {
+            holder: cardData.cardHolder,
+            number: cardData.cardNumber,
+            expireMonth: mm,
+            expireYear: yy,
+            cvc: cardData.cvc || cardData.cvv,
+          },
+          buyer: {
+            name: cardData.cardHolder,
+            email: cardData.email || 'guest@qrhesap.net',
+          },
+          items: items.map((it, i) => ({ id: it.id || `item-${i}`, name: it.name, price: it.price })),
+        });
+        setPendingPaymentId(res.data.payment_id);
+        setThreedsHtml(res.data.threeds_html);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Ödeme başlatılamadı.');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Mock akış (eski)
     try {
       await api.post('/payments', {
         orderId,
@@ -100,6 +142,77 @@ export default function PaymentPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 3DS iframe'den gelen postMessage ile hızlı sonuç al
+  useEffect(() => {
+    function onMsg(e) {
+      const data = e?.data;
+      if (!data || data.type !== 'qrhesap:payment_result') return;
+      if (data.status === 'success') {
+        setThreedsHtml(null);
+        setPendingPaymentId(null);
+        setSuccess(true);
+      } else if (data.status === 'failed') {
+        setThreedsHtml(null);
+        setPendingPaymentId(null);
+        setError('Ödeme başarısız oldu.');
+      }
+    }
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  // 3DS açıkken backend status'unu poll et (callback geldiğinde 'paid' olur)
+  useEffect(() => {
+    if (!pendingPaymentId) return;
+    pollRef.current = setInterval(async () => {
+      try {
+        const r = await api.get(`/payments/status/${pendingPaymentId}`);
+        if (r.data.status === 'paid') {
+          clearInterval(pollRef.current);
+          setThreedsHtml(null);
+          setPendingPaymentId(null);
+          setSuccess(true);
+        } else if (r.data.status === 'failed') {
+          clearInterval(pollRef.current);
+          setThreedsHtml(null);
+          setPendingPaymentId(null);
+          setError(r.data.error_message || 'Ödeme başarısız oldu.');
+        }
+      } catch {}
+    }, 2500);
+    return () => pollRef.current && clearInterval(pollRef.current);
+  }, [pendingPaymentId]);
+
+  // 3DS HTML'ini iframe'e enjekte et
+  const ThreeDSFrame = () => {
+    const iframeRef = useRef(null);
+    useEffect(() => {
+      if (!iframeRef.current || !threedsHtml) return;
+      try {
+        const decoded = atob(threedsHtml);
+        const doc = iframeRef.current.contentDocument;
+        if (doc) {
+          doc.open();
+          doc.write(decoded);
+          doc.close();
+        }
+      } catch (e) {
+        setError('3DS sayfası yüklenemedi.');
+      }
+    }, []);
+    return (
+      <div className="threeds-overlay">
+        <div className="threeds-modal">
+          <div className="threeds-header">
+            <span>🔒 Güvenli Ödeme — 3D Secure</span>
+            <button className="threeds-close" onClick={() => { setThreedsHtml(null); setPendingPaymentId(null); }}>✕</button>
+          </div>
+          <iframe ref={iframeRef} title="3D Secure" className="threeds-iframe" />
+        </div>
+      </div>
+    );
   };
 
   if (success) {
@@ -125,6 +238,7 @@ export default function PaymentPage() {
 
   return (
     <div className="customer-page">
+      {threedsHtml && <ThreeDSFrame />}
       <div className="customer-container">
         <button className="back-btn" onClick={() => navigate(-1)}>
           &#8592; Geri
