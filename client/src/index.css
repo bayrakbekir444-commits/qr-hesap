@@ -2619,6 +2619,8 @@ a { color: var(--gold); text-decoration: none; }
 /* Notif - new order specific */
 .notif-call strong { color: #c0392b; }
 .notif-order strong { color: #2980b9; }
+.notif-ready strong { color: #16a34a; }
+.notif-ready { background: #f0fdf4; border-left: 3px solid #16a34a; }
 .notif-items {
   display: flex;
   flex-wrap: wrap;

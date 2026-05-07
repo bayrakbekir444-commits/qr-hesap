@@ -51,33 +51,41 @@ const isSeen = (id, updatedAt) => {
 function NotificationsBell() {
   const [calls, setCalls] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [readyItems, setReadyItems] = useState([]);
   const [open, setOpen] = useState(false);
   const prevCallIdsRef = useRef(new Set());
   const prevOrderKeysRef = useRef(new Set());
+  const prevReadyIdsRef = useRef(new Set());
   const initializedRef = useRef(false);
 
   const fetchAll = async () => {
     try {
-      const [callsRes, ordersRes] = await Promise.all([
+      const [callsRes, ordersRes, readyRes] = await Promise.all([
         api.get('/waiter/calls').catch(() => ({ data: [] })),
         api.get('/orders/new-alerts').catch(() => ({ data: [] })),
+        api.get('/waiter/ready-items').catch(() => ({ data: [] })),
       ]);
       const callList = callsRes.data || [];
       const orderList = (ordersRes.data || []).filter((o) => !isSeen(o.id, o.updated_at));
+      const readyList = readyRes.data || [];
 
       // Yeni geldi mi kontrol — beep
       const callIds = new Set(callList.map((c) => c.id));
       const orderKeys = new Set(orderList.map((o) => `${o.id}_${o.updated_at}`));
+      const readyIds = new Set(readyList.map((r) => r.id));
       const newCall = [...callIds].some((id) => !prevCallIdsRef.current.has(id));
       const newOrder = [...orderKeys].some((k) => !prevOrderKeysRef.current.has(k));
+      const newReady = [...readyIds].some((id) => !prevReadyIdsRef.current.has(id));
 
-      if (initializedRef.current && (newCall || newOrder)) beep();
+      if (initializedRef.current && (newCall || newOrder || newReady)) beep();
       initializedRef.current = true;
 
       prevCallIdsRef.current = callIds;
       prevOrderKeysRef.current = orderKeys;
+      prevReadyIdsRef.current = readyIds;
       setCalls(callList);
       setOrders(orderList);
+      setReadyItems(readyList);
     } catch {}
   };
 
@@ -96,7 +104,14 @@ function NotificationsBell() {
     setOrders((prev) => prev.filter((o) => o.id !== order.id));
   };
 
-  const totalCount = calls.length + orders.length;
+  const pickUpReady = async (item) => {
+    try {
+      await api.put(`/waiter/ready-items/${item.id}/picked-up`);
+      setReadyItems((prev) => prev.filter((r) => r.id !== item.id));
+    } catch {}
+  };
+
+  const totalCount = calls.length + orders.length + readyItems.length;
 
   return (
     <div className="waiter-notifier">
@@ -127,6 +142,22 @@ function NotificationsBell() {
                 </div>
                 <button className="waiter-call-dismiss" onClick={() => dismissCall(c.id)}>
                   ✓ Geldim
+                </button>
+              </div>
+            ))}
+            {readyItems.map((r) => (
+              <div key={`ready-${r.id}`} className="waiter-call-item notif-ready">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <strong>🍽️ Masa {r.table_number} HAZIR</strong>
+                  <div className="notif-items">
+                    <span className="notif-item-chip">
+                      {r.quantity}× {r.item_name}
+                    </span>
+                  </div>
+                  <div className="waiter-call-age">{formatAge(r.kitchen_updated_at)}</div>
+                </div>
+                <button className="waiter-call-dismiss" onClick={() => pickUpReady(r)}>
+                  ✓ Aldım
                 </button>
               </div>
             ))}

@@ -130,4 +130,67 @@ router.put('/calls/:id/dismiss', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/waiter/ready-items - Mutfak "Hazır" yapmış ama henüz servis edilmemiş kalemler
+router.get('/ready-items', authMiddleware, async (req, res) => {
+  try {
+    const pool = getPool();
+    const sinceCutoff = new Date(Date.now() - 2 * 3600 * 1000).toISOString(); // son 2 saat
+    const { rows } = await pool.query(
+      `SELECT
+         oi.id,
+         oi.order_id,
+         oi.quantity,
+         oi.kitchen_status,
+         oi.kitchen_updated_at,
+         mi.name AS item_name,
+         o.table_id,
+         t.table_number,
+         t.name AS table_name
+       FROM order_items oi
+       JOIN orders o ON oi.order_id = o.id
+       JOIN tables t ON o.table_id = t.id
+       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
+       WHERE t.restaurant_id = $1
+         AND oi.kitchen_status = 'ready'
+         AND oi.kitchen_updated_at >= $2
+       ORDER BY oi.kitchen_updated_at ASC`,
+      [req.restaurantId, sinceCutoff]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Hazır kalemler hatası:', err);
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  }
+});
+
+// PUT /api/waiter/ready-items/:id/picked-up - Garson aldı, servis edildi olarak işaretle
+router.put('/ready-items/:id/picked-up', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = getPool();
+
+    const { rows: ownRows } = await pool.query(
+      `SELECT oi.id FROM order_items oi
+       JOIN orders o ON oi.order_id = o.id
+       JOIN tables t ON o.table_id = t.id
+       WHERE oi.id = $1 AND t.restaurant_id = $2`,
+      [id, req.restaurantId]
+    );
+    if (ownRows.length === 0) {
+      return res.status(404).json({ error: 'Kalem bulunamadı.' });
+    }
+
+    await pool.query(
+      `UPDATE order_items SET kitchen_status = 'served', kitchen_updated_at = NOW()
+       WHERE id = $1`,
+      [id]
+    );
+
+    res.json({ message: 'Servis edildi.' });
+  } catch (err) {
+    console.error('Servis işaretleme hatası:', err);
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  }
+});
+
 module.exports = router;
