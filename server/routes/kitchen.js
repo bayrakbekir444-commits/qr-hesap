@@ -16,20 +16,16 @@ router.get('/items', authMiddleware, async (req, res) => {
     const pool = getPool();
     const { status, since } = req.query;
 
-    const conditions = ['t.restaurant_id = $1'];
+    const conditions = ['t.restaurant_id = $1', "o.status = 'open'"];
     const params = [req.restaurantId];
 
     if (status && VALID_STATUSES.includes(status)) {
-      conditions.push(`oi.kitchen_status = $${params.length + 1}`);
+      conditions.push(`COALESCE(oi.kitchen_status, 'pending') = $${params.length + 1}`);
       params.push(status);
     } else {
-      // Default: bitenler (served/cancelled) hariç
-      conditions.push(`oi.kitchen_status NOT IN ('served', 'cancelled')`);
+      // Default: bitenler (served/cancelled) hariç. NULL kitchen_status = pending kabul et.
+      conditions.push(`COALESCE(oi.kitchen_status, 'pending') NOT IN ('served', 'cancelled')`);
     }
-
-    const sinceCutoff = since || new Date(Date.now() - 12 * 3600 * 1000).toISOString();
-    conditions.push(`oi.created_at >= $${params.length + 1}`);
-    params.push(sinceCutoff);
 
     const { rows } = await pool.query(
       `SELECT
@@ -39,9 +35,9 @@ router.get('/items', authMiddleware, async (req, res) => {
          oi.quantity,
          oi.unit_price,
          oi.note,
-         oi.kitchen_status,
+         COALESCE(oi.kitchen_status, 'pending') AS kitchen_status,
          oi.kitchen_updated_at,
-         oi.created_at,
+         COALESCE(oi.created_at, o.created_at, NOW()) AS created_at,
          mi.name AS item_name,
          o.table_id,
          t.table_number,
@@ -51,7 +47,7 @@ router.get('/items', authMiddleware, async (req, res) => {
        JOIN tables t ON o.table_id = t.id
        LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
        WHERE ${conditions.join(' AND ')}
-       ORDER BY oi.created_at ASC`,
+       ORDER BY COALESCE(oi.created_at, o.created_at) ASC`,
       params
     );
 
