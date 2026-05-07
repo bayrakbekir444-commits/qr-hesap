@@ -53,7 +53,7 @@ export default function Kitchen() {
 
   useEffect(() => {
     load();
-    const token = localStorage.getItem('panel_token');
+    const token = localStorage.getItem('token');
     const socket = connectSocket(token);
 
     const onConnect = () => setConnected(true);
@@ -84,8 +84,8 @@ export default function Kitchen() {
 
     setConnected(socket.connected);
 
-    // Her 30 saniyede bir liste yenile (yedek polling)
-    const id = setInterval(load, 30000);
+    // Her 5 saniyede bir liste yenile (WebSocket koparsa bile sipariş hızlı düşsün)
+    const id = setInterval(load, 5000);
     // Her 5 saniyede bir tick — timeAgo güncellensin
     const tickId = setInterval(() => { tickRef.current++; setItems((p) => [...p]); }, 5000);
 
