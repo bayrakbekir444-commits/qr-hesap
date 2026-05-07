@@ -6,6 +6,8 @@ export default function RestaurantSettings() {
   const [form, setForm] = useState({ logo_url: '', description: '', phone: '', email: '' });
   const [hideBranding, setHideBranding] = useState(false);
   const [brandingMsg, setBrandingMsg] = useState('');
+  const [aiWaiter, setAiWaiter] = useState(true);
+  const [aiWaiterMsg, setAiWaiterMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -20,9 +22,22 @@ export default function RestaurantSettings() {
           email: res.data.email || '',
         });
         setHideBranding(res.data.hide_branding === 1);
+        setAiWaiter(res.data.ai_waiter_enabled !== 0);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const toggleAiWaiter = async () => {
+    const next = !aiWaiter;
+    try {
+      await api.put('/auth/restaurant/ai-waiter', { enabled: next });
+      setAiWaiter(next);
+      setAiWaiterMsg(next ? '✓ AI Garson açıldı' : '✓ AI Garson kapatıldı');
+      setTimeout(() => setAiWaiterMsg(''), 3000);
+    } catch (e) {
+      setAiWaiterMsg(e?.response?.data?.error || 'Güncellenemedi.');
+    }
+  };
 
   const toggleBranding = async () => {
     const next = !hideBranding;
@@ -109,6 +124,28 @@ export default function RestaurantSettings() {
 
         <button type="submit" className="btn btn-accent">Kaydet</button>
       </form>
+
+      <div className="panel-card" style={{ marginTop: '1.5rem' }}>
+        <h3 style={{ marginTop: 0, fontSize: '1rem' }}>🤖 AI Garson</h3>
+        <p style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+          Müşteri menüde "Garsona Sor" butonuna basıp AI'ya sorabilir: yemek önerisi, alerjen bilgisi, bütçe kombinasyonu vs.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem' }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={aiWaiter}
+              onChange={toggleAiWaiter}
+            />
+            <span>AI Garson aktif</span>
+          </label>
+        </div>
+        {aiWaiterMsg && (
+          <div style={{ marginTop: '0.75rem', background: '#eff6ff', color: '#1e40af', padding: '0.5rem 0.75rem', borderRadius: '8px', fontSize: '0.875rem' }}>
+            {aiWaiterMsg}
+          </div>
+        )}
+      </div>
 
       <div className="panel-card" style={{ marginTop: '1.5rem' }}>
         <h3 style={{ marginTop: 0, fontSize: '1rem' }}>✨ Beyaz Etiket</h3>

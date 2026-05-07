@@ -54,6 +54,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/kitchen', require('./routes/kitchen'));
+app.use('/api/ai-waiter', require('./routes/ai-waiter'));
 
 // Sağlık kontrolü
 app.get('/api/health', (req, res) => {

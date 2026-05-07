@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api, { formatTL } from '../../utils/api';
 import Loading from '../../components/Loading';
 import BrandingFooter from '../../components/BrandingFooter';
+import AIWaiterChat from '../../components/AIWaiterChat';
 
 const LANGUAGES = [
   { code: 'tr', label: 'TR' },
@@ -78,6 +79,7 @@ export default function MenuView() {
   const [loyaltyOpen, setLoyaltyOpen] = useState(false);
   const [loyaltyPhone, setLoyaltyPhone] = useState(() => localStorage.getItem('qr_hesap_loyalty_phone') || '');
   const [loyaltyData, setLoyaltyData] = useState(null);
+  const [aiWaiterOpen, setAiWaiterOpen] = useState(false);
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
   // KVKK açık rıza — telefon daha önce kaydedildiyse rıza zaten verilmiş demek
   const [loyaltyConsent, setLoyaltyConsent] = useState(() => !!localStorage.getItem('qr_hesap_loyalty_phone'));
@@ -558,6 +560,28 @@ export default function MenuView() {
           </div>
         )}
       </div>
+
+      {data?.table?.ai_waiter_enabled && (
+        <button
+          className="ai-waiter-fab"
+          onClick={() => setAiWaiterOpen(true)}
+          aria-label="AI Garson"
+        >
+          <span className="ai-waiter-fab-icon">🤖</span>
+          <span className="ai-waiter-fab-text">
+            {lang === 'en' ? 'Ask Waiter' : lang === 'ar' ? 'اسأل النادل' : 'Garsona Sor'}
+          </span>
+        </button>
+      )}
+
+      {aiWaiterOpen && (
+        <AIWaiterChat
+          menuQrToken={menuQrToken}
+          lang={lang}
+          onClose={() => setAiWaiterOpen(false)}
+        />
+      )}
+
       <BrandingFooter hide={data?.table?.hide_branding} />
     </div>
   );

@@ -143,7 +143,7 @@ router.get('/restaurant', authMiddleware, async (req, res) => {
   try {
     const pool = getPool();
     const { rows } = await pool.query(
-      'SELECT id, name, logo_url, description, phone, email, hide_branding, package_type FROM restaurants WHERE id = $1',
+      'SELECT id, name, logo_url, description, phone, email, hide_branding, ai_waiter_enabled, package_type FROM restaurants WHERE id = $1',
       [req.restaurantId]
     );
     res.json(rows[0]);
@@ -165,6 +165,23 @@ router.put('/restaurant/branding', authMiddleware, async (req, res) => {
     res.json({ message: 'Güncellendi.', hide_branding: !!value });
   } catch (err) {
     console.error('Branding toggle hatası:', err);
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  }
+});
+
+// PUT /api/auth/restaurant/ai-waiter — AI Garson aç/kapat
+router.put('/restaurant/ai-waiter', authMiddleware, async (req, res) => {
+  try {
+    const { enabled } = req.body;
+    const pool = getPool();
+    const value = enabled ? 1 : 0;
+    await pool.query(
+      'UPDATE restaurants SET ai_waiter_enabled = $1 WHERE id = $2',
+      [value, req.restaurantId]
+    );
+    res.json({ message: 'Güncellendi.', ai_waiter_enabled: !!value });
+  } catch (err) {
+    console.error('AI Garson toggle hatası:', err);
     res.status(500).json({ error: 'Sunucu hatası.' });
   }
 });

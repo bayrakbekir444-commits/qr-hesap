@@ -296,6 +296,7 @@ router.get('/menu/:menuQrToken/public', async (req, res) => {
       `SELECT t.*, r.name as restaurant_name, r.logo_url as restaurant_logo,
               r.description as restaurant_description,
               r.hide_branding as restaurant_hide_branding,
+              r.ai_waiter_enabled as restaurant_ai_waiter,
               r.package_type as restaurant_package
        FROM tables t JOIN restaurants r ON t.restaurant_id = r.id
        WHERE t.menu_qr_token = $1 AND t.active = 1`,
@@ -351,6 +352,7 @@ router.get('/menu/:menuQrToken/public', async (req, res) => {
         restaurant_description: table.restaurant_description,
         payment_qr_token: table.payment_qr_token,
         hide_branding: hideBranding,
+        ai_waiter_enabled: table.restaurant_ai_waiter === 1 || table.restaurant_ai_waiter === null || table.restaurant_ai_waiter === undefined,
       },
       menu,
       order,

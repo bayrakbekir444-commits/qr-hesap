@@ -65,6 +65,7 @@ async function runAlterTables(client) {
     "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS kitchen_status TEXT DEFAULT 'pending'",
     "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS kitchen_updated_at TIMESTAMPTZ",
     "ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS hide_branding SMALLINT DEFAULT 0",
+    "ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS ai_waiter_enabled SMALLINT DEFAULT 1",
   ];
 
   for (const sql of alterStatements) {
