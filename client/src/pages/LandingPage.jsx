@@ -293,11 +293,38 @@ export default function LandingPage() {
         <div className="lp-footer-payments">
           <span className="lp-payment-label">Güvenli Ödeme</span>
           <div className="lp-payment-logos">
-            <span className="lp-payment-logo lp-payment-iyzico">iyzico</span>
-            <span className="lp-payment-logo">Mastercard</span>
-            <span className="lp-payment-logo">VISA</span>
-            <span className="lp-payment-logo">American Express</span>
-            <span className="lp-payment-logo">troy</span>
+            <div className="lp-payment-logo">
+              <svg viewBox="0 0 80 28" xmlns="http://www.w3.org/2000/svg">
+                <rect width="80" height="28" rx="4" fill="#1e64ff"/>
+                <text x="40" y="19" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="13" fill="#fff">iyzico</text>
+              </svg>
+            </div>
+            <div className="lp-payment-logo">
+              <svg viewBox="0 0 60 38" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="22" cy="19" r="13" fill="#eb001b"/>
+                <circle cx="38" cy="19" r="13" fill="#f79e1b"/>
+                <path d="M30 9.5a13 13 0 0 1 0 19 13 13 0 0 1 0-19z" fill="#ff5f00"/>
+              </svg>
+            </div>
+            <div className="lp-payment-logo">
+              <svg viewBox="0 0 80 28" xmlns="http://www.w3.org/2000/svg">
+                <rect width="80" height="28" rx="4" fill="#fff"/>
+                <text x="40" y="20" textAnchor="middle" fontFamily="Arial Black, Arial, sans-serif" fontWeight="900" fontStyle="italic" fontSize="16" fill="#1a1f71" letterSpacing="2">VISA</text>
+              </svg>
+            </div>
+            <div className="lp-payment-logo">
+              <svg viewBox="0 0 80 28" xmlns="http://www.w3.org/2000/svg">
+                <rect width="80" height="28" rx="4" fill="#006fcf"/>
+                <text x="40" y="19" textAnchor="middle" fontFamily="Arial Black, Arial, sans-serif" fontWeight="900" fontSize="11" fill="#fff" letterSpacing="1.5">AMEX</text>
+              </svg>
+            </div>
+            <div className="lp-payment-logo">
+              <svg viewBox="0 0 80 28" xmlns="http://www.w3.org/2000/svg">
+                <rect width="80" height="28" rx="4" fill="#fff"/>
+                <text x="40" y="20" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="800" fontSize="16" fill="#e30613" letterSpacing="0.5">troy</text>
+                <circle cx="62" cy="18" r="2.5" fill="#00a651"/>
+              </svg>
+            </div>
           </div>
         </div>
         <div className="lp-footer-social">
