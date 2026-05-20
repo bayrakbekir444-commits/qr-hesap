@@ -47,6 +47,12 @@ const steps = [
   { num: '3', title: 'QR Yapıştır', desc: 'PDF\'i yazdır, masalarına yapıştır. Müşteri okutur, sistem başlıyor.' },
 ];
 
+const testimonials = [
+  { name: 'Ahmet Usta', role: 'Kebap Restoranı Sahibi', text: 'QR Hesap sayesinde sipariş karışmıyor, garsonlarım daha rahat. Mutfağa anlık düşüyor, kasada kuyruk kalmadı.' },
+  { name: 'Mehmet Şef', role: 'Pide & Lahmacun', text: 'QR sistemi mutfağa hız kattı. Yoğun saatlerde bile siparişler düzenli geliyor, hata payı çok düştü.' },
+  { name: 'Café Nil', role: 'İşletme Sahibi', text: 'Kasa hataları %90 azaldı, ödeme doğrudan hesabımıza geçiyor. Müşteri masadan kalkmadan ödüyor, çok memnunlar.' },
+];
+
 const plans = [
   {
     name: 'Tüm Özellikler',
@@ -225,6 +231,26 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Testimonials */}
+      <section className="lp-section lp-section-dark">
+        <div className="lp-container">
+          <h2 className="lp-section-title">Restoran Sahipleri Ne Diyor?</h2>
+          <p className="lp-section-sub">Gerçek işletmelerden gerçek yorumlar</p>
+          <div className="lp-testimonials">
+            {testimonials.map((t, i) => (
+              <div key={i} className="lp-testimonial">
+                <div className="lp-testimonial-stars">★★★★★</div>
+                <p className="lp-testimonial-text">"{t.text}"</p>
+                <div className="lp-testimonial-author">
+                  <div className="lp-testimonial-name">{t.name}</div>
+                  <div className="lp-testimonial-role">{t.role}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="lp-cta-final">
         <div className="lp-container">
@@ -262,6 +288,16 @@ export default function LandingPage() {
               <a href="mailto:info@qrhesap.com">info@qrhesap.com</a>
               <a href="https://wa.me/905436960574" target="_blank" rel="noreferrer">WhatsApp</a>
             </div>
+          </div>
+        </div>
+        <div className="lp-footer-payments">
+          <span className="lp-payment-label">Güvenli Ödeme</span>
+          <div className="lp-payment-logos">
+            <span className="lp-payment-logo lp-payment-iyzico">iyzico</span>
+            <span className="lp-payment-logo">Mastercard</span>
+            <span className="lp-payment-logo">VISA</span>
+            <span className="lp-payment-logo">American Express</span>
+            <span className="lp-payment-logo">troy</span>
           </div>
         </div>
         <div className="lp-footer-social">

@@ -3134,6 +3134,93 @@ a { color: var(--gold); text-decoration: none; }
   color: #fff !important;
 }
 
+/* Testimonials */
+.lp-testimonials {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.lp-testimonial {
+  background: rgba(255, 247, 238, 0.06);
+  border: 1px solid rgba(255, 247, 238, 0.1);
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.2s;
+}
+.lp-testimonial:hover {
+  transform: translateY(-4px);
+  border-color: #e76f51;
+  background: rgba(255, 247, 238, 0.09);
+}
+.lp-testimonial-stars {
+  color: #f4a261;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+.lp-testimonial-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #fff7ee;
+  flex: 1;
+}
+.lp-testimonial-author {
+  border-top: 1px solid rgba(255, 247, 238, 0.1);
+  padding-top: 14px;
+}
+.lp-testimonial-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff7ee;
+}
+.lp-testimonial-role {
+  font-size: 13px;
+  color: #d4a373;
+  margin-top: 2px;
+}
+
+/* Footer payments */
+.lp-footer-payments {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 24px 0;
+  border-top: 1px solid rgba(255, 247, 238, 0.1);
+  margin-top: 20px;
+}
+.lp-payment-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #d4a373;
+  font-weight: 600;
+}
+.lp-payment-logos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+}
+.lp-payment-logo {
+  background: #fff7ee;
+  color: #2c1810;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  min-width: 70px;
+  text-align: center;
+}
+.lp-payment-iyzico {
+  background: #1e64ff;
+  color: #fff;
+}
+
 /* Footer */
 .lp-footer {
   background: #2c1810;
@@ -3191,7 +3278,8 @@ a { color: var(--gold); text-decoration: none; }
   .lp-hero-title { font-size: 36px; }
   .lp-features-grid,
   .lp-steps,
-  .lp-plans { grid-template-columns: 1fr; }
+  .lp-plans,
+  .lp-testimonials { grid-template-columns: 1fr; }
   .lp-plan.popular { transform: none; }
   .lp-section { padding: 60px 0; }
   .lp-section-title { font-size: 30px; }
