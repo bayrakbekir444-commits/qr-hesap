@@ -211,26 +211,56 @@ export default function LandingPage() {
           <p className="lp-section-sub">Restoranına özel teklif için iletişime geç</p>
           <div className="lp-plans" style={{ justifyContent: 'center' }}>
             {plans.map((p, i) => (
-              <div key={i} className={`lp-plan lp-plan-wide ${p.popular ? 'popular' : ''}`}>
-                <h3>{p.name}</h3>
-                <div className="lp-plan-price">
-                  <span className="lp-plan-amount">{p.price}</span>
+              <div key={i} className={`lp-plan lp-plan-horizontal ${p.popular ? 'popular' : ''}`}>
+                <div className="lp-plan-left">
+                  <span className="lp-plan-badge">⭐ En Çok Tercih Edilen</span>
+                  <h3>{p.name}</h3>
+                  <div className="lp-plan-price">
+                    <span className="lp-plan-amount">{p.price}</span>
+                  </div>
+                  <p className="lp-plan-desc">{p.desc}</p>
+
+                  <div className="lp-plan-stats">
+                    <div className="lp-plan-stat">
+                      <div className="lp-plan-stat-num">30dk</div>
+                      <div className="lp-plan-stat-label">Kurulum</div>
+                    </div>
+                    <div className="lp-plan-stat">
+                      <div className="lp-plan-stat-num">%0</div>
+                      <div className="lp-plan-stat-label">Komisyon</div>
+                    </div>
+                    <div className="lp-plan-stat">
+                      <div className="lp-plan-stat-num">7/24</div>
+                      <div className="lp-plan-stat-label">Destek</div>
+                    </div>
+                  </div>
+
+                  <a
+                    href="https://wa.me/905436960574?text=Merhaba%2C%20QR%20Hesap%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="lp-btn lp-btn-primary lp-plan-cta"
+                  >
+                    💬 {p.cta}
+                  </a>
+
+                  <div className="lp-plan-trust">
+                    <span>🔒 Güvenli ödeme: iyzico</span>
+                    <span>🇹🇷 Türkçe destek</span>
+                  </div>
                 </div>
-                <p className="lp-plan-desc">{p.desc}</p>
-                <ul className="lp-plan-features">
-                  {p.features.map((f, j) => (
-                    <li key={j}>✓ {f}</li>
-                  ))}
-                </ul>
-                <a
-                  href="https://wa.me/905436960574?text=Merhaba%2C%20QR%20Hesap%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="lp-btn lp-btn-primary"
-                  style={{ width: '100%', justifyContent: 'center' }}
-                >
-                  💬 {p.cta}
-                </a>
+
+                <div className="lp-plan-right">
+                  <h4 className="lp-plan-features-title">Pakete dahil olan her şey</h4>
+                  <ul className="lp-plan-features">
+                    {p.features.map((f, j) => (
+                      <li key={j}>
+                        <span className="lp-plan-check">✓</span>
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             ))}
           </div>
