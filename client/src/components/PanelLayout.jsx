@@ -209,7 +209,6 @@ export default function PanelLayout() {
     { to: '/panel/staff', label: 'Personel', icon: '\u263A' },
     { to: '/panel/coupons', label: 'Kuponlar', icon: '\u1F3AB' },
     { to: '/panel/reviews', label: 'Yorumlar', icon: '\u2b50' },
-    { to: '/panel/billing', label: '\u00d6deme Bilgileri', icon: '\ud83d\udcb3' },
     { to: '/panel/settings', label: 'Restoran Bilgileri', icon: '\u2699' },
   ];
 

@@ -2972,6 +2972,100 @@ a { color: var(--gold); text-decoration: none; }
   .form-grid { grid-template-columns: 1fr; }
 }
 
+/* Signup wizard */
+.signup-page {
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 32px 16px;
+  display: flex;
+  justify-content: center;
+}
+.signup-card {
+  width: 100%;
+  max-width: 760px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+}
+.signup-header { text-align: center; margin-bottom: 24px; }
+.signup-header h1 {
+  margin: 0 0 6px;
+  color: var(--gold);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 32px;
+}
+.signup-header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+.signup-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 18px;
+}
+.signup-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
+.signup-step.active, .signup-step.done { opacity: 1; }
+.signup-step-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(245, 166, 35, 0.15);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(245, 166, 35, 0.25);
+}
+.signup-step.active .signup-step-num {
+  background: var(--gold);
+  color: #1a1a2e;
+  border-color: var(--gold);
+}
+.signup-step.done .signup-step-num {
+  background: #10b981;
+  color: #fff;
+  border-color: #10b981;
+}
+.signup-step-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.signup-step-desc { font-size: 11px; color: var(--text-secondary); }
+.signup-form { display: flex; flex-direction: column; gap: 18px; }
+.signup-section {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.signup-section h3 {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.signup-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.signup-nav .btn { min-width: 140px; }
+@media (max-width: 600px) {
+  .signup-card { padding: 20px 16px; }
+  .signup-steps { grid-template-columns: 1fr; gap: 8px; }
+  .signup-step-desc { display: none; }
+}
+
 /* Register page perks + terms */
 .register-perks {
   display: flex;

@@ -55,13 +55,13 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// POST /api/auth/register — Public restoran kaydı (deneme paketi, 14 gün)
+// POST /api/auth/register — Public restoran kaydı (tam: hesap + iyzico bilgileri)
 router.post('/register', async (req, res) => {
   const { v4: uuidv4 } = require('uuid');
   const pool = getPool();
   const client = await pool.connect();
   try {
-    const { name, password, email, phone } = req.body;
+    const { name, password, email, phone, billing = {} } = req.body;
 
     if (!name || !password) {
       client.release();
@@ -75,6 +75,47 @@ router.post('/register', async (req, res) => {
     if (String(password).length < 6) {
       client.release();
       return res.status(400).json({ error: 'Şifre en az 6 karakter olmalı.' });
+    }
+
+    // Billing validation
+    const companyType = String(billing.company_type || '').trim().toLowerCase();
+    if (!['sahis', 'limited', 'anonim'].includes(companyType)) {
+      client.release();
+      return res.status(400).json({ error: 'İşletme türünü seçin (Şahıs/Limited/Anonim).' });
+    }
+    const iban = String(billing.iban || '').replace(/\s+/g, '').toUpperCase();
+    if (!/^TR\d{24}$/.test(iban)) {
+      client.release();
+      return res.status(400).json({ error: 'Geçerli bir IBAN girin (TR ile başlayan 26 karakter).' });
+    }
+    if (companyType === 'sahis') {
+      const id = String(billing.identity_number || '').replace(/\D/g, '');
+      if (!/^\d{11}$/.test(id)) {
+        client.release();
+        return res.status(400).json({ error: 'Şahıs için 11 haneli T.C. kimlik no girin.' });
+      }
+    } else {
+      const tax = String(billing.tax_number || '').replace(/\D/g, '');
+      if (!/^\d{10}$/.test(tax)) {
+        client.release();
+        return res.status(400).json({ error: 'Limited/Anonim için 10 haneli vergi numarası girin.' });
+      }
+    }
+    if (!billing.legal_name?.trim()) {
+      client.release();
+      return res.status(400).json({ error: 'İşletme/Şirket adı girin.' });
+    }
+    if (!billing.authorized_name?.trim() || !billing.authorized_surname?.trim()) {
+      client.release();
+      return res.status(400).json({ error: 'Yetkili kişinin adı ve soyadını girin.' });
+    }
+    if (!billing.authorized_email?.trim() || !billing.authorized_phone?.trim()) {
+      client.release();
+      return res.status(400).json({ error: 'Yetkili kişinin email ve telefonunu girin.' });
+    }
+    if (!billing.address_city?.trim() || !billing.address_full?.trim()) {
+      client.release();
+      return res.status(400).json({ error: 'İl ve açık adres girin.' });
     }
 
     // Aynı isimde restoran var mı?
@@ -99,9 +140,42 @@ router.post('/register', async (req, res) => {
       `INSERT INTO restaurants (name, password_hash, package_type, package_expires_at, email, phone)
        VALUES ($1, $2, 'deneme', $3, $4, $5)
        RETURNING id, name`,
-      [trimmedName, hash, expiresStr, email || null, phone || null]
+      [trimmedName, hash, expiresStr, email || billing.authorized_email || null, phone || billing.authorized_phone || null]
     );
     const restaurant = rRows[0];
+
+    // Billing record
+    await client.query(
+      `INSERT INTO restaurant_billing (
+        restaurant_id, company_type, legal_name, tax_number, tax_office, identity_number,
+        iban, authorized_name, authorized_surname, authorized_email, authorized_phone,
+        authorized_identity, authorized_birthdate, authorized_gender,
+        address_city, address_district, address_full, address_postal_code,
+        website, business_category, status, accepted_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,'pending',NOW())`,
+      [
+        restaurant.id,
+        companyType,
+        billing.legal_name.trim(),
+        companyType !== 'sahis' ? String(billing.tax_number || '').replace(/\D/g, '') : null,
+        billing.tax_office?.trim() || null,
+        companyType === 'sahis' ? String(billing.identity_number || '').replace(/\D/g, '') : null,
+        iban,
+        billing.authorized_name.trim(),
+        billing.authorized_surname.trim(),
+        billing.authorized_email.trim(),
+        billing.authorized_phone.trim(),
+        String(billing.authorized_identity || '').replace(/\D/g, '') || null,
+        billing.authorized_birthdate?.trim() || null,
+        billing.authorized_gender?.trim() || null,
+        billing.address_city.trim(),
+        billing.address_district?.trim() || null,
+        billing.address_full.trim(),
+        billing.address_postal_code?.trim() || null,
+        billing.website?.trim() || null,
+        billing.business_category?.trim() || 'restoran',
+      ]
+    );
 
     // Örnek kategori
     const { rows: catRows } = await client.query(
