@@ -3145,6 +3145,11 @@ a { color: var(--gold); text-decoration: none; }
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
   align-items: stretch;
+  justify-items: center;
+}
+.lp-plans:has(.lp-plan-wide) {
+  display: flex;
+  justify-content: center;
 }
 .lp-plan {
   background: #16213e;
