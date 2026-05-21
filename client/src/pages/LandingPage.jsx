@@ -98,8 +98,7 @@ export default function LandingPage() {
             <a href="#pricing">Fiyatlar</a>
             <a href="#faq">SSS</a>
             <Link to="/mutfak/giris" className="lp-nav-cta lp-nav-cta-secondary">👨‍🍳 Mutfak Girişi</Link>
-            <Link to="/panel/login" className="lp-nav-cta lp-nav-cta-secondary">Giriş Yap</Link>
-            <Link to="/kayit" className="lp-nav-cta">🚀 Ücretsiz Dene</Link>
+            <Link to="/panel/login" className="lp-nav-cta">Giriş Yap</Link>
           </nav>
         </div>
       </header>
@@ -117,11 +116,10 @@ export default function LandingPage() {
               Garson, mutfak ve yönetim için tek panel.
             </p>
             <div className="lp-hero-cta">
-              <Link to="/kayit" className="lp-btn lp-btn-primary">
-                🚀 14 Gün Ücretsiz Dene →
-              </Link>
+              <a href="#pricing" className="lp-btn lp-btn-primary">
+                Hemen Başla →
+              </a>
             </div>
-            <p className="lp-hero-hint">Kredi kartı gerekmez · 30 saniyede kurulum</p>
           </div>
           <div className="lp-hero-visual">
             <div className="lp-phone">
