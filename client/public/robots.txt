@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /panel
+Disallow: /admin
+Disallow: /odeme-sonuc
+Disallow: /t/
+Disallow: /menu/
+Disallow: /pay/
+Disallow: /mutfak/
+
+Sitemap: https://qrhesap.net/sitemap.xml
