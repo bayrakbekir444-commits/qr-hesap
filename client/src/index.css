@@ -3265,7 +3265,7 @@ a { color: var(--gold); text-decoration: none; }
 }
 .lp-payment-name {
   font-size: 11px;
-  color: #f5a623;
+  color: #ffffff;
   font-weight: 500;
   letter-spacing: 0.3px;
 }
@@ -3273,7 +3273,7 @@ a { color: var(--gold); text-decoration: none; }
 /* Footer */
 .lp-footer {
   background: #16213e;
-  color: #f5a623;
+  color: #ffffff;
   padding: 60px 0 30px;
 }
 .lp-footer-inner {
@@ -3283,12 +3283,13 @@ a { color: var(--gold); text-decoration: none; }
   margin-bottom: 40px;
 }
 .lp-footer .lp-logo {
-  color: #1a1a2e;
+  color: #ffffff;
   margin-bottom: 12px;
 }
 .lp-footer p {
   font-size: 14px;
   line-height: 1.6;
+  color: #b8b8c8;
 }
 .lp-footer-cols {
   display: grid;
@@ -3296,7 +3297,7 @@ a { color: var(--gold); text-decoration: none; }
   gap: 30px;
 }
 .lp-footer-cols h4 {
-  color: #1a1a2e;
+  color: #f5a623;
   font-size: 14px;
   font-weight: 700;
   margin-bottom: 14px;
@@ -3305,7 +3306,7 @@ a { color: var(--gold); text-decoration: none; }
 }
 .lp-footer-cols a {
   display: block;
-  color: #f5a623;
+  color: #ffffff;
   text-decoration: none;
   font-size: 14px;
   padding: 4px 0;
@@ -3317,8 +3318,9 @@ a { color: var(--gold); text-decoration: none; }
 .lp-footer-bottom {
   text-align: center;
   padding-top: 30px;
-  border-top: 1px solid rgba(26, 26, 46, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 13px;
+  color: #b8b8c8;
 }
 
 /* Mobile */
