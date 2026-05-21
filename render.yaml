@@ -1,0 +1,45 @@
+databases:
+  - name: qrhesap-db
+    plan: free
+    databaseName: qrhesap
+    user: qrhesap
+
+services:
+  - type: web
+    name: qrhesap-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: qrhesap-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: USER_JWT_SECRET
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CORS_ORIGIN
+        value: https://qrhesap.net,https://www.qrhesap.net
+      - key: CLIENT_BASE_URL
+        value: https://qrhesap.net
+      - key: IYZICO_BASE_URL
+        value: https://sandbox-api.iyzipay.com
+      - key: IYZICO_API_KEY
+        sync: false
+      - key: IYZICO_SECRET_KEY
+        sync: false
+      - key: IYZICO_CALLBACK_URL
+        value: https://qrhesap.net/odeme-sonuc
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: NODE_VERSION
+        value: 20

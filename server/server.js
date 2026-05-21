@@ -36,6 +36,11 @@ const corsOrigin = corsRaw === '*' || corsRaw === ''
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 
+// Health check (Render bunu kullanır)
+app.get('/', (_req, res) => {
+  res.json({ ok: true, service: 'qrhesap-api', time: new Date().toISOString() });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
