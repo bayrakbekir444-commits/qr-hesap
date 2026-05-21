@@ -3200,17 +3200,17 @@ a { color: var(--gold); text-decoration: none; }
 .lp-testimonial-text {
   font-size: 15px;
   line-height: 1.7;
-  color: #1a1a2e;
+  color: #ffffff;
   flex: 1;
 }
 .lp-testimonial-author {
-  border-top: 1px solid rgba(26, 26, 46, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 14px;
 }
 .lp-testimonial-name {
   font-size: 15px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #ffffff;
 }
 .lp-testimonial-role {
   font-size: 13px;
