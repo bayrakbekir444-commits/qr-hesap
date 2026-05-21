@@ -69,6 +69,32 @@ async function runAlterTables(client) {
     "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS kitchen_updated_at TIMESTAMPTZ",
     "ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS hide_branding SMALLINT DEFAULT 0",
     "ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS ai_waiter_enabled SMALLINT DEFAULT 1",
+    // iyzico ödeme bilgileri (her restoran için)
+    `CREATE TABLE IF NOT EXISTS restaurant_billing (
+      restaurant_id INTEGER PRIMARY KEY REFERENCES restaurants(id) ON DELETE CASCADE,
+      company_type TEXT,
+      legal_name TEXT,
+      tax_number TEXT,
+      tax_office TEXT,
+      identity_number TEXT,
+      iban TEXT,
+      authorized_name TEXT,
+      authorized_surname TEXT,
+      authorized_email TEXT,
+      authorized_phone TEXT,
+      authorized_identity TEXT,
+      address_city TEXT,
+      address_district TEXT,
+      address_full TEXT,
+      address_postal_code TEXT,
+      website TEXT,
+      mcc_code TEXT DEFAULT '5812',
+      iyzico_submerchant_key TEXT,
+      status TEXT DEFAULT 'incomplete',
+      accepted_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
   ];
 
   for (const sql of alterStatements) {

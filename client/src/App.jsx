@@ -22,6 +22,7 @@ import StaffManage from './pages/panel/StaffManage';
 import RestaurantSettings from './pages/panel/RestaurantSettings';
 import Coupons from './pages/panel/Coupons';
 import Reviews from './pages/panel/Reviews';
+import Billing from './pages/panel/Billing';
 import Kitchen from './pages/panel/Kitchen';
 import KitchenLogin from './pages/panel/KitchenLogin';
 import AdminLogin from './pages/admin/AdminLogin';
@@ -74,6 +75,7 @@ export default function App() {
         <Route path="settings" element={<RestaurantSettings />} />
         <Route path="coupons" element={<Coupons />} />
         <Route path="reviews" element={<Reviews />} />
+        <Route path="billing" element={<Billing />} />
       </Route>
 
       {/* KDS - Mutfak ekranı (panel layout dışında, tam ekran) */}

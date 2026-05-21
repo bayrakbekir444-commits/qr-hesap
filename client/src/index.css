@@ -2837,6 +2837,91 @@ a { color: var(--gold); text-decoration: none; }
   opacity: 0.85;
 }
 
+/* Billing / iyzico ödeme bilgileri sayfası */
+.billing-page { max-width: 880px; }
+.billing-status {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  border-left-width: 4px;
+}
+.billing-status > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+.billing-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.billing-status p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.billing-form { display: flex; flex-direction: column; gap: 20px; }
+.billing-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+.billing-section h3 {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.3px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.form-group-full { grid-column: 1 / -1; }
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.billing-radios { display: flex; flex-wrap: wrap; gap: 10px; }
+.billing-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+.billing-radio:hover { border-color: var(--gold); }
+.billing-radio.active { border-color: var(--gold); background: rgba(245, 166, 35, 0.08); }
+.billing-radio input { accent-color: var(--gold); }
+.billing-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+.billing-terms input { margin-top: 3px; flex-shrink: 0; accent-color: var(--gold); }
+@media (max-width: 600px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+
 /* Register page perks + terms */
 .register-perks {
   display: flex;

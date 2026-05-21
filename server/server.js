@@ -23,6 +23,7 @@ const receiptsRoutes = require('./routes/receipts');
 const usersRoutes = require('./routes/users');
 const walletRoutes = require('./routes/wallet');
 const notificationsRoutes = require('./routes/notifications');
+const billingRoutes = require('./routes/billing');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -58,6 +59,7 @@ app.use('/api/receipts', receiptsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/billing', billingRoutes);
 app.use('/api/kitchen', require('./routes/kitchen'));
 app.use('/api/ai-waiter', require('./routes/ai-waiter'));
 
