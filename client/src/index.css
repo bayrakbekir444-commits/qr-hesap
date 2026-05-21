@@ -3155,29 +3155,20 @@ a { color: var(--gold); text-decoration: none; }
 /* Final CTA */
 .lp-cta-final {
   padding: 80px 0;
-  background: linear-gradient(135deg, #f5a623, #e0951a);
+  background: #ffffff;
   text-align: center;
-  color: #fff;
+  color: #1a1a2e;
 }
 .lp-cta-final h2 {
   font-size: 38px;
   font-weight: 800;
   margin-bottom: 16px;
   letter-spacing: -1px;
+  color: #1a1a2e;
 }
 .lp-cta-final p {
   font-size: 18px;
-  margin-bottom: 32px;
-  opacity: 0.95;
-}
-.lp-cta-final .lp-btn-primary {
-  background: #16213e;
-  color: #e0951a !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-.lp-cta-final .lp-btn-primary:hover {
-  background: #16213e;
-  color: #fff !important;
+  color: #6b6b7a;
 }
 
 /* Testimonials */

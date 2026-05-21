@@ -258,9 +258,6 @@ export default function LandingPage() {
         <div className="lp-container">
           <h2>Restoranınızı bugün dijitalleştirin</h2>
           <p>Dakikalar içinde başlayın, ilk müşteriniz QR kodu okutsun.</p>
-          <Link to="/panel/login" className="lp-btn lp-btn-primary lp-btn-large">
-            Ücretsiz Dene →
-          </Link>
         </div>
       </section>
 
