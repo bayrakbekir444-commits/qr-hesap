@@ -8,8 +8,9 @@ const FIELDS = [
   'company_type', 'legal_name', 'tax_number', 'tax_office',
   'identity_number', 'iban', 'authorized_name', 'authorized_surname',
   'authorized_email', 'authorized_phone', 'authorized_identity',
+  'authorized_birthdate', 'authorized_gender',
   'address_city', 'address_district', 'address_full', 'address_postal_code',
-  'website',
+  'website', 'business_category',
 ];
 
 // GET /api/billing — restoranın mevcut ödeme bilgileri
@@ -78,11 +79,14 @@ router.put('/', authMiddleware, async (req, res) => {
       authorized_email: body.authorized_email.trim(),
       authorized_phone: body.authorized_phone.trim(),
       authorized_identity: String(body.authorized_identity || '').replace(/\D/g, '') || null,
+      authorized_birthdate: body.authorized_birthdate?.trim() || null,
+      authorized_gender: body.authorized_gender?.trim() || null,
       address_city: body.address_city.trim(),
       address_district: body.address_district?.trim() || null,
       address_full: body.address_full.trim(),
       address_postal_code: body.address_postal_code?.trim() || null,
       website: body.website?.trim() || null,
+      business_category: body.business_category?.trim() || null,
     };
 
     const pool = getPool();

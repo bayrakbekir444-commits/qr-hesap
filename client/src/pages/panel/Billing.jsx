@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../../utils/api';
 
 const STATUS_LABELS = {
@@ -9,6 +10,8 @@ const STATUS_LABELS = {
 };
 
 export default function Billing() {
+  const [searchParams] = useSearchParams();
+  const isWelcome = searchParams.get('welcome') === '1';
   const [form, setForm] = useState({
     company_type: 'sahis',
     legal_name: '',
@@ -21,11 +24,14 @@ export default function Billing() {
     authorized_email: '',
     authorized_phone: '',
     authorized_identity: '',
+    authorized_birthdate: '',
+    authorized_gender: '',
     address_city: '',
     address_district: '',
     address_full: '',
     address_postal_code: '',
     website: '',
+    business_category: 'restoran',
   });
   const [status, setStatus] = useState('incomplete');
   const [accepted, setAccepted] = useState(false);
@@ -86,12 +92,34 @@ export default function Billing() {
         <p>iyzico üzerinden ödeme alabilmek için işletme ve banka bilgilerinizi tamamlayın.</p>
       </div>
 
+      {isWelcome && status === 'incomplete' && (
+        <div className="billing-welcome">
+          <h3>🎉 Hoş geldin! Son bir adım kaldı.</h3>
+          <p>
+            QR Hesap'a kayıt oldun. Müşterilerden ödeme alabilmen için aşağıdaki <strong>vergi ve banka bilgilerini </strong>
+            doldurman gerekiyor. Bilgiler iyzico'ya iletilir, 1-5 iş günü içinde onaylanır.
+          </p>
+        </div>
+      )}
+
       <div className="billing-status" style={{ borderColor: st.color }}>
         <div>
           <span className="billing-status-dot" style={{ background: st.color }}></span>
           <strong>Durum: {st.label}</strong>
         </div>
         <p>{st.desc}</p>
+      </div>
+
+      <div className="billing-docs-info">
+        <h4>📎 Ayrıca göndermeniz gereken evraklar</h4>
+        <p>Formu doldurduktan sonra aşağıdaki PDF/JPG evrakları <a href="https://wa.me/905436960574" target="_blank" rel="noreferrer"><strong>WhatsApp</strong></a> veya <a href="mailto:info@qrhesap.com"><strong>info@qrhesap.com</strong></a> üzerinden iletmeniz gerekir:</p>
+        <ul>
+          <li><strong>Vergi Levhası</strong> (zorunlu)</li>
+          <li><strong>Faaliyet Belgesi</strong> (esnaf odası / ticaret odası — zorunlu)</li>
+          <li><strong>İmza Beyannamesi</strong> (Şahıs) <em>veya</em> <strong>İmza Sirküleri</strong> (Limited/Anonim)</li>
+          <li><strong>Ticaret Sicil Gazetesi</strong> (sadece Limited/Anonim)</li>
+          <li><strong>Kimlik Fotokopisi</strong> (yetkili kişinin)</li>
+        </ul>
       </div>
 
       {message && <div className="success-message">{message}</div>}
@@ -170,6 +198,21 @@ export default function Billing() {
               />
             </div>
             <div className="form-group">
+              <label>İşletme Türü</label>
+              <select
+                value={form.business_category}
+                onChange={(e) => update('business_category', e.target.value)}
+              >
+                <option value="restoran">Restoran</option>
+                <option value="kafe">Kafe</option>
+                <option value="bar">Bar / Pub</option>
+                <option value="pastane">Pastane / Fırın</option>
+                <option value="fast_food">Fast Food</option>
+                <option value="kebapci">Kebapçı / Pideci</option>
+                <option value="diger">Diğer</option>
+              </select>
+            </div>
+            <div className="form-group">
               <label>Web Sitesi <small>(opsiyonel)</small></label>
               <input
                 type="url"
@@ -242,7 +285,7 @@ export default function Billing() {
               />
             </div>
             {!isSahis && (
-              <div className="form-group form-group-full">
+              <div className="form-group">
                 <label>Yetkili T.C. Kimlik No <small>(opsiyonel)</small></label>
                 <input
                   type="text"
@@ -254,6 +297,25 @@ export default function Billing() {
                 />
               </div>
             )}
+            <div className="form-group">
+              <label>Doğum Tarihi <small>(opsiyonel)</small></label>
+              <input
+                type="date"
+                value={form.authorized_birthdate}
+                onChange={(e) => update('authorized_birthdate', e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label>Cinsiyet <small>(opsiyonel)</small></label>
+              <select
+                value={form.authorized_gender}
+                onChange={(e) => update('authorized_gender', e.target.value)}
+              >
+                <option value="">Seçiniz</option>
+                <option value="erkek">Erkek</option>
+                <option value="kadın">Kadın</option>
+              </select>
+            </div>
           </div>
         </section>
 

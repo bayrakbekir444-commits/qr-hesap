@@ -2865,6 +2865,56 @@ a { color: var(--gold); text-decoration: none; }
   color: var(--text-secondary);
   font-size: 13px;
 }
+.billing-welcome {
+  background: linear-gradient(135deg, rgba(245, 166, 35, 0.12), rgba(245, 166, 35, 0.04));
+  border: 1.5px solid rgba(245, 166, 35, 0.35);
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin-bottom: 18px;
+}
+.billing-welcome h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  color: var(--gold);
+}
+.billing-welcome p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.55;
+}
+.billing-docs-info {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gold);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+.billing-docs-info h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--gold);
+}
+.billing-docs-info p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+.billing-docs-info ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.billing-docs-info a {
+  color: var(--gold);
+  text-decoration: underline;
+}
 .billing-form { display: flex; flex-direction: column; gap: 20px; }
 .billing-section {
   background: var(--card);

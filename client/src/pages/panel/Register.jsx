@@ -41,7 +41,7 @@ export default function Register() {
         phone: form.phone || undefined,
       });
       localStorage.setItem('token', res.data.token);
-      navigate('/panel', { replace: true });
+      navigate('/panel/billing?welcome=1', { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Kayıt sırasında bir hata oluştu.');
     } finally {

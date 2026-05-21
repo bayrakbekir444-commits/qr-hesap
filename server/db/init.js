@@ -83,18 +83,24 @@ async function runAlterTables(client) {
       authorized_email TEXT,
       authorized_phone TEXT,
       authorized_identity TEXT,
+      authorized_birthdate TEXT,
+      authorized_gender TEXT,
       address_city TEXT,
       address_district TEXT,
       address_full TEXT,
       address_postal_code TEXT,
       website TEXT,
       mcc_code TEXT DEFAULT '5812',
+      business_category TEXT,
       iyzico_submerchant_key TEXT,
       status TEXT DEFAULT 'incomplete',
       accepted_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )`,
+    "ALTER TABLE restaurant_billing ADD COLUMN IF NOT EXISTS authorized_birthdate TEXT",
+    "ALTER TABLE restaurant_billing ADD COLUMN IF NOT EXISTS authorized_gender TEXT",
+    "ALTER TABLE restaurant_billing ADD COLUMN IF NOT EXISTS business_category TEXT",
   ];
 
   for (const sql of alterStatements) {
