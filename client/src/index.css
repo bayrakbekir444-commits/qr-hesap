@@ -5246,6 +5246,44 @@ a { color: var(--gold); text-decoration: none; }
 .kds-btn.primary { background: #0a7ea4; color: #fff; }
 .kds-btn.primary:hover { background: #0d6986; }
 .kds-btn.ghost { background: #fee2e2; color: #b91c1c; flex: 0 0 50px; }
+.kds-btn.warn { background: #fef3c7; color: #92400e; flex: 0 0 auto; font-size: 12px; padding: 8px 10px; }
+.kds-btn.warn:hover { background: #fde68a; }
+
+/* Stoktan kaldır mini buton (sipariş bazlı satır içi) */
+.kds-stock-btn {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 11px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s;
+}
+.kds-stock-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+.kds-card-out {
+  opacity: 0.55;
+  background: #f1f5f9 !important;
+}
+.kds-order-item-out {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+.kds-stock-badge {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-top: 6px;
+  text-align: center;
+}
 .kds-loading {
   min-height: 100vh;
   display: flex;

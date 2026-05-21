@@ -137,6 +137,22 @@ export default function Kitchen() {
     }
   };
 
+  const markOutOfStock = async (menuItemId, itemName) => {
+    if (!menuItemId) return;
+    const ok = window.confirm(`"${itemName}" bitti olarak işaretlensin mi?\n\nMüşteri menüsünden anında gizlenir. Tekrar gelince Menü Yönetimi'nden aktif et.`);
+    if (!ok) return;
+    try {
+      await api.patch(`/menu/items/${menuItemId}/toggle`);
+      // Visual feedback
+      setItems((prev) => prev.map((it) => it.menu_item_id === menuItemId
+        ? { ...it, _out_of_stock: true }
+        : it
+      ));
+    } catch (err) {
+      alert('Bitti işaretlenemedi: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
   // Kalemleri kolonlara grupla (item bazlı görünüm)
   const grouped = useMemo(() => {
     const g = { pending: [], preparing: [], ready: [] };
@@ -251,7 +267,7 @@ export default function Kitchen() {
                 <>
                   {grouped[col.key].length === 0 && <div className="kds-empty">—</div>}
                   {grouped[col.key].map((it) => (
-                    <div key={it.id} className={`kds-card ${urgencyClass(it.created_at)}`}>
+                    <div key={it.id} className={`kds-card ${urgencyClass(it.created_at)} ${it._out_of_stock ? 'kds-card-out' : ''}`}>
                       <div className="kds-card-top">
                         <span className="kds-table">Masa {it.table_number || it.table_name || '-'}</span>
                         <span className="kds-time">{timeAgo(it.created_at)}</span>
@@ -261,6 +277,7 @@ export default function Kitchen() {
                         <span>{it.item_name || 'Ürün'}</span>
                       </div>
                       {it.note && <div className="kds-note">📝 {it.note}</div>}
+                      {it._out_of_stock && <div className="kds-stock-badge">🚫 Menüden gizlendi</div>}
                       <div className="kds-actions">
                         {NEXT_STATUS[col.key] && (
                           <button
@@ -277,6 +294,13 @@ export default function Kitchen() {
                             ✕
                           </button>
                         )}
+                        <button
+                          className="kds-btn warn"
+                          title="Bu ürünü stoktan kaldır — müşteri menüsünden gizlenir"
+                          onClick={() => markOutOfStock(it.menu_item_id, it.item_name)}
+                        >
+                          🚫 Bitti
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -296,7 +320,7 @@ export default function Kitchen() {
                       </div>
                       <div className="kds-order-items">
                         {order.items.map((it) => (
-                          <div key={it.id} className={`kds-order-item kds-item-${it.kitchen_status}`}>
+                          <div key={it.id} className={`kds-order-item kds-item-${it.kitchen_status} ${it._out_of_stock ? 'kds-order-item-out' : ''}`}>
                             <div className="kds-order-item-main">
                               <span className="kds-qty">×{it.quantity}</span>
                               <span className="kds-order-item-name">{it.item_name || 'Ürün'}</span>
@@ -308,8 +332,16 @@ export default function Kitchen() {
                                 {it.kitchen_status === 'preparing' && '🟡'}
                                 {it.kitchen_status === 'ready' && '🟢'}
                               </span>
+                              <button
+                                className="kds-stock-btn"
+                                title="Bu ürünü stoktan kaldır"
+                                onClick={(e) => { e.stopPropagation(); markOutOfStock(it.menu_item_id, it.item_name); }}
+                              >
+                                🚫
+                              </button>
                             </div>
                             {it.note && <div className="kds-order-item-note">📝 {it.note}</div>}
+                            {it._out_of_stock && <div className="kds-order-item-note" style={{ color: '#dc2626' }}>🚫 Menüden gizlendi</div>}
                           </div>
                         ))}
                       </div>
