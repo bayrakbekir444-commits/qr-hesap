@@ -47,6 +47,13 @@ const steps = [
   { num: '3', title: 'QR Yapıştır', desc: 'PDF\'i yazdır, masalarına yapıştır. Müşteri okutur, sistem başlıyor.' },
 ];
 
+const flowSteps = [
+  { icon: '🍽️', title: 'Müşteri Sipariş Verir', desc: 'Müşteriniz masadaki QR kodu okutur ve mobil menü üzerinden sipariş oluşturur.' },
+  { icon: '🎯', title: 'Sipariş Mutfakta Görünür', desc: 'Siparişler anında mutfak ekranında görünür. Gecikme veya karışıklık yaşanmaz.' },
+  { icon: '📋', title: 'Müşteriye Teslim Edilir', desc: 'Hazırlanan ürünler mutfaktan kasaya, kasadan müşteriye gerçek zamanlı aktarılır.' },
+  { icon: '💳', title: 'Ödeme Tamamlanır', desc: 'Müşteri masadan kalkmadan kart ile öder, para doğrudan iyzico üzerinden hesabınıza geçer.' },
+];
+
 const testimonials = [
   { name: 'Ahmet Usta', role: 'Kebap Restoranı Sahibi', text: 'QR Hesap sayesinde sipariş karışmıyor, garsonlarım daha rahat. Mutfağa anlık düşüyor, kasada kuyruk kalmadı.' },
   { name: 'Mehmet Şef', role: 'Pide & Lahmacun', text: 'QR sistemi mutfağa hız kattı. Yoğun saatlerde bile siparişler düzenli geliyor, hata payı çok düştü.' },
@@ -87,7 +94,7 @@ export default function LandingPage() {
           </Link>
           <nav className="lp-nav">
             <a href="#features">Özellikler</a>
-            <a href="#how">Nasıl Çalışır</a>
+            <a href="#flow">Nasıl Çalışır</a>
             <a href="#pricing">Fiyatlar</a>
             <a href="#faq">SSS</a>
             <Link to="/mutfak/giris" className="lp-nav-cta lp-nav-cta-secondary">👨‍🍳 Mutfak Girişi</Link>
@@ -142,6 +149,24 @@ export default function LandingPage() {
                 <div className="lp-feature-icon">{f.icon}</div>
                 <h3>{f.title}</h3>
                 <p>{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Customer flow */}
+      <section id="flow" className="lp-section">
+        <div className="lp-container">
+          <h2 className="lp-section-title">Nasıl Çalışır?</h2>
+          <p className="lp-section-sub">Müşteri masaya oturduğu andan ödemeye kadar 4 adım</p>
+          <div className="lp-flow-grid">
+            {flowSteps.map((s, i) => (
+              <div key={i} className="lp-flow-card">
+                <div className="lp-flow-num">{i + 1}</div>
+                <div className="lp-flow-icon">{s.icon}</div>
+                <h3>{s.title}</h3>
+                <p>{s.desc}</p>
               </div>
             ))}
           </div>

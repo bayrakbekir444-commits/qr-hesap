@@ -3049,6 +3049,61 @@ a { color: var(--gold); text-decoration: none; }
   line-height: 1.6;
 }
 
+/* Customer Flow (4 step horizontal) */
+.lp-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.lp-flow-card {
+  position: relative;
+  background: #16213e;
+  border: 1px solid rgba(245, 166, 35, 0.18);
+  border-radius: 16px;
+  padding: 36px 22px 24px;
+  text-align: center;
+  transition: all 0.2s;
+}
+.lp-flow-card:hover {
+  transform: translateY(-4px);
+  border-color: #f5a623;
+  box-shadow: 0 14px 32px rgba(245, 166, 35, 0.15);
+}
+.lp-flow-num {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f5a623, #e0951a);
+  color: #1a1a2e;
+  font-weight: 900;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(245, 166, 35, 0.35);
+}
+.lp-flow-icon {
+  font-size: 44px;
+  margin-bottom: 14px;
+  line-height: 1;
+}
+.lp-flow-card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 10px;
+  letter-spacing: -0.3px;
+}
+.lp-flow-card p {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #b8b8c8;
+}
+
 /* Steps */
 .lp-steps {
   display: grid;
@@ -3340,6 +3395,7 @@ a { color: var(--gold); text-decoration: none; }
   .lp-steps,
   .lp-plans,
   .lp-testimonials { grid-template-columns: 1fr; }
+  .lp-flow-grid { grid-template-columns: repeat(2, 1fr); gap: 28px; }
   .lp-plan.popular { transform: none; }
   .lp-section { padding: 60px 0; }
   .lp-section-title { font-size: 30px; }
