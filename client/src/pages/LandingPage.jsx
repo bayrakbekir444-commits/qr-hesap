@@ -212,11 +212,13 @@ export default function LandingPage() {
           <div className="lp-plans" style={{ justifyContent: 'center' }}>
             {plans.map((p, i) => (
               <div key={i} className={`lp-plan lp-plan-wide ${p.popular ? 'popular' : ''}`}>
-                <h3>{p.name}</h3>
-                <div className="lp-plan-price">
-                  <span className="lp-plan-amount">{p.price}</span>
+                <div className="lp-plan-wide-head">
+                  <h3>{p.name}</h3>
+                  <div className="lp-plan-price">
+                    <span className="lp-plan-amount">{p.price}</span>
+                  </div>
+                  <p className="lp-plan-desc">{p.desc}</p>
                 </div>
-                <p className="lp-plan-desc">{p.desc}</p>
                 <ul className="lp-plan-features">
                   {p.features.map((f, j) => (
                     <li key={j}>✓ {f}</li>
@@ -227,7 +229,6 @@ export default function LandingPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="lp-btn lp-btn-primary"
-                  style={{ width: '100%', justifyContent: 'center' }}
                 >
                   💬 {p.cta}
                 </a>
