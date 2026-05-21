@@ -203,7 +203,6 @@ export default function PanelLayout() {
   const links = [
     { to: '/panel', label: 'Genel Bakis', icon: '\u2302' },
     { to: '/panel/orders', label: 'Siparisler', icon: '\u2615' },
-    { to: '/panel/kitchen', label: 'Mutfak Ekrani', icon: '\ud83c\udf73', external: true },
     { to: '/panel/menu', label: 'Menu Yonetimi', icon: '\u2630' },
     { to: '/panel/tables', label: 'Masa Yonetimi', icon: '\u25A6' },
     { to: '/panel/reports', label: 'Raporlar', icon: '\u2261' },
