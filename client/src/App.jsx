@@ -22,6 +22,7 @@ import RestaurantSettings from './pages/panel/RestaurantSettings';
 import Coupons from './pages/panel/Coupons';
 import Reviews from './pages/panel/Reviews';
 import Kitchen from './pages/panel/Kitchen';
+import KitchenLogin from './pages/panel/KitchenLogin';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
@@ -73,6 +74,7 @@ export default function App() {
       </Route>
 
       {/* KDS - Mutfak ekranı (panel layout dışında, tam ekran) */}
+      <Route path="/mutfak/giris" element={<KitchenLogin />} />
       <Route path="/panel/kitchen" element={<Kitchen />} />
 
       {/* 404 catch-all */}

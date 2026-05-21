@@ -90,6 +90,7 @@ export default function LandingPage() {
             <a href="#how">Nasıl Çalışır</a>
             <a href="#pricing">Fiyatlar</a>
             <a href="#faq">SSS</a>
+            <Link to="/mutfak/giris" className="lp-nav-cta lp-nav-cta-secondary">👨‍🍳 Mutfak Girişi</Link>
             <Link to="/panel/login" className="lp-nav-cta">Giriş Yap</Link>
           </nav>
         </div>

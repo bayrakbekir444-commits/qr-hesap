@@ -2743,6 +2743,15 @@ a { color: var(--gold); text-decoration: none; }
   background: #f5a623 !important;
   color: #fff !important;
 }
+.lp-nav-cta-secondary {
+  background: transparent !important;
+  color: #f5a623 !important;
+  border: 1.5px solid #f5a623;
+}
+.lp-nav-cta-secondary:hover {
+  background: #f5a623 !important;
+  color: #16213e !important;
+}
 
 /* Hero */
 .lp-hero {
