@@ -112,9 +112,6 @@ export default function LandingPage() {
               <Link to="/panel/login" className="lp-btn lp-btn-primary">
                 Hemen Başla →
               </Link>
-              <a href="#pricing" className="lp-btn lp-btn-ghost">
-                Fiyatları Gör
-              </a>
             </div>
           </div>
           <div className="lp-hero-visual">
