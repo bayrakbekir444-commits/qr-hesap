@@ -211,10 +211,10 @@ export default function LandingPage() {
           <p className="lp-section-sub">Restoranına özel teklif için iletişime geç</p>
           <div className="lp-plans" style={{ justifyContent: 'center' }}>
             {plans.map((p, i) => (
-              <div key={i} className={`lp-plan ${p.popular ? 'popular' : ''}`} style={{ maxWidth: 480 }}>
+              <div key={i} className={`lp-plan lp-plan-wide ${p.popular ? 'popular' : ''}`}>
                 <h3>{p.name}</h3>
                 <div className="lp-plan-price">
-                  <span className="lp-plan-amount" style={{ fontSize: '1.6rem' }}>{p.price}</span>
+                  <span className="lp-plan-amount">{p.price}</span>
                 </div>
                 <p className="lp-plan-desc">{p.desc}</p>
                 <ul className="lp-plan-features">

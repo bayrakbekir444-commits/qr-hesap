@@ -3155,6 +3155,47 @@ a { color: var(--gold); text-decoration: none; }
   display: flex;
   flex-direction: column;
 }
+.lp-plan-wide {
+  max-width: 760px;
+  width: 100%;
+  padding: 56px 56px 48px;
+  border-radius: 24px;
+}
+.lp-plan-wide h3 {
+  font-size: 32px;
+  margin-bottom: 14px;
+}
+.lp-plan-wide .lp-plan-amount {
+  font-size: 56px;
+  background: linear-gradient(135deg, #f5a623, #e0951a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.lp-plan-wide .lp-plan-desc {
+  font-size: 17px;
+  margin-bottom: 36px;
+}
+.lp-plan-wide .lp-plan-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 32px;
+  margin-bottom: 36px;
+}
+.lp-plan-wide .lp-plan-features li {
+  font-size: 16px;
+  padding: 12px 0;
+}
+.lp-plan-wide .lp-btn {
+  font-size: 17px;
+  padding: 18px 28px;
+}
+@media (max-width: 700px) {
+  .lp-plan-wide { padding: 36px 24px; }
+  .lp-plan-wide h3 { font-size: 24px; }
+  .lp-plan-wide .lp-plan-amount { font-size: 38px; }
+  .lp-plan-wide .lp-plan-features { grid-template-columns: 1fr; }
+}
 .lp-plan.popular {
   border-color: #f5a623;
   transform: scale(1.04);
