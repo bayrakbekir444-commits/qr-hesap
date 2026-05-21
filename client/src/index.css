@@ -2704,6 +2704,18 @@ a { color: var(--gold); text-decoration: none; }
   font-weight: 800;
   color: #2c1810;
   letter-spacing: -0.5px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.lp-logo-svg {
+  height: 36px;
+  width: auto;
+  display: block;
+}
+.lp-logo-svg-footer {
+  height: 44px;
+  margin-bottom: 12px;
 }
 .lp-nav {
   display: flex;

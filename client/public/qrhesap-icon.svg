@@ -1,0 +1,25 @@
+<svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sadece QR ikonu — favicon, app icon için -->
+  <rect width="280" height="280" rx="60" fill="#1a2342"/>
+
+  <g transform="translate(65, 65)" fill="#ffffff">
+    <path d="M 0 0 h 60 a 10 10 0 0 1 10 10 v 60 a 10 10 0 0 1 -10 10 h -60 a 10 10 0 0 1 -10 -10 v -60 a 10 10 0 0 1 10 -10 z M 18 18 h 34 v 34 h -34 z" fill-rule="evenodd"/>
+    <rect x="25" y="25" width="20" height="20" rx="3"/>
+
+    <g transform="translate(100, 0)">
+      <path d="M 0 0 h 60 a 10 10 0 0 1 10 10 v 60 a 10 10 0 0 1 -10 10 h -60 a 10 10 0 0 1 -10 -10 v -60 a 10 10 0 0 1 10 -10 z M 18 18 h 34 v 34 h -34 z" fill-rule="evenodd"/>
+      <rect x="25" y="25" width="20" height="20" rx="3"/>
+    </g>
+
+    <g transform="translate(0, 100)">
+      <path d="M 0 0 h 60 a 10 10 0 0 1 10 10 v 60 a 10 10 0 0 1 -10 10 h -60 a 10 10 0 0 1 -10 -10 v -60 a 10 10 0 0 1 10 -10 z M 18 18 h 34 v 34 h -34 z" fill-rule="evenodd"/>
+      <rect x="25" y="25" width="20" height="20" rx="3"/>
+    </g>
+
+    <g transform="translate(100, 100)">
+      <path d="M 0 0 h 60 a 10 10 0 0 1 10 10 v 60 a 10 10 0 0 1 -10 10 h -60 a 10 10 0 0 1 -10 -10 v -60 a 10 10 0 0 1 10 -10 z M 18 18 h 34 v 34 h -34 z" fill-rule="evenodd"/>
+      <rect x="25" y="25" width="20" height="20" rx="3"/>
+      <rect x="50" y="54" width="24" height="10" rx="3" transform="rotate(45 62 59)"/>
+    </g>
+  </g>
+</svg>

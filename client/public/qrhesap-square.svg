@@ -1,0 +1,37 @@
+<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ahmet stili kare: koyu zemin + beyaz QR + stacked "QR / HESAP" -->
+  <rect width="1000" height="1000" fill="#1a2342"/>
+
+  <!-- QR ikonu (sol, dikey ortalı) -->
+  <g transform="translate(140, 230)" fill="#ffffff">
+    <!-- Top-left finder -->
+    <path d="M 0 0 h 130 a 20 20 0 0 1 20 20 v 130 a 20 20 0 0 1 -20 20 h -130 a 20 20 0 0 1 -20 -20 v -130 a 20 20 0 0 1 20 -20 z M 35 35 h 80 v 80 h -80 z" fill-rule="evenodd"/>
+    <rect x="50" y="50" width="50" height="50" rx="8"/>
+
+    <!-- Top-right finder -->
+    <g transform="translate(220, 0)">
+      <path d="M 0 0 h 130 a 20 20 0 0 1 20 20 v 130 a 20 20 0 0 1 -20 20 h -130 a 20 20 0 0 1 -20 -20 v -130 a 20 20 0 0 1 20 -20 z M 35 35 h 80 v 80 h -80 z" fill-rule="evenodd"/>
+      <rect x="50" y="50" width="50" height="50" rx="8"/>
+    </g>
+
+    <!-- Bottom-left finder -->
+    <g transform="translate(0, 220)">
+      <path d="M 0 0 h 130 a 20 20 0 0 1 20 20 v 130 a 20 20 0 0 1 -20 20 h -130 a 20 20 0 0 1 -20 -20 v -130 a 20 20 0 0 1 20 -20 z M 35 35 h 80 v 80 h -80 z" fill-rule="evenodd"/>
+      <rect x="50" y="50" width="50" height="50" rx="8"/>
+    </g>
+
+    <!-- Bottom-right: "Q" — rounded square + diagonal tail -->
+    <g transform="translate(220, 220)">
+      <path d="M 0 0 h 130 a 20 20 0 0 1 20 20 v 130 a 20 20 0 0 1 -20 20 h -130 a 20 20 0 0 1 -20 -20 v -130 a 20 20 0 0 1 20 -20 z M 35 35 h 80 v 80 h -80 z" fill-rule="evenodd"/>
+      <rect x="50" y="50" width="50" height="50" rx="8"/>
+      <!-- Q kuyruğu -->
+      <rect x="110" y="115" width="50" height="20" rx="6" transform="rotate(45 135 125)"/>
+    </g>
+  </g>
+
+  <!-- Wordmark (sağ, stacked) -->
+  <g fill="#ffffff" font-family="Inter, -apple-system, sans-serif" font-weight="900" letter-spacing="-8">
+    <text x="560" y="510" font-size="220">QR</text>
+    <text x="560" y="730" font-size="220">HESAP</text>
+  </g>
+</svg>
