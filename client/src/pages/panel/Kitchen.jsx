@@ -24,6 +24,40 @@ function timeAgo(iso) {
   return `${hr} sa ${min % 60} dk`;
 }
 
+const ALLERGY_KEYWORDS = [
+  'alerji', 'alerjik', 'allerji',
+  'fıstık', 'fistik', 'yer fıstığı',
+  'badem', 'ceviz', 'fındık', 'findik',
+  'glüten', 'gluten', 'glütensiz', 'glutensiz',
+  'laktoz', 'laktozsuz', 'süt alerji', 'sut alerji',
+  'yumurta alerji', 'kabuklu deniz', 'çekirdek alerji',
+  'soya alerji', 'arı', 'eklem',
+];
+const PREFERENCE_KEYWORDS = [
+  'soğansız', 'sogansiz',
+  'sarımsaksız', 'sarimsaksiz',
+  'acısız', 'acisiz', 'az acı', 'az aci',
+  'tuzsuz', 'az tuzlu',
+  'salçasız', 'salcasiz',
+  'baharatsız', 'baharatsiz',
+  'şekersiz', 'sekersiz',
+  'vegan', 'vejetaryen', 'vejeteryan', 'etsiz',
+  'helal',
+  'sade',
+];
+
+function noteSeverity(note) {
+  if (!note) return null;
+  const n = note.toLocaleLowerCase('tr-TR');
+  for (const kw of ALLERGY_KEYWORDS) {
+    if (n.includes(kw)) return 'allergy';
+  }
+  for (const kw of PREFERENCE_KEYWORDS) {
+    if (n.includes(kw)) return 'preference';
+  }
+  return 'note';
+}
+
 function urgencyClass(iso) {
   if (!iso) return '';
   const min = (Date.now() - new Date(iso).getTime()) / 60000;
@@ -266,8 +300,13 @@ export default function Kitchen() {
               {viewMode === 'items' && (
                 <>
                   {grouped[col.key].length === 0 && <div className="kds-empty">—</div>}
-                  {grouped[col.key].map((it) => (
-                    <div key={it.id} className={`kds-card ${urgencyClass(it.created_at)} ${it._out_of_stock ? 'kds-card-out' : ''}`}>
+                  {grouped[col.key].map((it) => {
+                    const sev = noteSeverity(it.note);
+                    return (
+                    <div key={it.id} className={`kds-card ${urgencyClass(it.created_at)} ${it._out_of_stock ? 'kds-card-out' : ''} ${sev === 'allergy' ? 'kds-card-allergy' : ''}`}>
+                      {sev === 'allergy' && (
+                        <div className="kds-allergy-strip">⚠️ ALERJİ — Dikkat!</div>
+                      )}
                       <div className="kds-card-top">
                         <span className="kds-table">Masa {it.table_number || it.table_name || '-'}</span>
                         <span className="kds-time">{timeAgo(it.created_at)}</span>
@@ -276,7 +315,11 @@ export default function Kitchen() {
                         <span className="kds-qty">×{it.quantity}</span>
                         <span>{it.item_name || 'Ürün'}</span>
                       </div>
-                      {it.note && <div className="kds-note">📝 {it.note}</div>}
+                      {it.note && (
+                        <div className={`kds-note kds-note-${sev}`}>
+                          {sev === 'allergy' ? '🚨' : sev === 'preference' ? '⚙️' : '📝'} {it.note}
+                        </div>
+                      )}
                       {it._out_of_stock && <div className="kds-stock-badge">🚫 Menüden gizlendi</div>}
                       <div className="kds-actions">
                         {NEXT_STATUS[col.key] && (
@@ -303,15 +346,20 @@ export default function Kitchen() {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  );})}
                 </>
               )}
 
               {viewMode === 'orders' && (
                 <>
                   {orderGrouped[col.key].length === 0 && <div className="kds-empty">—</div>}
-                  {orderGrouped[col.key].map((order) => (
-                    <div key={order.order_id} className={`kds-card kds-order-card ${urgencyClass(order.created_at)}`}>
+                  {orderGrouped[col.key].map((order) => {
+                    const orderHasAllergy = order.items.some((it) => noteSeverity(it.note) === 'allergy');
+                    return (
+                    <div key={order.order_id} className={`kds-card kds-order-card ${urgencyClass(order.created_at)} ${orderHasAllergy ? 'kds-card-allergy' : ''}`}>
+                      {orderHasAllergy && (
+                        <div className="kds-allergy-strip">⚠️ ALERJİ — Dikkat!</div>
+                      )}
                       <div className="kds-card-top">
                         <span className="kds-table kds-table-big">
                           🪑 Masa {order.table_number || order.table_name || '-'}
@@ -319,8 +367,10 @@ export default function Kitchen() {
                         <span className="kds-time">{timeAgo(order.created_at)}</span>
                       </div>
                       <div className="kds-order-items">
-                        {order.items.map((it) => (
-                          <div key={it.id} className={`kds-order-item kds-item-${it.kitchen_status} ${it._out_of_stock ? 'kds-order-item-out' : ''}`}>
+                        {order.items.map((it) => {
+                          const sev = noteSeverity(it.note);
+                          return (
+                          <div key={it.id} className={`kds-order-item kds-item-${it.kitchen_status} ${it._out_of_stock ? 'kds-order-item-out' : ''} ${sev === 'allergy' ? 'kds-order-item-allergy' : ''}`}>
                             <div className="kds-order-item-main">
                               <span className="kds-qty">×{it.quantity}</span>
                               <span className="kds-order-item-name">{it.item_name || 'Ürün'}</span>
@@ -340,10 +390,15 @@ export default function Kitchen() {
                                 🚫
                               </button>
                             </div>
-                            {it.note && <div className="kds-order-item-note">📝 {it.note}</div>}
+                            {it.note && (
+                              <div className={`kds-order-item-note kds-order-item-note-${sev}`}>
+                                {sev === 'allergy' ? '🚨 ' : sev === 'preference' ? '⚙️ ' : '📝 '}{it.note}
+                              </div>
+                            )}
                             {it._out_of_stock && <div className="kds-order-item-note" style={{ color: '#dc2626' }}>🚫 Menüden gizlendi</div>}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       <div className="kds-card-summary">
                         {order.items.length} ürün
@@ -366,7 +421,8 @@ export default function Kitchen() {
                         )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </>
               )}
             </div>
