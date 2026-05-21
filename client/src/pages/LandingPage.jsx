@@ -116,9 +116,9 @@ export default function LandingPage() {
               Garson, mutfak ve yönetim için tek panel.
             </p>
             <div className="lp-hero-cta">
-              <a href="#pricing" className="lp-btn lp-btn-primary">
+              <Link to="/panel/login" className="lp-btn lp-btn-primary">
                 Hemen Başla →
-              </a>
+              </Link>
             </div>
           </div>
           <div className="lp-hero-visual">
