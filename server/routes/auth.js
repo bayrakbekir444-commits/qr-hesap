@@ -55,6 +55,107 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// POST /api/auth/register — Public restoran kaydı (deneme paketi, 14 gün)
+router.post('/register', async (req, res) => {
+  const { v4: uuidv4 } = require('uuid');
+  const pool = getPool();
+  const client = await pool.connect();
+  try {
+    const { name, password, email, phone } = req.body;
+
+    if (!name || !password) {
+      client.release();
+      return res.status(400).json({ error: 'Restoran adı ve şifre gereklidir.' });
+    }
+    const trimmedName = String(name).trim();
+    if (trimmedName.length < 2) {
+      client.release();
+      return res.status(400).json({ error: 'Restoran adı en az 2 karakter olmalı.' });
+    }
+    if (String(password).length < 6) {
+      client.release();
+      return res.status(400).json({ error: 'Şifre en az 6 karakter olmalı.' });
+    }
+
+    // Aynı isimde restoran var mı?
+    const { rows: existRows } = await client.query(
+      'SELECT id FROM restaurants WHERE LOWER(TRIM(name)) = LOWER(TRIM($1))',
+      [trimmedName]
+    );
+    if (existRows.length > 0) {
+      client.release();
+      return res.status(409).json({ error: 'Bu isimde bir restoran zaten kayıtlı. Farklı bir isim deneyin.' });
+    }
+
+    const hash = bcrypt.hashSync(password, 10);
+    // 14 günlük deneme
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 14);
+    const expiresStr = expires.toISOString().split('T')[0];
+
+    await client.query('BEGIN');
+
+    const { rows: rRows } = await client.query(
+      `INSERT INTO restaurants (name, password_hash, package_type, package_expires_at, email, phone)
+       VALUES ($1, $2, 'deneme', $3, $4, $5)
+       RETURNING id, name`,
+      [trimmedName, hash, expiresStr, email || null, phone || null]
+    );
+    const restaurant = rRows[0];
+
+    // Örnek kategori
+    const { rows: catRows } = await client.query(
+      `INSERT INTO categories (restaurant_id, name, sort_order) VALUES ($1, $2, $3) RETURNING id`,
+      [restaurant.id, 'Örnek Kategori', 0]
+    );
+    const categoryId = catRows[0].id;
+
+    // 3 örnek ürün
+    const sampleItems = [
+      { name: 'Mercimek Çorbası', price: 8500 },
+      { name: 'Adana Kebap', price: 24500 },
+      { name: 'Türk Kahvesi', price: 6500 },
+    ];
+    for (const it of sampleItems) {
+      await client.query(
+        `INSERT INTO menu_items (restaurant_id, category_id, name, price, active)
+         VALUES ($1, $2, $3, $4, 1)`,
+        [restaurant.id, categoryId, it.name, it.price]
+      );
+    }
+
+    // 4 örnek masa
+    for (let i = 1; i <= 4; i++) {
+      await client.query(
+        `INSERT INTO tables (restaurant_id, table_number, qr_token, menu_qr_token, payment_qr_token)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [restaurant.id, i, uuidv4(), uuidv4(), uuidv4()]
+      );
+    }
+
+    await client.query('COMMIT');
+
+    const token = jwt.sign(
+      { restaurantId: restaurant.id, restaurantName: restaurant.name },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({
+      message: 'Restoran oluşturuldu. 14 gün ücretsiz deneme başladı.',
+      token,
+      restaurant: { id: restaurant.id, name: restaurant.name },
+      trial_expires_at: expiresStr,
+    });
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('Kayıt hatası:', err);
+    res.status(500).json({ error: 'Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyin.' });
+  } finally {
+    client.release();
+  }
+});
+
 // POST /api/auth/forgot — Şifremi unuttum kodu üret
 router.post('/forgot', async (req, res) => {
   try {

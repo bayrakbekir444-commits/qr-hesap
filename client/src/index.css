@@ -2830,6 +2830,46 @@ a { color: var(--gold); text-decoration: none; }
   color: #b8b8c8;
   margin-bottom: 32px;
 }
+.lp-hero-hint {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #b8b8c8;
+  opacity: 0.85;
+}
+
+/* Register page perks + terms */
+.register-perks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+.register-perk {
+  font-size: 13px;
+  color: #f5a623;
+  font-weight: 600;
+}
+.register-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: #b8b8c8;
+  margin: 6px 0 14px;
+  cursor: pointer;
+}
+.register-terms input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.register-terms a {
+  color: #f5a623;
+  text-decoration: underline;
+}
 .lp-hero-cta {
   display: flex;
   gap: 16px;

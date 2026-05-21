@@ -12,6 +12,7 @@ import PaymentPage from './pages/customer/PaymentPage';
 import PaymentResultPage from './pages/customer/PaymentResultPage';
 
 import Login from './pages/panel/Login';
+import Register from './pages/panel/Register';
 import Dashboard from './pages/panel/Dashboard';
 import MenuManage from './pages/panel/MenuManage';
 import TableManage from './pages/panel/TableManage';
@@ -61,6 +62,8 @@ export default function App() {
 
       {/* Panel routes */}
       <Route path="/panel/login" element={<Login />} />
+      <Route path="/kayit" element={<Register />} />
+      <Route path="/panel/kayit" element={<Register />} />
       <Route path="/panel" element={<PanelLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="menu" element={<MenuManage />} />

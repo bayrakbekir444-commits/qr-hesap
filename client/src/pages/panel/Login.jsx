@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../../utils/api';
 
 export default function Login() {
@@ -117,6 +117,13 @@ export default function Login() {
             }}>
             Şifremi unuttum
           </button>
+
+          <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.9rem', color: '#8b8b8b', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.25rem' }}>
+            Hesabın yok mu?{' '}
+            <Link to="/kayit" style={{ color: '#f5a623', textDecoration: 'none', fontWeight: 600 }}>
+              14 Gün Ücretsiz Dene →
+            </Link>
+          </div>
         </form>
       </div>
 
