@@ -284,7 +284,7 @@ export default function LandingPage() {
               <h4>İletişim</h4>
               <a href="mailto:info@qrhesap.com">info@qrhesap.com</a>
               <a href="https://wa.me/905436960574" target="_blank" rel="noreferrer">WhatsApp</a>
-              <a href="https://instagram.com/qr.hesap_/" target="_blank" rel="noreferrer">Instagram</a>
+              <a href="https://ig.me/m/qr.hesap_" target="_blank" rel="noreferrer">Instagram DM</a>
             </div>
           </div>
         </div>
