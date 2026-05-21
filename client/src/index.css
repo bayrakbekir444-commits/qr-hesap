@@ -2983,10 +2983,10 @@ a { color: var(--gold); text-decoration: none; }
 }
 .lp-section-dark {
   background: #16213e;
-  color: #1a1a2e;
+  color: #ffffff;
 }
 .lp-section-dark .lp-section-title {
-  color: #1a1a2e;
+  color: #ffffff;
 }
 .lp-section-dark .lp-section-sub {
   color: #f5a623;
