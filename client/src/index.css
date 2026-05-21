@@ -2709,13 +2709,14 @@ a { color: var(--gold); text-decoration: none; }
   text-decoration: none;
 }
 .lp-logo-svg {
-  height: 36px;
+  height: 44px;
   width: auto;
   display: block;
+  border-radius: 8px;
 }
 .lp-logo-svg-footer {
-  height: 44px;
-  margin-bottom: 12px;
+  height: 56px;
+  margin-bottom: 14px;
 }
 .lp-nav {
   display: flex;
