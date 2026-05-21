@@ -83,7 +83,7 @@ export default function LandingPage() {
       <header className="lp-header">
         <div className="lp-container lp-header-inner">
           <Link to="/" className="lp-logo">
-            <img src="/qrhesap-logo-dark.svg" alt="QR Hesap" className="lp-logo-svg" />
+            <img src="/qrhesap-logo-light.svg" alt="QR Hesap" className="lp-logo-svg" />
           </Link>
           <nav className="lp-nav">
             <a href="#features">Özellikler</a>
