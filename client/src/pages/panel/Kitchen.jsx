@@ -37,8 +37,13 @@ export default function Kitchen() {
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('kds_view') || 'orders');
   const audioRef = useRef(null);
   const tickRef = useRef(0);
+
+  useEffect(() => {
+    localStorage.setItem('kds_view', viewMode);
+  }, [viewMode]);
 
   const load = useCallback(async () => {
     try {
@@ -132,7 +137,7 @@ export default function Kitchen() {
     }
   };
 
-  // Kalemleri kolonlara grupla
+  // Kalemleri kolonlara grupla (item bazlı görünüm)
   const grouped = useMemo(() => {
     const g = { pending: [], preparing: [], ready: [] };
     for (const it of items) {
@@ -140,6 +145,54 @@ export default function Kitchen() {
     }
     return g;
   }, [items]);
+
+  // Sipariş bazlı: aynı order_id'deki ürünleri tek karta topla, ana kolon = en geri durumlu item
+  const orderGrouped = useMemo(() => {
+    const STATUS_RANK = { pending: 0, preparing: 1, ready: 2 };
+    const byOrder = new Map();
+    for (const it of items) {
+      if (!byOrder.has(it.order_id)) {
+        byOrder.set(it.order_id, {
+          order_id: it.order_id,
+          table_number: it.table_number,
+          table_name: it.table_name,
+          created_at: it.created_at,
+          items: [],
+        });
+      }
+      const o = byOrder.get(it.order_id);
+      o.items.push(it);
+      // en eski created_at'i tut
+      if (new Date(it.created_at) < new Date(o.created_at)) o.created_at = it.created_at;
+    }
+    const g = { pending: [], preparing: [], ready: [] };
+    for (const order of byOrder.values()) {
+      // Karar: siparişin durumunu en geri kalan kalem belirler
+      let minRank = 99;
+      for (const it of order.items) {
+        const r = STATUS_RANK[it.kitchen_status];
+        if (r !== undefined && r < minRank) minRank = r;
+      }
+      const status = minRank === 0 ? 'pending' : minRank === 1 ? 'preparing' : minRank === 2 ? 'ready' : null;
+      if (status) g[status].push(order);
+    }
+    // Her kolonu eskiden yeniye sırala
+    for (const k of Object.keys(g)) {
+      g[k].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    }
+    return g;
+  }, [items]);
+
+  const advanceOrder = async (order, nextStatus) => {
+    // Siparişteki uygun kalemleri toplu ilerlet
+    const targets = order.items.filter((it) => {
+      if (nextStatus === 'preparing') return it.kitchen_status === 'pending';
+      if (nextStatus === 'ready') return it.kitchen_status !== 'ready' && it.kitchen_status !== 'served';
+      if (nextStatus === 'served') return it.kitchen_status === 'ready';
+      return false;
+    });
+    await Promise.all(targets.map((it) => updateStatus(it.id, nextStatus)));
+  };
 
   if (loading) {
     return <div className="kds-loading">Yükleniyor…</div>;
@@ -153,6 +206,22 @@ export default function Kitchen() {
           <h1>Mutfak Ekranı</h1>
         </div>
         <div className="kds-meta">
+          <div className="kds-view-toggle">
+            <button
+              className={viewMode === 'orders' ? 'active' : ''}
+              onClick={() => setViewMode('orders')}
+              title="Aynı masanın tüm siparişleri tek kartta"
+            >
+              🧾 Sipariş Bazlı
+            </button>
+            <button
+              className={viewMode === 'items' ? 'active' : ''}
+              onClick={() => setViewMode('items')}
+              title="Her ürün ayrı kartta"
+            >
+              🍽️ Ürün Bazlı
+            </button>
+          </div>
           <span className={`kds-status ${connected ? 'connected' : 'disconnected'}`}>
             {connected ? '● Canlı' : '○ Bağlanıyor...'}
           </span>
@@ -172,43 +241,102 @@ export default function Kitchen() {
           <div key={col.key} className="kds-column" style={{ background: col.bg }}>
             <div className="kds-col-header" style={{ color: col.color, borderBottomColor: col.color }}>
               <span>{col.label}</span>
-              <span className="kds-col-count">{grouped[col.key].length}</span>
+              <span className="kds-col-count">
+                {viewMode === 'orders' ? orderGrouped[col.key].length : grouped[col.key].length}
+              </span>
             </div>
 
             <div className="kds-cards">
-              {grouped[col.key].length === 0 && (
-                <div className="kds-empty">—</div>
+              {viewMode === 'items' && (
+                <>
+                  {grouped[col.key].length === 0 && <div className="kds-empty">—</div>}
+                  {grouped[col.key].map((it) => (
+                    <div key={it.id} className={`kds-card ${urgencyClass(it.created_at)}`}>
+                      <div className="kds-card-top">
+                        <span className="kds-table">Masa {it.table_number || it.table_name || '-'}</span>
+                        <span className="kds-time">{timeAgo(it.created_at)}</span>
+                      </div>
+                      <div className="kds-item-name">
+                        <span className="kds-qty">×{it.quantity}</span>
+                        <span>{it.item_name || 'Ürün'}</span>
+                      </div>
+                      {it.note && <div className="kds-note">📝 {it.note}</div>}
+                      <div className="kds-actions">
+                        {NEXT_STATUS[col.key] && (
+                          <button
+                            className="kds-btn primary"
+                            onClick={() => updateStatus(it.id, NEXT_STATUS[col.key])}
+                          >
+                            {col.key === 'pending' && '▶ Başla'}
+                            {col.key === 'preparing' && '✓ Hazır'}
+                            {col.key === 'ready' && '🍽️ Servis'}
+                          </button>
+                        )}
+                        {col.key === 'pending' && (
+                          <button className="kds-btn ghost" onClick={() => updateStatus(it.id, 'cancelled')}>
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </>
               )}
-              {grouped[col.key].map((it) => (
-                <div key={it.id} className={`kds-card ${urgencyClass(it.created_at)}`}>
-                  <div className="kds-card-top">
-                    <span className="kds-table">Masa {it.table_number || it.table_name || '-'}</span>
-                    <span className="kds-time">{timeAgo(it.created_at)}</span>
-                  </div>
-                  <div className="kds-item-name">
-                    <span className="kds-qty">×{it.quantity}</span>
-                    <span>{it.item_name || 'Ürün'}</span>
-                  </div>
-                  {it.note && <div className="kds-note">📝 {it.note}</div>}
-                  <div className="kds-actions">
-                    {NEXT_STATUS[col.key] && (
-                      <button
-                        className="kds-btn primary"
-                        onClick={() => updateStatus(it.id, NEXT_STATUS[col.key])}
-                      >
-                        {col.key === 'pending' && '▶ Başla'}
-                        {col.key === 'preparing' && '✓ Hazır'}
-                        {col.key === 'ready' && '🍽️ Servis'}
-                      </button>
-                    )}
-                    {col.key === 'pending' && (
-                      <button className="kds-btn ghost" onClick={() => updateStatus(it.id, 'cancelled')}>
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+
+              {viewMode === 'orders' && (
+                <>
+                  {orderGrouped[col.key].length === 0 && <div className="kds-empty">—</div>}
+                  {orderGrouped[col.key].map((order) => (
+                    <div key={order.order_id} className={`kds-card kds-order-card ${urgencyClass(order.created_at)}`}>
+                      <div className="kds-card-top">
+                        <span className="kds-table kds-table-big">
+                          🪑 Masa {order.table_number || order.table_name || '-'}
+                        </span>
+                        <span className="kds-time">{timeAgo(order.created_at)}</span>
+                      </div>
+                      <div className="kds-order-items">
+                        {order.items.map((it) => (
+                          <div key={it.id} className={`kds-order-item kds-item-${it.kitchen_status}`}>
+                            <div className="kds-order-item-main">
+                              <span className="kds-qty">×{it.quantity}</span>
+                              <span className="kds-order-item-name">{it.item_name || 'Ürün'}</span>
+                              <span className="kds-order-item-dot" title={
+                                it.kitchen_status === 'pending' ? 'Yeni' :
+                                it.kitchen_status === 'preparing' ? 'Yapılıyor' : 'Hazır'
+                              }>
+                                {it.kitchen_status === 'pending' && '🔵'}
+                                {it.kitchen_status === 'preparing' && '🟡'}
+                                {it.kitchen_status === 'ready' && '🟢'}
+                              </span>
+                            </div>
+                            {it.note && <div className="kds-order-item-note">📝 {it.note}</div>}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="kds-card-summary">
+                        {order.items.length} ürün
+                      </div>
+                      <div className="kds-actions">
+                        {col.key === 'pending' && (
+                          <button className="kds-btn primary" onClick={() => advanceOrder(order, 'preparing')}>
+                            ▶ Tümünü Başlat
+                          </button>
+                        )}
+                        {col.key === 'preparing' && (
+                          <button className="kds-btn primary" onClick={() => advanceOrder(order, 'ready')}>
+                            ✓ Tümü Hazır
+                          </button>
+                        )}
+                        {col.key === 'ready' && (
+                          <button className="kds-btn primary" onClick={() => advanceOrder(order, 'served')}>
+                            🍽️ Servis Edildi
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </div>
         ))}
