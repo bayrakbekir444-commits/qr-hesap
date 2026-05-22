@@ -2,40 +2,17 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 function DemoRestoranPhone() {
-  const [active, setActive] = useState(false);
-
   return (
-    <div className="lp-phone lp-phone-center">
-      {!active && <span className="lp-phone-try-badge">👆 Tıkla, paneli gez</span>}
-      <div className={`lp-phone-screen ${active ? 'lp-phone-panel-demo' : 'lp-phone-live'}`}>
-        {active ? (
-          <DemoPanel />
-        ) : (
-          <button
-            type="button"
-            className="lp-demo-cover"
-            onClick={() => setActive(true)}
-            aria-label="Demo Restoran panelini aç"
-          >
-            <div className="lp-demo-cover-bg" />
-            <div className="lp-demo-cover-inner">
-              <div className="lp-demo-cover-logo">🍽️</div>
-              <h3 className="lp-demo-cover-name">Demo Restoran</h3>
-              <p className="lp-demo-cover-tag">Yönetim Paneli</p>
-              <div className="lp-demo-cover-cta">
-                <span className="lp-demo-cover-play">▶</span>
-                Paneli Gez
-              </div>
-              <div className="lp-demo-cover-meta">
-                <span>📊 Dashboard</span>
-                <span>•</span>
-                <span>☕ Siparişler</span>
-                <span>•</span>
-                <span>🍽️ Menü</span>
-              </div>
-            </div>
-          </button>
-        )}
+    <div className="lp-laptop">
+      <span className="lp-phone-try-badge">👆 Tıkla, paneli gez</span>
+      <div className="lp-laptop-bar">
+        <span className="lp-laptop-dot lp-laptop-dot-red"></span>
+        <span className="lp-laptop-dot lp-laptop-dot-amber"></span>
+        <span className="lp-laptop-dot lp-laptop-dot-green"></span>
+        <div className="lp-laptop-url">🔒 qrhesap.net/panel</div>
+      </div>
+      <div className="lp-laptop-screen">
+        <DemoPanel />
       </div>
     </div>
   );
@@ -44,128 +21,178 @@ function DemoRestoranPhone() {
 function DemoPanel() {
   const [tab, setTab] = useState('dash');
 
-  return (
-    <div className="demo-panel">
-      <div className="demo-panel-header">
-        <div>
-          <div className="demo-panel-greet">Hoş geldin, Demo</div>
-          <div className="demo-panel-live">● Canlı</div>
-        </div>
-        <div className="demo-panel-avatar">D</div>
-      </div>
+  const navItems = [
+    { id: 'dash', label: 'Genel Bakis', icon: '⌂' },
+    { id: 'orders', label: 'Siparisler', icon: '☕' },
+    { id: 'menu', label: 'Menu Yonetimi', icon: '☰' },
+    { id: 'tables', label: 'Masa Yonetimi', icon: '▦' },
+    { id: 'reports', label: 'Raporlar', icon: '≡' },
+    { id: 'staff', label: 'Personel', icon: '☺' },
+    { id: 'coupons', label: 'Kuponlar', icon: '🎫' },
+    { id: 'reviews', label: 'Yorumlar', icon: '★' },
+    { id: 'billing', label: 'Ödeme Bilgileri', icon: '💳' },
+    { id: 'settings', label: 'Restoran Bilgileri', icon: '⚙' },
+  ];
 
-      <div className="demo-panel-body">
+  return (
+    <div className="demo-panel-real">
+      <aside className="dpr-sidebar">
+        <div className="dpr-brand">
+          <div className="dpr-brand-title">QR Hesap</div>
+          <div className="dpr-brand-sub">Restoran Paneli</div>
+        </div>
+        <nav className="dpr-nav">
+          {navItems.map((it) => (
+            <button
+              key={it.id}
+              type="button"
+              className={`dpr-nav-item ${tab === it.id ? 'active' : ''}`}
+              onClick={() => setTab(it.id)}
+            >
+              <span className="dpr-nav-icon">{it.icon}</span>
+              <span>{it.label}</span>
+            </button>
+          ))}
+        </nav>
+        <button type="button" className="dpr-logout">Cikis Yap</button>
+      </aside>
+
+      <main className="dpr-main">
+        <div className="dpr-bell">🔔<span>5</span></div>
+
         {tab === 'dash' && (
           <>
-            <div className="demo-stats">
-              <div className="demo-stat">
-                <div className="demo-stat-num">₺3.450</div>
-                <div className="demo-stat-label">Bugün</div>
+            <h1 className="dpr-page-title">Genel Bakis</h1>
+            <p className="dpr-page-sub">Bugunun ozeti</p>
+            <div className="dpr-stats">
+              <div className="dpr-stat-card">
+                <span className="dpr-stat-icon">₺</span>
+                <div>
+                  <div className="dpr-stat-value">0,00 ₺</div>
+                  <div className="dpr-stat-label">Bugunun Geliri</div>
+                </div>
               </div>
-              <div className="demo-stat demo-stat-2">
-                <div className="demo-stat-num">24</div>
-                <div className="demo-stat-label">Sipariş</div>
+              <div className="dpr-stat-card">
+                <span className="dpr-stat-icon">▪</span>
+                <div>
+                  <div className="dpr-stat-value">0</div>
+                  <div className="dpr-stat-label">Acik Masa</div>
+                </div>
+              </div>
+              <div className="dpr-stat-card">
+                <span className="dpr-stat-icon">✓</span>
+                <div>
+                  <div className="dpr-stat-value">0</div>
+                  <div className="dpr-stat-label">Odeme Sayisi</div>
+                </div>
               </div>
             </div>
-            <div className="demo-sec-title"><span>Aktif Siparişler</span><span className="demo-badge-red">3</span></div>
-            <div className="demo-order">
-              <div><div className="demo-order-table">🪑 Masa 5</div><div className="demo-order-items">×2 Adana, ×1 Ayran</div></div>
-              <span className="demo-badge demo-badge-prep">Mutfakta</span>
-            </div>
-            <div className="demo-order">
-              <div><div className="demo-order-table">🪑 Masa 2</div><div className="demo-order-items">×1 Mercimek, ×1 Kebap</div></div>
-              <span className="demo-badge demo-badge-ready">Hazır</span>
-            </div>
-            <div className="demo-order">
-              <div><div className="demo-order-table">🪑 Masa 8</div><div className="demo-order-items">×3 Kahve</div></div>
-              <span className="demo-badge demo-badge-new">Yeni</span>
+            <div className="dpr-card">
+              <h3>Son Odemeler</h3>
+              <p className="dpr-empty">Henuz odeme yapilmamis.</p>
             </div>
           </>
         )}
 
         {tab === 'orders' && (
           <>
-            <div className="demo-sec-title"><span>Tüm Siparişler</span><span className="demo-badge-red">8</span></div>
-            {[
-              { table: 5, items: '×2 Adana, ×1 Ayran', total: 535, status: 'prep' },
-              { table: 2, items: '×1 Mercimek, ×1 Kebap', total: 330, status: 'ready' },
-              { table: 8, items: '×3 Kahve', total: 195, status: 'new' },
-              { table: 1, items: '×1 Pide, ×2 Cola', total: 220, status: 'paid' },
-              { table: 7, items: '×4 Lahmacun', total: 320, status: 'paid' },
-            ].map((o, i) => (
-              <div key={i} className="demo-order">
-                <div>
-                  <div className="demo-order-table">🪑 Masa {o.table}</div>
-                  <div className="demo-order-items">{o.items}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div className="demo-order-total">₺{o.total}</div>
-                  <span className={`demo-badge demo-badge-${o.status}`}>
-                    {o.status === 'new' && 'Yeni'}{o.status === 'prep' && 'Mutfakta'}
-                    {o.status === 'ready' && 'Hazır'}{o.status === 'paid' && 'Ödendi'}
-                  </span>
-                </div>
-              </div>
-            ))}
+            <h1 className="dpr-page-title">Siparisler</h1>
+            <p className="dpr-page-sub">Tum siparisleri yonet</p>
+            <div className="dpr-card">
+              <h3>Bekleyen Siparisler</h3>
+              <p className="dpr-empty">Henuz aktif siparis yok.</p>
+            </div>
           </>
         )}
 
         {tab === 'menu' && (
           <>
-            <div className="demo-sec-title"><span>Menü Yönetimi</span><span className="demo-btn-mini">+ Ekle</span></div>
-            <div className="demo-cat-tabs">
-              <span className="active">Çorbalar</span>
-              <span>Ana</span>
-              <span>İçecek</span>
-              <span>Tatlı</span>
+            <h1 className="dpr-page-title">Menu Yonetimi</h1>
+            <p className="dpr-page-sub">Kategori ve urunleri duzenle</p>
+            <div className="dpr-card">
+              <h3>Kategoriler</h3>
+              <p className="dpr-empty">Yeni kategori ekleyerek baslayin.</p>
             </div>
-            {[
-              { name: 'Mercimek Çorbası', price: 85, active: true, icon: '🍲' },
-              { name: 'Domates Çorbası', price: 80, active: true, icon: '🍅' },
-              { name: 'İşkembe', price: 95, active: false, icon: '🥣' },
-              { name: 'Tarhana', price: 75, active: true, icon: '🥘' },
-            ].map((m, i) => (
-              <div key={i} className={`demo-menu-item ${!m.active ? 'inactive' : ''}`}>
-                <div className="demo-menu-img">{m.icon}</div>
-                <div className="demo-menu-info">
-                  <div className="demo-menu-name">{m.name}</div>
-                  <div className="demo-menu-price">₺{m.price}</div>
-                </div>
-                <div className={`demo-toggle ${m.active ? 'on' : ''}`}><span></span></div>
-              </div>
-            ))}
+          </>
+        )}
+
+        {tab === 'tables' && (
+          <>
+            <h1 className="dpr-page-title">Masa Yonetimi</h1>
+            <p className="dpr-page-sub">QR kodlari ve masalari yonet</p>
+            <div className="dpr-card">
+              <h3>Masalar</h3>
+              <p className="dpr-empty">Henuz masa eklenmemis.</p>
+            </div>
+          </>
+        )}
+
+        {tab === 'reports' && (
+          <>
+            <h1 className="dpr-page-title">Raporlar</h1>
+            <p className="dpr-page-sub">Ciro, urun ve kategori raporlari</p>
+            <div className="dpr-card">
+              <h3>Bu Hafta</h3>
+              <p className="dpr-empty">Veri olusturulduktan sonra raporlar gorunur.</p>
+            </div>
+          </>
+        )}
+
+        {tab === 'staff' && (
+          <>
+            <h1 className="dpr-page-title">Personel</h1>
+            <p className="dpr-page-sub">Calisan hesaplarini yonet</p>
+            <div className="dpr-card">
+              <h3>Personel Listesi</h3>
+              <p className="dpr-empty">Henuz personel eklenmemis.</p>
+            </div>
+          </>
+        )}
+
+        {tab === 'coupons' && (
+          <>
+            <h1 className="dpr-page-title">Kuponlar</h1>
+            <p className="dpr-page-sub">Indirim kuponlari olustur</p>
+            <div className="dpr-card">
+              <h3>Aktif Kuponlar</h3>
+              <p className="dpr-empty">Henuz kupon olusturulmamis.</p>
+            </div>
+          </>
+        )}
+
+        {tab === 'reviews' && (
+          <>
+            <h1 className="dpr-page-title">Yorumlar</h1>
+            <p className="dpr-page-sub">Musteri geri bildirimleri</p>
+            <div className="dpr-card">
+              <h3>Son Yorumlar</h3>
+              <p className="dpr-empty">Henuz yorum yapilmamis.</p>
+            </div>
+          </>
+        )}
+
+        {tab === 'billing' && (
+          <>
+            <h1 className="dpr-page-title">Ödeme Bilgileri</h1>
+            <p className="dpr-page-sub">iyzico baglantisi ve banka bilgileri</p>
+            <div className="dpr-card">
+              <h3>Banka & Vergi</h3>
+              <p className="dpr-empty">IBAN, vergi numarasi ve yetkili bilgilerinizi tamamlayin.</p>
+            </div>
           </>
         )}
 
         {tab === 'settings' && (
           <>
-            <div className="demo-sec-title"><span>Restoran Bilgileri</span></div>
-            <div className="demo-field">
-              <label>Restoran Adı</label>
-              <div className="demo-input">Demo Restoran</div>
-            </div>
-            <div className="demo-field">
-              <label>Paket</label>
-              <div className="demo-pkg">⭐ Premium · 14 gün kaldı</div>
-            </div>
-            <div className="demo-field">
-              <label>Diller</label>
-              <div className="demo-langs">
-                <span className="active">TR</span>
-                <span className="active">EN</span>
-                <span className="active">AR</span>
-              </div>
+            <h1 className="dpr-page-title">Restoran Bilgileri</h1>
+            <p className="dpr-page-sub">Restoran adi, paket ve dil ayarlari</p>
+            <div className="dpr-card">
+              <h3>Genel</h3>
+              <p className="dpr-empty">Restoran adi: Demo Restoran · Paket: Deneme</p>
             </div>
           </>
         )}
-      </div>
-
-      <div className="demo-panel-nav">
-        <button type="button" className={tab === 'dash' ? 'active' : ''} onClick={() => setTab('dash')} title="Genel Bakış">📊</button>
-        <button type="button" className={tab === 'orders' ? 'active' : ''} onClick={() => setTab('orders')} title="Siparişler">☕</button>
-        <button type="button" className={tab === 'menu' ? 'active' : ''} onClick={() => setTab('menu')} title="Menü">🍽️</button>
-        <button type="button" className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')} title="Ayarlar">⚙️</button>
-      </div>
+      </main>
     </div>
   );
 }
@@ -291,63 +318,8 @@ export default function LandingPage() {
               </Link>
             </div>
           </div>
-          <div className="lp-hero-visual lp-hero-visual-stack">
-            {/* Sol — Menü görünümü (mockup) */}
-            <div className="lp-mini-phone lp-mini-phone-left">
-              <div className="lp-mini-phone-screen">
-                <div className="lp-mock-bar">
-                  <div className="lp-mock-bar-title">Demo Restoran</div>
-                  <div className="lp-mock-bar-sub">Masa 5 · Menü</div>
-                </div>
-                <div className="lp-mock-tabs">
-                  <span className="lp-mock-tab active">Çorbalar</span>
-                  <span className="lp-mock-tab">Ana</span>
-                  <span className="lp-mock-tab">Tatlı</span>
-                </div>
-                <div className="lp-mock-item">
-                  <div className="lp-mock-item-img">🍲</div>
-                  <div className="lp-mock-item-info">
-                    <div className="lp-mock-item-name">Mercimek Çorbası</div>
-                    <div className="lp-mock-item-price">₺85</div>
-                  </div>
-                  <div className="lp-mock-add">+</div>
-                </div>
-                <div className="lp-mock-item">
-                  <div className="lp-mock-item-img">🥘</div>
-                  <div className="lp-mock-item-info">
-                    <div className="lp-mock-item-name">Adana Kebap</div>
-                    <div className="lp-mock-item-price">₺245</div>
-                  </div>
-                  <div className="lp-mock-add">+</div>
-                </div>
-                <div className="lp-mock-item">
-                  <div className="lp-mock-item-img">☕</div>
-                  <div className="lp-mock-item-info">
-                    <div className="lp-mock-item-name">Türk Kahvesi</div>
-                    <div className="lp-mock-item-price">₺65</div>
-                  </div>
-                  <div className="lp-mock-add">+</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Orta — Demo Restoran (basınca canlı menü açılır) */}
+          <div className="lp-hero-visual lp-hero-visual-laptop">
             <DemoRestoranPhone />
-
-            {/* Sağ — Ödeme başarılı (mockup) */}
-            <div className="lp-mini-phone lp-mini-phone-right">
-              <div className="lp-mini-phone-screen lp-mock-success">
-                <div className="lp-mock-check">✓</div>
-                <div className="lp-mock-success-title">Ödeme Başarılı</div>
-                <div className="lp-mock-amount">₺395</div>
-                <div className="lp-mock-success-sub">Masa 5 · iyzico ile ödendi</div>
-                <div className="lp-mock-receipt">
-                  <div className="lp-mock-row"><span>Mercimek Çorbası ×2</span><span>₺170</span></div>
-                  <div className="lp-mock-row"><span>Adana Kebap</span><span>₺245</span></div>
-                  <div className="lp-mock-row lp-mock-row-total"><span>Toplam</span><span>₺395</span></div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
