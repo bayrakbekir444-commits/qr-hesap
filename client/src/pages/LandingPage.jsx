@@ -6,37 +6,32 @@ function DemoRestoranPhone() {
 
   return (
     <div className="lp-phone lp-phone-center">
-      {!active && <span className="lp-phone-try-badge">👆 Tıkla, dene</span>}
-      <div className="lp-phone-screen lp-phone-live">
+      {!active && <span className="lp-phone-try-badge">👆 Tıkla, paneli gez</span>}
+      <div className={`lp-phone-screen ${active ? 'lp-phone-panel-demo' : 'lp-phone-live'}`}>
         {active ? (
-          <iframe
-            src="/menu/7c4d3316-3ea9-458b-b062-b217339ef824"
-            className="lp-phone-iframe"
-            title="Demo Restoran menüsü"
-            loading="lazy"
-          />
+          <DemoPanel />
         ) : (
           <button
             type="button"
             className="lp-demo-cover"
             onClick={() => setActive(true)}
-            aria-label="Demo Restoran menüsünü aç"
+            aria-label="Demo Restoran panelini aç"
           >
             <div className="lp-demo-cover-bg" />
             <div className="lp-demo-cover-inner">
               <div className="lp-demo-cover-logo">🍽️</div>
               <h3 className="lp-demo-cover-name">Demo Restoran</h3>
-              <p className="lp-demo-cover-tag">Canlı müşteri menüsü</p>
+              <p className="lp-demo-cover-tag">Yönetim Paneli</p>
               <div className="lp-demo-cover-cta">
                 <span className="lp-demo-cover-play">▶</span>
-                Menüyü Aç
+                Paneli Gez
               </div>
               <div className="lp-demo-cover-meta">
-                <span>📱 QR Demo</span>
+                <span>📊 Dashboard</span>
                 <span>•</span>
-                <span>3 ürün</span>
+                <span>☕ Siparişler</span>
                 <span>•</span>
-                <span>TR · EN · AR</span>
+                <span>🍽️ Menü</span>
               </div>
             </div>
           </button>
