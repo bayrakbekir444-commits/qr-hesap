@@ -123,6 +123,8 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="lp-hero-visual">
+            <span className="lp-phone-badge">🔴 CANLI DEMO</span>
+
             <div className="lp-phone">
               <div className="lp-phone-screen lp-phone-live">
                 <iframe
@@ -131,6 +133,43 @@ export default function LandingPage() {
                   title="Canlı müşteri menüsü"
                   loading="lazy"
                 />
+              </div>
+            </div>
+
+            {/* Floating annotations */}
+            <div className="lp-phone-label lp-phone-label-1">
+              <span className="lp-phone-label-icon">📷</span>
+              <span>QR'ı oku</span>
+            </div>
+            <div className="lp-phone-label lp-phone-label-2">
+              <span className="lp-phone-label-icon">🍽️</span>
+              <span>Menüden seç</span>
+            </div>
+            <div className="lp-phone-label lp-phone-label-3">
+              <span className="lp-phone-label-icon">💳</span>
+              <span>Tek tuşla öde</span>
+            </div>
+
+            {/* Animated notifications */}
+            <div className="lp-phone-notif lp-phone-notif-1">
+              <div className="lp-phone-notif-icon">🎉</div>
+              <div>
+                <div className="lp-phone-notif-title">Yeni sipariş</div>
+                <div className="lp-phone-notif-text">Masa 5 — Adana Kebap ×2</div>
+              </div>
+            </div>
+            <div className="lp-phone-notif lp-phone-notif-2">
+              <div className="lp-phone-notif-icon">💳</div>
+              <div>
+                <div className="lp-phone-notif-title">Ödeme alındı</div>
+                <div className="lp-phone-notif-text">₺245 · iyzico</div>
+              </div>
+            </div>
+            <div className="lp-phone-notif lp-phone-notif-3">
+              <div className="lp-phone-notif-icon">⭐</div>
+              <div>
+                <div className="lp-phone-notif-title">Yeni yorum</div>
+                <div className="lp-phone-notif-text">5 yıldız · "Süper sistem!"</div>
               </div>
             </div>
           </div>
