@@ -145,16 +145,6 @@ function DemoPanel() {
               <div className="demo-input">Demo Restoran</div>
             </div>
             <div className="demo-field">
-              <label>Marka Rengi</label>
-              <div className="demo-colors">
-                <span style={{ background: '#f5a623' }} className="active"></span>
-                <span style={{ background: '#10b981' }}></span>
-                <span style={{ background: '#3b82f6' }}></span>
-                <span style={{ background: '#ef4444' }}></span>
-                <span style={{ background: '#a855f7' }}></span>
-              </div>
-            </div>
-            <div className="demo-field">
               <label>Paket</label>
               <div className="demo-pkg">⭐ Premium · 14 gün kaldı</div>
             </div>
