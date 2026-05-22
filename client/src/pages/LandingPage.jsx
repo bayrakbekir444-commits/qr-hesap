@@ -318,8 +318,17 @@ export default function LandingPage() {
               </Link>
             </div>
           </div>
-          <div className="lp-hero-visual lp-hero-visual-laptop">
-            <DemoRestoranPhone />
+          <div className="lp-hero-visual">
+            <div className="lp-phone">
+              <div className="lp-phone-screen lp-phone-live">
+                <iframe
+                  src="/menu/7c4d3316-3ea9-458b-b062-b217339ef824"
+                  className="lp-phone-iframe"
+                  title="Canlı müşteri menüsü"
+                  loading="lazy"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
