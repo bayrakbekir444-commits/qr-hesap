@@ -3178,39 +3178,27 @@ a { color: var(--gold); text-decoration: none; }
   transform: rotate(0deg) translateY(-8px);
 }
 .lp-phone-center:hover { transform: rotate(0deg) translateY(-12px); }
-
-.lp-phone-clickable {
-  display: block;
-  text-decoration: none;
-  cursor: pointer;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.lp-phone-clickable:hover {
-  transform: rotate(0deg) translateY(-14px) scale(1.02);
-  box-shadow: 0 40px 80px rgba(245, 166, 35, 0.35), 0 0 0 3px rgba(245, 166, 35, 0.4);
-}
-.lp-phone-hover {
+.lp-phone-try-badge {
   position: absolute;
-  top: -36px;
+  top: -14px;
   left: 50%;
-  transform: translateX(-50%) translateY(8px);
+  transform: translateX(-50%);
   background: linear-gradient(135deg, #f5a623, #e0951a);
   color: #1a1a2e;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
-  padding: 8px 16px;
+  padding: 6px 14px;
   border-radius: 100px;
-  white-space: nowrap;
-  box-shadow: 0 8px 20px rgba(245, 166, 35, 0.4);
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.25s ease;
+  box-shadow: 0 6px 18px rgba(245, 166, 35, 0.45);
   z-index: 10;
+  white-space: nowrap;
+  animation: lp-try-pulse 2.2s ease-in-out infinite;
 }
-.lp-phone-clickable:hover .lp-phone-hover {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
+@keyframes lp-try-pulse {
+  0%, 100% { transform: translateX(-50%) translateY(0); box-shadow: 0 6px 18px rgba(245, 166, 35, 0.45); }
+  50% { transform: translateX(-50%) translateY(-4px); box-shadow: 0 10px 24px rgba(245, 166, 35, 0.65); }
 }
+
 
 .lp-mini-phone {
   position: absolute;
