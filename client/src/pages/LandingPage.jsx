@@ -1,6 +1,145 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+function DemoPanel() {
+  const [tab, setTab] = useState('dash');
+
+  return (
+    <div className="demo-panel">
+      <div className="demo-panel-header">
+        <div>
+          <div className="demo-panel-greet">Hoş geldin, Demo</div>
+          <div className="demo-panel-live">● Canlı</div>
+        </div>
+        <div className="demo-panel-avatar">D</div>
+      </div>
+
+      <div className="demo-panel-body">
+        {tab === 'dash' && (
+          <>
+            <div className="demo-stats">
+              <div className="demo-stat">
+                <div className="demo-stat-num">₺3.450</div>
+                <div className="demo-stat-label">Bugün</div>
+              </div>
+              <div className="demo-stat demo-stat-2">
+                <div className="demo-stat-num">24</div>
+                <div className="demo-stat-label">Sipariş</div>
+              </div>
+            </div>
+            <div className="demo-sec-title"><span>Aktif Siparişler</span><span className="demo-badge-red">3</span></div>
+            <div className="demo-order">
+              <div><div className="demo-order-table">🪑 Masa 5</div><div className="demo-order-items">×2 Adana, ×1 Ayran</div></div>
+              <span className="demo-badge demo-badge-prep">Mutfakta</span>
+            </div>
+            <div className="demo-order">
+              <div><div className="demo-order-table">🪑 Masa 2</div><div className="demo-order-items">×1 Mercimek, ×1 Kebap</div></div>
+              <span className="demo-badge demo-badge-ready">Hazır</span>
+            </div>
+            <div className="demo-order">
+              <div><div className="demo-order-table">🪑 Masa 8</div><div className="demo-order-items">×3 Kahve</div></div>
+              <span className="demo-badge demo-badge-new">Yeni</span>
+            </div>
+          </>
+        )}
+
+        {tab === 'orders' && (
+          <>
+            <div className="demo-sec-title"><span>Tüm Siparişler</span><span className="demo-badge-red">8</span></div>
+            {[
+              { table: 5, items: '×2 Adana, ×1 Ayran', total: 535, status: 'prep' },
+              { table: 2, items: '×1 Mercimek, ×1 Kebap', total: 330, status: 'ready' },
+              { table: 8, items: '×3 Kahve', total: 195, status: 'new' },
+              { table: 1, items: '×1 Pide, ×2 Cola', total: 220, status: 'paid' },
+              { table: 7, items: '×4 Lahmacun', total: 320, status: 'paid' },
+            ].map((o, i) => (
+              <div key={i} className="demo-order">
+                <div>
+                  <div className="demo-order-table">🪑 Masa {o.table}</div>
+                  <div className="demo-order-items">{o.items}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div className="demo-order-total">₺{o.total}</div>
+                  <span className={`demo-badge demo-badge-${o.status}`}>
+                    {o.status === 'new' && 'Yeni'}{o.status === 'prep' && 'Mutfakta'}
+                    {o.status === 'ready' && 'Hazır'}{o.status === 'paid' && 'Ödendi'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+
+        {tab === 'menu' && (
+          <>
+            <div className="demo-sec-title"><span>Menü Yönetimi</span><span className="demo-btn-mini">+ Ekle</span></div>
+            <div className="demo-cat-tabs">
+              <span className="active">Çorbalar</span>
+              <span>Ana</span>
+              <span>İçecek</span>
+              <span>Tatlı</span>
+            </div>
+            {[
+              { name: 'Mercimek Çorbası', price: 85, active: true, icon: '🍲' },
+              { name: 'Domates Çorbası', price: 80, active: true, icon: '🍅' },
+              { name: 'İşkembe', price: 95, active: false, icon: '🥣' },
+              { name: 'Tarhana', price: 75, active: true, icon: '🥘' },
+            ].map((m, i) => (
+              <div key={i} className={`demo-menu-item ${!m.active ? 'inactive' : ''}`}>
+                <div className="demo-menu-img">{m.icon}</div>
+                <div className="demo-menu-info">
+                  <div className="demo-menu-name">{m.name}</div>
+                  <div className="demo-menu-price">₺{m.price}</div>
+                </div>
+                <div className={`demo-toggle ${m.active ? 'on' : ''}`}><span></span></div>
+              </div>
+            ))}
+          </>
+        )}
+
+        {tab === 'settings' && (
+          <>
+            <div className="demo-sec-title"><span>Restoran Bilgileri</span></div>
+            <div className="demo-field">
+              <label>Restoran Adı</label>
+              <div className="demo-input">Demo Restoran</div>
+            </div>
+            <div className="demo-field">
+              <label>Marka Rengi</label>
+              <div className="demo-colors">
+                <span style={{ background: '#f5a623' }} className="active"></span>
+                <span style={{ background: '#10b981' }}></span>
+                <span style={{ background: '#3b82f6' }}></span>
+                <span style={{ background: '#ef4444' }}></span>
+                <span style={{ background: '#a855f7' }}></span>
+              </div>
+            </div>
+            <div className="demo-field">
+              <label>Paket</label>
+              <div className="demo-pkg">⭐ Premium · 14 gün kaldı</div>
+            </div>
+            <div className="demo-field">
+              <label>Diller</label>
+              <div className="demo-langs">
+                <span className="active">TR</span>
+                <span className="active">EN</span>
+                <span className="active">AR</span>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="demo-panel-nav">
+        <button type="button" className={tab === 'dash' ? 'active' : ''} onClick={() => setTab('dash')} title="Genel Bakış">📊</button>
+        <button type="button" className={tab === 'orders' ? 'active' : ''} onClick={() => setTab('orders')} title="Siparişler">☕</button>
+        <button type="button" className={tab === 'menu' ? 'active' : ''} onClick={() => setTab('menu')} title="Menü">🍽️</button>
+        <button type="button" className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')} title="Ayarlar">⚙️</button>
+      </div>
+    </div>
+  );
+}
+
 const faqs = [
   {
     q: 'Kurulum ne kadar sürüyor?',
@@ -162,16 +301,11 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Orta — Gerçek interaktif demo (canlı iframe) */}
+            {/* Orta — İnteraktif panel demosu */}
             <div className="lp-phone lp-phone-center">
-              <span className="lp-phone-try-badge">👆 Dokun, gez</span>
-              <div className="lp-phone-screen lp-phone-live">
-                <iframe
-                  src="/menu/7c4d3316-3ea9-458b-b062-b217339ef824"
-                  className="lp-phone-iframe"
-                  title="Canlı müşteri menüsü demosu"
-                  loading="lazy"
-                />
+              <span className="lp-phone-try-badge">👆 Sekmelere bas, gez</span>
+              <div className="lp-phone-screen lp-phone-panel-demo">
+                <DemoPanel />
               </div>
             </div>
 
