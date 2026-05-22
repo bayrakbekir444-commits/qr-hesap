@@ -3295,6 +3295,136 @@ a { color: var(--gold); text-decoration: none; }
   flex-shrink: 0;
 }
 
+/* Mock — Restaurant management panel */
+.lp-mock-panel {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  padding: 16px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #fff;
+}
+.lp-mock-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lp-mock-panel-greet {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.lp-mock-panel-live {
+  font-size: 10px;
+  color: #10b981;
+  margin-top: 2px;
+}
+.lp-mock-panel-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f5a623, #e0951a);
+  color: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+}
+.lp-mock-stats {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 8px;
+}
+.lp-mock-stat {
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.lp-mock-stat-2 {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.lp-mock-stat-num {
+  font-size: 18px;
+  font-weight: 900;
+  color: #f5a623;
+  letter-spacing: -0.5px;
+}
+.lp-mock-stat-2 .lp-mock-stat-num { color: #fff; }
+.lp-mock-stat-label {
+  font-size: 9px;
+  color: #b8b8c8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+.lp-mock-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f5a623;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-top: 4px;
+}
+.lp-mock-badge-red {
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 100px;
+  letter-spacing: 0;
+}
+.lp-mock-order {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.lp-mock-order-table {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.lp-mock-order-items {
+  font-size: 9px;
+  color: #b8b8c8;
+  margin-top: 2px;
+}
+.lp-mock-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+.lp-mock-badge-new { background: rgba(59, 130, 246, 0.18); color: #60a5fa; }
+.lp-mock-badge-prep { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+.lp-mock-badge-ready { background: rgba(16, 185, 129, 0.18); color: #34d399; }
+.lp-mock-panel-nav {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.lp-mock-panel-nav span {
+  font-size: 18px;
+  opacity: 0.45;
+}
+.lp-mock-panel-nav span.active {
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(245, 166, 35, 0.55));
+}
+
 /* Mock — Payment success */
 .lp-mock-success {
   background: linear-gradient(180deg, #f0fdf4 0%, #fff 60%);

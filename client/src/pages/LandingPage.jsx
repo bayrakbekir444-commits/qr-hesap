@@ -162,15 +162,62 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Orta — Canlı iframe */}
+            {/* Orta — Restoran yönetim paneli mockup */}
             <div className="lp-phone lp-phone-center">
-              <div className="lp-phone-screen lp-phone-live">
-                <iframe
-                  src="/menu/7c4d3316-3ea9-458b-b062-b217339ef824"
-                  className="lp-phone-iframe"
-                  title="Canlı müşteri menüsü"
-                  loading="lazy"
-                />
+              <div className="lp-phone-screen lp-mock-panel">
+                <div className="lp-mock-panel-header">
+                  <div>
+                    <div className="lp-mock-panel-greet">Hoş geldin, Demo</div>
+                    <div className="lp-mock-panel-live">● Canlı</div>
+                  </div>
+                  <div className="lp-mock-panel-avatar">D</div>
+                </div>
+
+                <div className="lp-mock-stats">
+                  <div className="lp-mock-stat">
+                    <div className="lp-mock-stat-num">₺3.450</div>
+                    <div className="lp-mock-stat-label">Bugünün Cirosu</div>
+                  </div>
+                  <div className="lp-mock-stat lp-mock-stat-2">
+                    <div className="lp-mock-stat-num">24</div>
+                    <div className="lp-mock-stat-label">Sipariş</div>
+                  </div>
+                </div>
+
+                <div className="lp-mock-section-title">
+                  <span>Aktif Siparişler</span>
+                  <span className="lp-mock-badge-red">3</span>
+                </div>
+
+                <div className="lp-mock-order">
+                  <div className="lp-mock-order-left">
+                    <div className="lp-mock-order-table">🪑 Masa 5</div>
+                    <div className="lp-mock-order-items">×2 Adana, ×1 Ayran</div>
+                  </div>
+                  <span className="lp-mock-badge lp-mock-badge-prep">Mutfakta</span>
+                </div>
+                <div className="lp-mock-order">
+                  <div className="lp-mock-order-left">
+                    <div className="lp-mock-order-table">🪑 Masa 2</div>
+                    <div className="lp-mock-order-items">×1 Mercimek, ×1 Kebap</div>
+                  </div>
+                  <span className="lp-mock-badge lp-mock-badge-ready">Hazır</span>
+                </div>
+                <div className="lp-mock-order">
+                  <div className="lp-mock-order-left">
+                    <div className="lp-mock-order-table">🪑 Masa 8</div>
+                    <div className="lp-mock-order-items">×3 Kahve</div>
+                  </div>
+                  <span className="lp-mock-badge lp-mock-badge-new">Yeni</span>
+                </div>
+
+                <div className="lp-mock-panel-nav">
+                  <span className="active">📊</span>
+                  <span>☕</span>
+                  <span>🍽️</span>
+                  <span>🪑</span>
+                  <span>⚙️</span>
+                </div>
               </div>
             </div>
 
