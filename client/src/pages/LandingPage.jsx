@@ -122,8 +122,48 @@ export default function LandingPage() {
               </Link>
             </div>
           </div>
-          <div className="lp-hero-visual">
-            <div className="lp-phone">
+          <div className="lp-hero-visual lp-hero-visual-stack">
+            {/* Sol — Menü görünümü (mockup) */}
+            <div className="lp-mini-phone lp-mini-phone-left">
+              <div className="lp-mini-phone-screen">
+                <div className="lp-mock-bar">
+                  <div className="lp-mock-bar-title">Demo Restoran</div>
+                  <div className="lp-mock-bar-sub">Masa 5 · Menü</div>
+                </div>
+                <div className="lp-mock-tabs">
+                  <span className="lp-mock-tab active">Çorbalar</span>
+                  <span className="lp-mock-tab">Ana</span>
+                  <span className="lp-mock-tab">Tatlı</span>
+                </div>
+                <div className="lp-mock-item">
+                  <div className="lp-mock-item-img">🍲</div>
+                  <div className="lp-mock-item-info">
+                    <div className="lp-mock-item-name">Mercimek Çorbası</div>
+                    <div className="lp-mock-item-price">₺85</div>
+                  </div>
+                  <div className="lp-mock-add">+</div>
+                </div>
+                <div className="lp-mock-item">
+                  <div className="lp-mock-item-img">🥘</div>
+                  <div className="lp-mock-item-info">
+                    <div className="lp-mock-item-name">Adana Kebap</div>
+                    <div className="lp-mock-item-price">₺245</div>
+                  </div>
+                  <div className="lp-mock-add">+</div>
+                </div>
+                <div className="lp-mock-item">
+                  <div className="lp-mock-item-img">☕</div>
+                  <div className="lp-mock-item-info">
+                    <div className="lp-mock-item-name">Türk Kahvesi</div>
+                    <div className="lp-mock-item-price">₺65</div>
+                  </div>
+                  <div className="lp-mock-add">+</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Orta — Canlı iframe */}
+            <div className="lp-phone lp-phone-center">
               <div className="lp-phone-screen lp-phone-live">
                 <iframe
                   src="/menu/7c4d3316-3ea9-458b-b062-b217339ef824"
@@ -131,6 +171,21 @@ export default function LandingPage() {
                   title="Canlı müşteri menüsü"
                   loading="lazy"
                 />
+              </div>
+            </div>
+
+            {/* Sağ — Ödeme başarılı (mockup) */}
+            <div className="lp-mini-phone lp-mini-phone-right">
+              <div className="lp-mini-phone-screen lp-mock-success">
+                <div className="lp-mock-check">✓</div>
+                <div className="lp-mock-success-title">Ödeme Başarılı</div>
+                <div className="lp-mock-amount">₺395</div>
+                <div className="lp-mock-success-sub">Masa 5 · iyzico ile ödendi</div>
+                <div className="lp-mock-receipt">
+                  <div className="lp-mock-row"><span>Mercimek Çorbası ×2</span><span>₺170</span></div>
+                  <div className="lp-mock-row"><span>Adana Kebap</span><span>₺245</span></div>
+                  <div className="lp-mock-row lp-mock-row-total"><span>Toplam</span><span>₺395</span></div>
+                </div>
               </div>
             </div>
           </div>

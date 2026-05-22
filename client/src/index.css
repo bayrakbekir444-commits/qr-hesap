@@ -3164,6 +3164,204 @@ a { color: var(--gold); text-decoration: none; }
   display: flex;
   justify-content: center;
 }
+
+/* Stacked phones (3 across) */
+.lp-hero-visual-stack {
+  position: relative;
+  align-items: center;
+  min-height: 620px;
+  perspective: 1200px;
+}
+.lp-phone-center {
+  position: relative;
+  z-index: 3;
+  transform: rotate(0deg) translateY(-8px);
+}
+.lp-phone-center:hover { transform: rotate(0deg) translateY(-12px); }
+
+.lp-mini-phone {
+  position: absolute;
+  width: 210px;
+  background: #16213e;
+  border-radius: 26px;
+  padding: 9px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s;
+  z-index: 2;
+}
+.lp-mini-phone-left {
+  left: -50px;
+  top: 60px;
+  transform: rotate(-9deg);
+}
+.lp-mini-phone-right {
+  right: -50px;
+  top: 80px;
+  transform: rotate(9deg);
+}
+.lp-mini-phone-left:hover { transform: rotate(-6deg) translateY(-6px); }
+.lp-mini-phone-right:hover { transform: rotate(6deg) translateY(-6px); }
+.lp-mini-phone-screen {
+  background: #fff7ee;
+  border-radius: 18px;
+  padding: 14px 12px;
+  min-height: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #1a1a2e;
+}
+
+/* Mock — Menu side */
+.lp-mock-bar {
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+.lp-mock-bar-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #2c1810;
+}
+.lp-mock-bar-sub {
+  font-size: 10px;
+  color: #6b4423;
+  letter-spacing: 0.5px;
+}
+.lp-mock-tabs {
+  display: flex;
+  gap: 6px;
+  font-size: 10px;
+  margin: 4px 0 4px;
+}
+.lp-mock-tab {
+  padding: 4px 8px;
+  border-radius: 100px;
+  background: rgba(245, 166, 35, 0.12);
+  color: #6b4423;
+}
+.lp-mock-tab.active {
+  background: #f5a623;
+  color: #fff;
+  font-weight: 700;
+}
+.lp-mock-item {
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+.lp-mock-item-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(245, 166, 35, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.lp-mock-item-info { flex: 1; min-width: 0; }
+.lp-mock-item-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2c1810;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lp-mock-item-price {
+  font-size: 11px;
+  color: #c1432a;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.lp-mock-add {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f5a623;
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Mock — Payment success */
+.lp-mock-success {
+  background: linear-gradient(180deg, #f0fdf4 0%, #fff 60%);
+  align-items: center;
+  text-align: center;
+}
+.lp-mock-check {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #fff;
+  font-size: 30px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px auto 10px;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+}
+.lp-mock-success-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+.lp-mock-amount {
+  font-size: 28px;
+  font-weight: 900;
+  color: #10b981;
+  margin: 4px 0;
+  letter-spacing: -1px;
+}
+.lp-mock-success-sub {
+  font-size: 10px;
+  color: #475569;
+  margin-bottom: 12px;
+}
+.lp-mock-receipt {
+  width: 100%;
+  background: #fff;
+  border: 1px dashed rgba(0,0,0,0.15);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: auto;
+  font-size: 10px;
+  color: #1a1a2e;
+}
+.lp-mock-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+.lp-mock-row-total {
+  border-top: 1px dashed rgba(0,0,0,0.15);
+  margin-top: 4px;
+  padding-top: 4px;
+  font-weight: 800;
+}
+
+@media (max-width: 1100px) {
+  .lp-mini-phone-left { left: -20px; }
+  .lp-mini-phone-right { right: -20px; }
+}
+@media (max-width: 900px) {
+  .lp-hero-visual-stack { min-height: auto; }
+  .lp-mini-phone { display: none; }
+}
 .lp-phone {
   width: 320px;
   background: #16213e;
