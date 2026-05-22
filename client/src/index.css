@@ -3066,6 +3066,67 @@ a { color: var(--gold); text-decoration: none; }
   .signup-step-desc { display: none; }
 }
 
+/* Document upload (signup step 3) */
+.doc-uploads {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.doc-upload label {
+  display: block;
+  cursor: pointer;
+}
+.doc-upload-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.doc-upload-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.doc-upload-ok {
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+.doc-upload-missing {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+.doc-upload-btn {
+  display: block;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px dashed rgba(245, 166, 35, 0.3);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: center;
+  font-size: 13px;
+  transition: all 0.15s;
+  word-break: break-all;
+}
+.doc-upload label:hover .doc-upload-btn {
+  border-color: var(--gold);
+  background: rgba(245, 166, 35, 0.08);
+  color: var(--text);
+}
+.doc-upload.has-file .doc-upload-btn {
+  border-style: solid;
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+}
+
 /* Register page perks + terms */
 .register-perks {
   display: flex;

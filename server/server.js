@@ -35,7 +35,7 @@ const corsOrigin = corsRaw === '*' || corsRaw === ''
   : corsRaw.split(',').map((s) => s.trim());
 
 app.use(cors({ origin: corsOrigin, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
 
 // Health check (Render bunu kullanır)
 app.get('/', (_req, res) => {

@@ -5,8 +5,26 @@ import api from '../../utils/api';
 const STEPS = [
   { num: 1, title: 'Hesap', desc: 'Restoran adı, şifre' },
   { num: 2, title: 'İşletme & Banka', desc: 'Vergi, IBAN, yetkili, adres' },
-  { num: 3, title: 'Onay', desc: 'Sözleşme ve gönder' },
+  { num: 3, title: 'Evrak & Onay', desc: 'Belgeleri yükle ve gönder' },
 ];
+
+const DOC_LABELS = {
+  vergi_levhasi: 'Vergi Levhası',
+  faaliyet_belgesi: 'Faaliyet Belgesi (esnaf/ticaret odası)',
+  imza_beyannamesi: 'İmza Beyannamesi',
+  imza_sirkuleri: 'İmza Sirküleri',
+  ticaret_sicil: 'Ticaret Sicil Gazetesi',
+  kimlik_fotokopisi: 'Yetkili Kimlik Fotokopisi',
+};
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function Register() {
   const navigate = useNavigate();
@@ -40,10 +58,42 @@ export default function Register() {
     business_category: 'restoran',
   });
   const [accepted, setAccepted] = useState(false);
+  const [docs, setDocs] = useState({});
+  const [docError, setDocError] = useState('');
 
   const isSahis = billing.company_type === 'sahis';
   const updA = (k, v) => setAccount((s) => ({ ...s, [k]: v }));
   const updB = (k, v) => setBilling((s) => ({ ...s, [k]: v }));
+
+  const requiredDocs = isSahis
+    ? ['vergi_levhasi', 'faaliyet_belgesi', 'imza_beyannamesi', 'kimlik_fotokopisi']
+    : ['vergi_levhasi', 'faaliyet_belgesi', 'imza_sirkuleri', 'ticaret_sicil', 'kimlik_fotokopisi'];
+
+  const handleFile = async (type, file) => {
+    setDocError('');
+    if (!file) {
+      setDocs((d) => { const n = { ...d }; delete n[type]; return n; });
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setDocError(`${DOC_LABELS[type]} 4MB'tan büyük olmamalı.`);
+      return;
+    }
+    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowed.includes(file.type)) {
+      setDocError(`${DOC_LABELS[type]} sadece PDF / JPG / PNG olabilir.`);
+      return;
+    }
+    try {
+      const dataUrl = await fileToBase64(file);
+      setDocs((d) => ({
+        ...d,
+        [type]: { type, file_name: file.name, mime_type: file.type, file_data: dataUrl },
+      }));
+    } catch {
+      setDocError('Dosya okunamadı.');
+    }
+  };
 
   const validateStep1 = () => {
     if (!account.name.trim() || account.name.trim().length < 2) return 'Restoran adı en az 2 karakter olmalı.';
@@ -79,6 +129,12 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    for (const t of requiredDocs) {
+      if (!docs[t]) {
+        setError(`Eksik evrak: ${DOC_LABELS[t]}`);
+        return;
+      }
+    }
     if (!accepted) { setError('Sözleşmeleri onaylamanız gerekiyor.'); return; }
     setLoading(true);
     try {
@@ -88,6 +144,7 @@ export default function Register() {
         email: account.email || undefined,
         phone: account.phone || undefined,
         billing,
+        documents: requiredDocs.map((t) => docs[t]),
       });
       localStorage.setItem('token', res.data.token);
       navigate('/panel', { replace: true });
@@ -285,23 +342,42 @@ export default function Register() {
 
           {step === 3 && (
             <div className="signup-section">
-              <h3>Onay ve Gönderim</h3>
-              <div className="billing-docs-info">
-                <h4>📎 Sonra göndereceğiniz evraklar</h4>
-                <p>Kaydı tamamladıktan sonra aşağıdaki belgeleri <a href="https://wa.me/905436960574" target="_blank" rel="noreferrer"><strong>WhatsApp</strong></a> veya <a href="mailto:info@qrhesap.com"><strong>info@qrhesap.com</strong></a> üzerinden iletmeniz gerekir:</p>
-                <ul>
-                  <li>Vergi Levhası</li>
-                  <li>Faaliyet Belgesi (esnaf/ticaret odası)</li>
-                  <li>{isSahis ? 'İmza Beyannamesi' : 'İmza Sirküleri'}</li>
-                  {!isSahis && <li>Ticaret Sicil Gazetesi</li>}
-                  <li>Yetkili Kimlik Fotokopisi</li>
-                </ul>
+              <h3>Evrak Yükleme (Zorunlu)</h3>
+              <p style={{ color: '#b8b8c8', fontSize: 13, marginTop: -8, marginBottom: 14 }}>
+                Her belgeyi PDF, JPG veya PNG olarak yükleyin. Maksimum 4 MB / dosya.
+              </p>
+
+              <div className="doc-uploads">
+                {requiredDocs.map((t) => {
+                  const f = docs[t];
+                  return (
+                    <div key={t} className={`doc-upload ${f ? 'has-file' : ''}`}>
+                      <label>
+                        <div className="doc-upload-head">
+                          <span className="doc-upload-name">{DOC_LABELS[t]}</span>
+                          {f ? <span className="doc-upload-ok">✓ Yüklendi</span> : <span className="doc-upload-missing">Zorunlu</span>}
+                        </div>
+                        <input
+                          type="file"
+                          accept="application/pdf,image/jpeg,image/jpg,image/png"
+                          onChange={(e) => handleFile(t, e.target.files?.[0])}
+                          style={{ display: 'none' }}
+                        />
+                        <span className="doc-upload-btn">
+                          {f ? `📎 ${f.file_name}` : '📤 Dosya Seç (PDF/JPG/PNG)'}
+                        </span>
+                      </label>
+                    </div>
+                  );
+                })}
               </div>
 
-              <label className="billing-terms">
+              {docError && <div className="error-message" style={{ marginTop: 12 }}>{docError}</div>}
+
+              <label className="billing-terms" style={{ marginTop: 16 }}>
                 <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
                 <span>
-                  Yukarıdaki bilgilerin doğru olduğunu beyan ederim.{' '}
+                  Yukarıdaki bilgilerin ve yüklediğim evrakların doğru olduğunu beyan ederim.{' '}
                   <Link to="/yasal/kullanim" target="_blank">Kullanım koşulları</Link>,{' '}
                   <Link to="/yasal/kvkk" target="_blank">KVKK aydınlatma metni</Link> ve iyzico ödeme hizmet sözleşmesini onaylıyorum.
                 </span>

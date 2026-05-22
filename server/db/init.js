@@ -101,6 +101,17 @@ async function runAlterTables(client) {
     "ALTER TABLE restaurant_billing ADD COLUMN IF NOT EXISTS authorized_birthdate TEXT",
     "ALTER TABLE restaurant_billing ADD COLUMN IF NOT EXISTS authorized_gender TEXT",
     "ALTER TABLE restaurant_billing ADD COLUMN IF NOT EXISTS business_category TEXT",
+    `CREATE TABLE IF NOT EXISTS restaurant_documents (
+      id SERIAL PRIMARY KEY,
+      restaurant_id INTEGER NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+      document_type TEXT NOT NULL,
+      file_name TEXT NOT NULL,
+      mime_type TEXT,
+      file_data TEXT NOT NULL,
+      file_size INTEGER,
+      uploaded_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    "CREATE INDEX IF NOT EXISTS idx_restaurant_documents_restaurant ON restaurant_documents(restaurant_id)",
   ];
 
   for (const sql of alterStatements) {

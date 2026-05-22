@@ -61,7 +61,7 @@ router.post('/register', async (req, res) => {
   const pool = getPool();
   const client = await pool.connect();
   try {
-    const { name, password, email, phone, billing = {} } = req.body;
+    const { name, password, email, phone, billing = {}, documents = [] } = req.body;
 
     if (!name || !password) {
       client.release();
@@ -116,6 +116,34 @@ router.post('/register', async (req, res) => {
     if (!billing.address_city?.trim() || !billing.address_full?.trim()) {
       client.release();
       return res.status(400).json({ error: 'İl ve açık adres girin.' });
+    }
+
+    // Evrak validation — şirket türüne göre zorunlular
+    const REQUIRED_DOCS = companyType === 'sahis'
+      ? ['vergi_levhasi', 'faaliyet_belgesi', 'imza_beyannamesi', 'kimlik_fotokopisi']
+      : ['vergi_levhasi', 'faaliyet_belgesi', 'imza_sirkuleri', 'ticaret_sicil', 'kimlik_fotokopisi'];
+    const docMap = {};
+    for (const d of (documents || [])) {
+      if (d?.type && d?.file_data && d?.file_name) docMap[d.type] = d;
+    }
+    for (const reqType of REQUIRED_DOCS) {
+      if (!docMap[reqType]) {
+        client.release();
+        const labels = {
+          vergi_levhasi: 'Vergi Levhası',
+          faaliyet_belgesi: 'Faaliyet Belgesi',
+          imza_beyannamesi: 'İmza Beyannamesi',
+          imza_sirkuleri: 'İmza Sirküleri',
+          ticaret_sicil: 'Ticaret Sicil Gazetesi',
+          kimlik_fotokopisi: 'Yetkili Kimlik Fotokopisi',
+        };
+        return res.status(400).json({ error: `Eksik evrak: ${labels[reqType]} yüklenmeli.` });
+      }
+      // Boyut kontrolü (base64 olduğu için %33 daha büyük; ~4MB orijinal = ~5.5MB base64)
+      if (docMap[reqType].file_data.length > 6_000_000) {
+        client.release();
+        return res.status(400).json({ error: `${docMap[reqType].file_name} dosyası çok büyük. Max 4MB.` });
+      }
     }
 
     // Aynı isimde restoran var mı?
@@ -176,6 +204,23 @@ router.post('/register', async (req, res) => {
         billing.business_category?.trim() || 'restoran',
       ]
     );
+
+    // Evrakları kaydet
+    for (const reqType of REQUIRED_DOCS) {
+      const doc = docMap[reqType];
+      await client.query(
+        `INSERT INTO restaurant_documents (restaurant_id, document_type, file_name, mime_type, file_data, file_size)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          restaurant.id,
+          reqType,
+          doc.file_name,
+          doc.mime_type || null,
+          doc.file_data,
+          Math.round(doc.file_data.length * 0.75), // base64 → byte tahmini
+        ]
+      );
+    }
 
     // Örnek kategori
     const { rows: catRows } = await client.query(
