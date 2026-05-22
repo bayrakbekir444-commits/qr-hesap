@@ -162,8 +162,9 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Orta — Restoran yönetim paneli mockup */}
-            <div className="lp-phone lp-phone-center">
+            {/* Orta — Restoran yönetim paneli mockup (tıklanabilir) */}
+            <Link to="/panel/login" className="lp-phone lp-phone-center lp-phone-clickable" aria-label="Panele gir">
+              <span className="lp-phone-hover">🚀 Panele Gir →</span>
               <div className="lp-phone-screen lp-mock-panel">
                 <div className="lp-mock-panel-header">
                   <div>
@@ -219,7 +220,7 @@ export default function LandingPage() {
                   <span>⚙️</span>
                 </div>
               </div>
-            </div>
+            </Link>
 
             {/* Sağ — Ödeme başarılı (mockup) */}
             <div className="lp-mini-phone lp-mini-phone-right">
