@@ -189,11 +189,17 @@ function NotificationsBell() {
 export default function PanelLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [billingStatus, setBillingStatus] = useState(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) navigate('/panel/login', { replace: true });
   }, [navigate]);
+
+  useEffect(() => {
+    api.get('/billing').then((r) => setBillingStatus(r.data?.status || null)).catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -259,6 +265,32 @@ export default function PanelLayout() {
 
       <main className="panel-main">
         <NotificationsBell />
+        {billingStatus && billingStatus !== 'approved' && !bannerDismissed && (
+          <div className={`billing-banner billing-banner-${billingStatus}`}>
+            <div className="billing-banner-icon">{billingStatus === 'pending' ? '⏳' : '⚠️'}</div>
+            <div className="billing-banner-text">
+              <strong>
+                {billingStatus === 'pending' && 'iyzico onayı bekleniyor'}
+                {billingStatus === 'rejected' && 'iyzico başvurunuz reddedildi'}
+                {billingStatus === 'incomplete' && 'Ödeme bilgileri eksik'}
+              </strong>
+              <span>
+                {billingStatus === 'pending' && 'Onay sürecinde kart ile ödeme aktif değil. Şimdilik nakit/POS ile tahsil edebilirsiniz. Onay 1-5 iş günü içinde gelir.'}
+                {billingStatus === 'rejected' && 'Destek ekibimizle iletişime geçin.'}
+                {billingStatus === 'incomplete' && 'Ödeme almak için banka ve vergi bilgilerinizi tamamlayın.'}
+              </span>
+            </div>
+            <a
+              href="https://wa.me/905436960574?text=Merhaba%2C%20iyzico%20onay%20s%C3%BCrecim%20hakk%C4%B1nda%20yard%C4%B1m%20istiyorum"
+              target="_blank"
+              rel="noreferrer"
+              className="billing-banner-btn"
+            >
+              💬 Destek
+            </a>
+            <button className="billing-banner-close" onClick={() => setBannerDismissed(true)} aria-label="Kapat">×</button>
+          </div>
+        )}
         <Outlet />
       </main>
 
