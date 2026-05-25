@@ -1,6 +1,7 @@
 const express = require('express');
 const { getPool } = require('../db/init');
 const { authMiddleware } = require('../middleware/auth');
+const { findImageForName } = require('../utils/food-images');
 
 const router = express.Router();
 
@@ -194,7 +195,7 @@ router.post('/items', authMiddleware, async (req, res) => {
         price,
         name_en || '',
         name_ar || '',
-        image_url || null,
+        image_url || findImageForName(name),
         is_special ? 1 : 0,
         special_discount || 0,
       ]
@@ -263,6 +264,16 @@ router.put('/items/:id', authMiddleware, async (req, res) => {
       nextActive = 1;
     }
 
+    // image_url boş gönderildiyse veya hiç yoksa ürün adından otomatik foto bul
+    let nextImage;
+    if (image_url === undefined) {
+      nextImage = item.image_url || findImageForName(name || item.name);
+    } else if (!image_url) {
+      nextImage = findImageForName(name || item.name);
+    } else {
+      nextImage = image_url;
+    }
+
     const { rows } = await pool.query(
       `UPDATE menu_items
        SET name = $1, price = $2, category_id = $3, active = $4,
@@ -277,7 +288,7 @@ router.put('/items/:id', authMiddleware, async (req, res) => {
         nextActive,
         name_en !== undefined ? name_en : (item.name_en || ''),
         name_ar !== undefined ? name_ar : (item.name_ar || ''),
-        image_url !== undefined ? image_url : item.image_url,
+        nextImage,
         is_special !== undefined ? (is_special ? 1 : 0) : item.is_special,
         special_discount !== undefined ? special_discount : item.special_discount,
         nextStock,

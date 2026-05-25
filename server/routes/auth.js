@@ -225,21 +225,48 @@ router.post('/register', async (req, res) => {
     // Örnek kategori
     const { rows: catRows } = await client.query(
       `INSERT INTO categories (restaurant_id, name, sort_order) VALUES ($1, $2, $3) RETURNING id`,
-      [restaurant.id, 'Örnek Kategori', 0]
+      [restaurant.id, 'Popüler', 0]
     );
     const categoryId = catRows[0].id;
 
-    // 3 örnek ürün
+    // 6 örnek ürün — gerçek fotoğraflı, demo görüntüsü iyi olsun diye
     const sampleItems = [
-      { name: 'Mercimek Çorbası', price: 8500 },
-      { name: 'Adana Kebap', price: 24500 },
-      { name: 'Türk Kahvesi', price: 6500 },
+      {
+        name: 'Mercimek Çorbası',
+        price: 85,
+        image_url: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=85&auto=format&fit=crop',
+      },
+      {
+        name: 'Adana Kebap',
+        price: 245,
+        image_url: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=800&q=85&auto=format&fit=crop',
+      },
+      {
+        name: 'Lahmacun',
+        price: 95,
+        image_url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&q=85&auto=format&fit=crop',
+      },
+      {
+        name: 'Künefe',
+        price: 145,
+        image_url: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&q=85&auto=format&fit=crop',
+      },
+      {
+        name: 'Ayran',
+        price: 35,
+        image_url: 'https://images.unsplash.com/photo-1571212515416-fca325c3e2cf?w=800&q=85&auto=format&fit=crop',
+      },
+      {
+        name: 'Türk Kahvesi',
+        price: 65,
+        image_url: 'https://images.unsplash.com/photo-1521488451859-d2dbf7ae21fb?w=800&q=85&auto=format&fit=crop',
+      },
     ];
     for (const it of sampleItems) {
       await client.query(
-        `INSERT INTO menu_items (restaurant_id, category_id, name, price, active)
-         VALUES ($1, $2, $3, $4, 1)`,
-        [restaurant.id, categoryId, it.name, it.price]
+        `INSERT INTO menu_items (restaurant_id, category_id, name, price, active, image_url)
+         VALUES ($1, $2, $3, $4, 1, $5)`,
+        [restaurant.id, categoryId, it.name, it.price, it.image_url]
       );
     }
 
