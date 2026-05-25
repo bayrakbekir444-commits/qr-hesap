@@ -104,7 +104,7 @@ function detectCategory(name) {
 function findImageForName(name) {
   const cat = detectCategory(name);
   const c = CATEGORIES[cat] || CATEGORIES.default;
-  const text = encodeURIComponent(`${c.emoji} ${name || 'Ürün'}`);
+  const text = encodeURIComponent(c.emoji);
   return `${PLACEHOLDER_BASE}/${c.bg}/${c.fg}?text=${text}&font=roboto`;
 }
 
