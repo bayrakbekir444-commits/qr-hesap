@@ -112,6 +112,7 @@ const FOOD_IMAGES = {
 };
 
 // Anahtar kelime → görsel (eşleşmediyse parçalı arama)
+// 3+ karakter zorunlu; "su", "et" gibi kısa kelimeler tehlikeli (sulu köfte → su)
 const KEYWORD_MAP = [
   ['çorba', px(539451)],
   ['corba', px(539451)],
@@ -119,6 +120,7 @@ const KEYWORD_MAP = [
   ['köfte', px(1639565)],
   ['kofte', px(1639565)],
   ['döner', px(8753650)],
+  ['doner', px(8753650)],
   ['pizza', px(905847)],
   ['pide', px(4193869)],
   ['lahma', px(905847)],
@@ -128,22 +130,33 @@ const KEYWORD_MAP = [
   ['tatli', px(4099124)],
   ['baklava', px(4099124)],
   ['kahve', px(1162455)],
-  ['çay', px(312418)],
-  ['cay', px(312418)],
-  ['kola', px(2983100)],
   ['ayran', px(3735170)],
-  ['su', px(2983100)],
   ['burger', px(1639557)],
   ['sandviç', px(1639557)],
+  ['sandvic', px(1639557)],
   ['tost', px(1571997)],
   ['börek', px(4255484)],
   ['borek', px(4255484)],
   ['kahvaltı', px(1660030)],
-  ['et', px(2233729)],
+  ['kahvalti', px(1660030)],
   ['tavuk', px(461198)],
   ['balık', px(842571)],
   ['balik', px(842571)],
 ];
+
+// Kısa, tam eşleşme zorunlu kelimeler (kola, su, çay, et, vs.)
+// Bu set "Su" tek başına ise su fotosu, "Sulu Köfte" ise köfte fotosu vermek için
+const EXACT_ONLY = new Set(['su', 'çay', 'cay', 'kola', 'fanta', 'sprite', 'soda', 'et', 'sicak', 'sıcak', 'soguk', 'soğuk']);
+
+const EXACT_IMAGES = {
+  'su': 'https://images.pexels.com/photos/416528/pexels-photo-416528.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'çay': px(312418),
+  'cay': px(312418),
+  'kola': 'https://images.pexels.com/photos/2983100/pexels-photo-2983100.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'fanta': 'https://images.pexels.com/photos/96974/pexels-photo-96974.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'sprite': px(2983100),
+  'soda': px(2983100),
+};
 
 const DEFAULT_IMAGE = px(958545); // generic plated food
 
@@ -159,22 +172,26 @@ function findImageForName(name) {
   if (!name) return DEFAULT_IMAGE;
   const raw = String(name).toLocaleLowerCase('tr-TR').trim();
 
-  // 1. Tam eşleşme
+  // 0. Kısa exact-only kelimeler (su / çay / kola vs.) — sadece tam eşleşme
+  if (EXACT_ONLY.has(raw) && EXACT_IMAGES[raw]) return EXACT_IMAGES[raw];
+
+  // 1. Tam eşleşme (sözlükten)
   if (FOOD_IMAGES[raw]) return FOOD_IMAGES[raw];
   const norm = normalize(name);
   if (FOOD_IMAGES[norm]) return FOOD_IMAGES[norm];
 
   // 2. İçerme (örn. "Acılı Adana Kebap" → "adana kebap")
+  //    Sadece 4+ karakter anahtarları kullan (yanlış pozitif önleme)
   for (const key of Object.keys(FOOD_IMAGES)) {
-    if (raw.includes(key)) return FOOD_IMAGES[key];
+    if (key.length >= 4 && raw.includes(key)) return FOOD_IMAGES[key];
   }
 
-  // 3. Anahtar kelime fallback
+  // 3. Anahtar kelime fallback (sadece 4+ karakter)
   for (const [kw, url] of KEYWORD_MAP) {
-    if (raw.includes(kw)) return url;
+    if (kw.length >= 4 && raw.includes(kw)) return url;
   }
 
-  // 4. Hiçbir şey değil
+  // 4. Hiçbir şey eşleşmedi
   return DEFAULT_IMAGE;
 }
 
