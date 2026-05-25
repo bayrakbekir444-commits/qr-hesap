@@ -2,7 +2,6 @@
 // Pexels foto guess'i yerine: renkli + emoji + isim placeholder (her zaman çalışır).
 // Restoran sahibi isterse manuel URL yapıştırabilir.
 
-const PLACEHOLDER_BASE = 'https://placehold.co/600x450';
 
 // Kategori → { emoji, renk (HEX, # yok) }
 const CATEGORIES = {
@@ -104,8 +103,9 @@ function detectCategory(name) {
 function findImageForName(name) {
   const cat = detectCategory(name);
   const c = CATEGORIES[cat] || CATEGORIES.default;
-  const text = encodeURIComponent(c.emoji);
-  return `${PLACEHOLDER_BASE}/${c.bg}/${c.fg}?text=${text}&font=roboto`;
+  // SVG data URI — her tarayıcıda emoji düzgün, network çağrısı yok, kesin çalışır.
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#${c.bg}" stop-opacity="0.95"/><stop offset="100%" stop-color="#${c.bg}" stop-opacity="1"/></linearGradient></defs><rect width="600" height="450" fill="url(#g)"/><text x="300" y="240" font-size="240" text-anchor="middle" dominant-baseline="central" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">${c.emoji}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 module.exports = { findImageForName, detectCategory };
