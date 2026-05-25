@@ -1,111 +1,148 @@
-// Türk yemek/içecek isimlerinden otomatik görsel üretir.
-// Pexels foto guess'i yerine: renkli + emoji + isim placeholder (her zaman çalışır).
-// Restoran sahibi isterse manuel URL yapıştırabilir.
+// Türk yemek/içecek isimlerine gerçek fotoğraf URL'leri (Wikimedia Commons & TheMealDB — doğrulandı).
+// Eşleşme yoksa SVG emoji placeholder fallback.
 
+const W = (p) => `https://upload.wikimedia.org/wikipedia/commons/${p}`;
+const M = (h) => `https://www.themealdb.com/images/media/meals/${h}`;
 
-// Kategori → { emoji, renk (HEX, # yok) }
-const CATEGORIES = {
-  soup:    { emoji: '🍲', bg: 'b45309', fg: 'fff7ee' },
-  meat:    { emoji: '🍖', bg: 'c1432a', fg: 'fff7ee' },
-  kebab:   { emoji: '🍢', bg: 'a04429', fg: 'fff7ee' },
-  pide:    { emoji: '🫓', bg: 'b97c34', fg: 'fff7ee' },
-  pizza:   { emoji: '🍕', bg: 'b91c1c', fg: 'fff7ee' },
-  rice:    { emoji: '🍚', bg: 'd97706', fg: '1a1a2e' },
-  salad:   { emoji: '🥗', bg: '15803d', fg: 'fff7ee' },
-  dessert: { emoji: '🍰', bg: 'be185d', fg: 'fff7ee' },
-  coffee:  { emoji: '☕', bg: '78350f', fg: 'fff7ee' },
-  tea:     { emoji: '🍵', bg: '991b1b', fg: 'fff7ee' },
-  water:   { emoji: '💧', bg: '0284c7', fg: 'fff7ee' },
-  juice:   { emoji: '🧃', bg: 'ea580c', fg: 'fff7ee' },
-  soda:    { emoji: '🥤', bg: '7c2d12', fg: 'fff7ee' },
-  ayran:   { emoji: '🥛', bg: 'e5e7eb', fg: '1a1a2e' },
-  burger:  { emoji: '🍔', bg: 'a16207', fg: 'fff7ee' },
-  sandwich:{ emoji: '🥪', bg: 'ca8a04', fg: '1a1a2e' },
-  pastry:  { emoji: '🥐', bg: 'd97706', fg: '1a1a2e' },
-  egg:     { emoji: '🍳', bg: 'f59e0b', fg: '1a1a2e' },
-  chicken: { emoji: '🍗', bg: 'a16207', fg: 'fff7ee' },
-  fish:    { emoji: '🐟', bg: '0369a1', fg: 'fff7ee' },
-  fruit:   { emoji: '🍎', bg: 'dc2626', fg: 'fff7ee' },
-  default: { emoji: '🍽️', bg: 'f5a623', fg: '1a1a2e' },
-};
+// İsim → gerçek foto URL (doğrulandı, çalışıyor)
+const FOOD_IMAGES = {
+  // Et / Kebap
+  'adana kebap': W('thumb/5/55/Adana_kebab.jpg/640px-Adana_kebab.jpg'),
+  'adana':       W('thumb/5/55/Adana_kebab.jpg/640px-Adana_kebab.jpg'),
+  'urfa kebap':  W('thumb/5/55/Adana_kebab.jpg/640px-Adana_kebab.jpg'),
+  'şiş kebap':   W('thumb/5/55/Adana_kebab.jpg/640px-Adana_kebab.jpg'),
+  'sis kebap':   W('thumb/5/55/Adana_kebab.jpg/640px-Adana_kebab.jpg'),
+  'kebap':       W('thumb/5/55/Adana_kebab.jpg/640px-Adana_kebab.jpg'),
+  'köfte':       W('thumb/3/38/Koofteh_tabrizi.jpg/640px-Koofteh_tabrizi.jpg'),
+  'kofte':       W('thumb/3/38/Koofteh_tabrizi.jpg/640px-Koofteh_tabrizi.jpg'),
+  'döner':       W('a/ad/D%C3%B6ner_kebab_slicing.jpg'),
+  'doner':       W('a/ad/D%C3%B6ner_kebab_slicing.jpg'),
+  'iskender':    W('thumb/3/3e/%C4%B0skender_Kebap.jpg/640px-%C4%B0skender_Kebap.jpg'),
+  'iskender kebap': W('thumb/3/3e/%C4%B0skender_Kebap.jpg/640px-%C4%B0skender_Kebap.jpg'),
+  'mantı':       W('thumb/c/ca/Kayseride_bir_restoranda_Kayseri_mant%C4%B1s%C4%B1_%28cropped%29.jpg/640px-Kayseride_bir_restoranda_Kayseri_mant%C4%B1s%C4%B1_%28cropped%29.jpg'),
+  'manti':       W('thumb/c/ca/Kayseride_bir_restoranda_Kayseri_mant%C4%B1s%C4%B1_%28cropped%29.jpg/640px-Kayseride_bir_restoranda_Kayseri_mant%C4%B1s%C4%B1_%28cropped%29.jpg'),
+  'sucuk':       W('thumb/0/0b/Sucuk-1.jpg/640px-Sucuk-1.jpg'),
+  'biftek':      M('pbzcrx1763765096.jpg'),
 
-// İsmin içinde geçen kelimeye göre kategori
-const RULES = [
-  // İçecekler
-  { kw: ['ayran'],                                     cat: 'ayran' },
-  { kw: ['kahve', 'espresso', 'latte', 'cappuccino', 'mocha', 'nescafe'], cat: 'coffee' },
-  { kw: ['çay', 'cay'],                                cat: 'tea' },
-  { kw: ['kola', 'fanta', 'sprite', 'gazoz', 'soda'],  cat: 'soda' },
-  { kw: ['meyve suyu', 'portakal suyu', 'limonata', 'şalgam', 'salgam'], cat: 'juice' },
-  { kw: ['su'],                                        cat: 'water' },
+  // Pide / Lahmacun
+  'lahmacun':    W('thumb/c/c7/Lahmacun.jpg/640px-Lahmacun.jpg'),
+  'pide':        W('thumb/a/a6/Su_B%C3%B6re%C4%9Fi.JPG/640px-Su_B%C3%B6re%C4%9Fi.JPG'),
+  'pizza':       W('thumb/c/c8/Pizza_Margherita_stu_spivack.jpg/640px-Pizza_Margherita_stu_spivack.jpg'),
 
   // Çorba
-  { kw: ['çorba', 'corba', 'tarhana', 'mercimek çorba', 'ezogelin'], cat: 'soup' },
+  'mercimek çorbası': W('thumb/6/61/EgFoodLentilSoup.jpg/640px-EgFoodLentilSoup.jpg'),
+  'mercimek corbasi': W('thumb/6/61/EgFoodLentilSoup.jpg/640px-EgFoodLentilSoup.jpg'),
+  'mercimek':         W('thumb/6/61/EgFoodLentilSoup.jpg/640px-EgFoodLentilSoup.jpg'),
+  'ezogelin':         W('thumb/6/61/EgFoodLentilSoup.jpg/640px-EgFoodLentilSoup.jpg'),
+  'domates çorbası':  W('thumb/8/8c/Tomato_soup%2C_plant-based_%2844040252791%29.jpg/640px-Tomato_soup%2C_plant-based_%2844040252791%29.jpg'),
+  'domates corbasi':  W('thumb/8/8c/Tomato_soup%2C_plant-based_%2844040252791%29.jpg/640px-Tomato_soup%2C_plant-based_%2844040252791%29.jpg'),
 
-  // Et / Kebap
-  { kw: ['döner', 'doner', 'iskender', 'tantuni'],     cat: 'kebab' },
-  { kw: ['kebap', 'köfte', 'kofte', 'şiş', 'sis', 'pirzola', 'biftek', 'sucuk'], cat: 'meat' },
-  { kw: ['tavuk', 'piliç', 'pilic'],                   cat: 'chicken' },
-  { kw: ['balık', 'balik', 'somon', 'levrek', 'çupra', 'hamsi'], cat: 'fish' },
+  // Kahvaltı / Hamur
+  'menemen':     W('thumb/f/fd/My_breakfast_menemen.jpg/640px-My_breakfast_menemen.jpg'),
+  'su böreği':   W('thumb/a/a6/Su_B%C3%B6re%C4%9Fi.JPG/640px-Su_B%C3%B6re%C4%9Fi.JPG'),
+  'su boregi':   W('thumb/a/a6/Su_B%C3%B6re%C4%9Fi.JPG/640px-Su_B%C3%B6re%C4%9Fi.JPG'),
+  'börek':       W('thumb/a/a6/Su_B%C3%B6re%C4%9Fi.JPG/640px-Su_B%C3%B6re%C4%9Fi.JPG'),
+  'borek':       W('thumb/a/a6/Su_B%C3%B6re%C4%9Fi.JPG/640px-Su_B%C3%B6re%C4%9Fi.JPG'),
 
-  // Hamur işleri
-  { kw: ['lahmacun', 'pizza'],                         cat: 'pizza' },
-  { kw: ['pide'],                                      cat: 'pide' },
-  { kw: ['simit', 'poğaça', 'pogaca', 'börek', 'borek', 'açma', 'acma'], cat: 'pastry' },
-
-  // Burger / Sandviç
-  { kw: ['burger', 'hamburger', 'cheeseburger'],       cat: 'burger' },
-  { kw: ['sandviç', 'sandvic', 'tost', 'kumru', 'wrap'], cat: 'sandwich' },
-
-  // Yan ürünler
-  { kw: ['pilav', 'bulgur', 'makarna', 'spagetti'],    cat: 'rice' },
-  { kw: ['salata', 'çoban', 'coban', 'mevsim'],        cat: 'salad' },
+  // Salata
+  'çoban salata':    W('thumb/9/94/Salad_platter.jpg/640px-Salad_platter.jpg'),
+  'coban salata':    W('thumb/9/94/Salad_platter.jpg/640px-Salad_platter.jpg'),
+  'mevsim salata':   W('thumb/9/94/Salad_platter.jpg/640px-Salad_platter.jpg'),
+  'salata':          W('thumb/9/94/Salad_platter.jpg/640px-Salad_platter.jpg'),
 
   // Tatlı
-  { kw: ['künefe', 'kunefe', 'baklava', 'sütlaç', 'sutlac', 'kazandibi', 'tulumba', 'şekerpare', 'sekerpare', 'kemalpaşa', 'dondurma', 'tatlı', 'tatli', 'pasta', 'cheesecake'], cat: 'dessert' },
+  'künefe':      W('thumb/c/c8/K%C3%BCnefe.jpg/640px-K%C3%BCnefe.jpg'),
+  'kunefe':      W('thumb/c/c8/K%C3%BCnefe.jpg/640px-K%C3%BCnefe.jpg'),
+  'baklava':     W('thumb/c/c7/Baklava%281%29.png/640px-Baklava%281%29.png'),
 
-  // Kahvaltı
-  { kw: ['menemen', 'omlet', 'yumurta'],               cat: 'egg' },
+  // Burger / Sandviç
+  'burger':      W('thumb/0/0b/RedDot_Burger.jpg/640px-RedDot_Burger.jpg'),
+  'hamburger':   W('thumb/0/0b/RedDot_Burger.jpg/640px-RedDot_Burger.jpg'),
+  'cheeseburger':W('thumb/0/0b/RedDot_Burger.jpg/640px-RedDot_Burger.jpg'),
 
-  // Meyve
-  { kw: ['elma', 'muz', 'portakal', 'meyve tab'],      cat: 'fruit' },
+  // İçecekler
+  'türk kahvesi':W('thumb/b/b5/T%C3%BCrk_Kahvesi_-_Bakir_Cezve.jpg/640px-T%C3%BCrk_Kahvesi_-_Bakir_Cezve.jpg'),
+  'turk kahvesi':W('thumb/b/b5/T%C3%BCrk_Kahvesi_-_Bakir_Cezve.jpg/640px-T%C3%BCrk_Kahvesi_-_Bakir_Cezve.jpg'),
+  'kahve':       W('thumb/b/b5/T%C3%BCrk_Kahvesi_-_Bakir_Cezve.jpg/640px-T%C3%BCrk_Kahvesi_-_Bakir_Cezve.jpg'),
+  'ayran':       W('thumb/8/8e/Fresh_ayran.jpg/640px-Fresh_ayran.jpg'),
+  'çay':         W('thumb/8/8a/Cup_of_black_tea.JPG/640px-Cup_of_black_tea.JPG'),
+  'cay':         W('thumb/8/8a/Cup_of_black_tea.JPG/640px-Cup_of_black_tea.JPG'),
+  'su':          W('0/02/Stilles_Mineralwasser.jpg'),
+  'kola':        W('thumb/2/27/Coca_Cola_Flasche_-_Original_Taste.jpg/640px-Coca_Cola_Flasche_-_Original_Taste.jpg'),
+  'coca cola':   W('thumb/2/27/Coca_Cola_Flasche_-_Original_Taste.jpg/640px-Coca_Cola_Flasche_-_Original_Taste.jpg'),
+  'limonata':    W('thumb/1/10/Lemonade_-_27682817724.jpg/640px-Lemonade_-_27682817724.jpg'),
+  'lemonade':    W('thumb/1/10/Lemonade_-_27682817724.jpg/640px-Lemonade_-_27682817724.jpg'),
+};
+
+// Kısa kelimeler: sadece tam eşleşme (su/çay/kola/et)
+const EXACT_ONLY = new Set(['su', 'çay', 'cay', 'kola', 'et']);
+
+// Anahtar kelime → gerçek foto (4+ karakter)
+const KEYWORDS = [
+  ['kebap',    FOOD_IMAGES['kebap']],
+  ['köfte',    FOOD_IMAGES['köfte']],
+  ['kofte',    FOOD_IMAGES['kofte']],
+  ['döner',    FOOD_IMAGES['döner']],
+  ['doner',    FOOD_IMAGES['doner']],
+  ['lahmacun', FOOD_IMAGES['lahmacun']],
+  ['pizza',    FOOD_IMAGES['pizza']],
+  ['pide',     FOOD_IMAGES['pide']],
+  ['mercimek', FOOD_IMAGES['mercimek']],
+  ['çorba',    FOOD_IMAGES['domates çorbası']],
+  ['corba',    FOOD_IMAGES['domates çorbası']],
+  ['salata',   FOOD_IMAGES['salata']],
+  ['künefe',   FOOD_IMAGES['künefe']],
+  ['kunefe',   FOOD_IMAGES['kunefe']],
+  ['baklava',  FOOD_IMAGES['baklava']],
+  ['burger',   FOOD_IMAGES['burger']],
+  ['kahve',    FOOD_IMAGES['kahve']],
+  ['ayran',    FOOD_IMAGES['ayran']],
+  ['börek',    FOOD_IMAGES['börek']],
+  ['borek',    FOOD_IMAGES['borek']],
+  ['sucuk',    FOOD_IMAGES['sucuk']],
+  ['mantı',    FOOD_IMAGES['mantı']],
+  ['manti',    FOOD_IMAGES['manti']],
+  ['menemen',  FOOD_IMAGES['menemen']],
 ];
 
-// Kısa kelimeler için sadece tam eşleşme (su/çay/kola/...)
-const EXACT_ONLY = new Set(['su', 'çay', 'cay', 'kola', 'fanta', 'sprite', 'soda', 'et']);
-
-function detectCategory(name) {
-  if (!name) return 'default';
-  const raw = String(name).toLocaleLowerCase('tr-TR').trim();
-
-  // 0. Kısa kelimeler: sadece tam eşleşme
-  if (EXACT_ONLY.has(raw)) {
-    for (const r of RULES) {
-      if (r.kw.includes(raw)) return r.cat;
-    }
-  }
-
-  // 1. Kuralları uzun-anahtar-önce sırasıyla dolaş
-  const sortedRules = [...RULES].sort((a, b) => {
-    const aMax = Math.max(...a.kw.map((k) => k.length));
-    const bMax = Math.max(...b.kw.map((k) => k.length));
-    return bMax - aMax;
-  });
-  for (const r of sortedRules) {
-    for (const k of r.kw) {
-      if (k.length < 4 && raw !== k) continue; // kısa kelime sadece tam eşleşme
-      if (raw.includes(k)) return r.cat;
-    }
-  }
-  return 'default';
-}
-
-function findImageForName(name) {
-  const cat = detectCategory(name);
-  const c = CATEGORIES[cat] || CATEGORIES.default;
-  // SVG data URI — her tarayıcıda emoji düzgün, network çağrısı yok, kesin çalışır.
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#${c.bg}" stop-opacity="0.95"/><stop offset="100%" stop-color="#${c.bg}" stop-opacity="1"/></linearGradient></defs><rect width="600" height="450" fill="url(#g)"/><text x="300" y="240" font-size="240" text-anchor="middle" dominant-baseline="central" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">${c.emoji}</text></svg>`;
+// SVG placeholder fallback (en son seçenek)
+function svgPlaceholder() {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450"><rect fill="#f5a623" width="600" height="450"/><text x="300" y="240" font-size="240" text-anchor="middle" dominant-baseline="central" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">🍽️</text></svg>';
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-module.exports = { findImageForName, detectCategory };
+function normalize(str) {
+  return String(str || '')
+    .toLocaleLowerCase('tr-TR')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function findImageForName(name) {
+  if (!name) return svgPlaceholder();
+  const raw = normalize(name);
+
+  // 1. Kısa exact-only kelimeler
+  if (EXACT_ONLY.has(raw) && FOOD_IMAGES[raw]) return FOOD_IMAGES[raw];
+
+  // 2. Tam eşleşme
+  if (FOOD_IMAGES[raw]) return FOOD_IMAGES[raw];
+
+  // 3. İçerme — uzun anahtarlar (4+ karakter)
+  const sortedKeys = Object.keys(FOOD_IMAGES)
+    .filter((k) => k.length >= 4)
+    .sort((a, b) => b.length - a.length);
+  for (const key of sortedKeys) {
+    if (raw.includes(key)) return FOOD_IMAGES[key];
+  }
+
+  // 4. Anahtar kelime fallback
+  for (const [kw, url] of KEYWORDS) {
+    if (kw.length >= 4 && raw.includes(kw)) return url;
+  }
+
+  // 5. SVG placeholder
+  return svgPlaceholder();
+}
+
+module.exports = { findImageForName };
